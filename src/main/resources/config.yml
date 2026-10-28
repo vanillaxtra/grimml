@@ -1,0 +1,36 @@
+# Schema version - bump when keys change; missing keys use defaults.
+config-version: 1
+
+# Master kill switch. false = no packet hooks write, writer drains then idles.
+enabled: true
+
+# Salt for anonymized player IDs (change on install; do not reuse across public shares).
+anonymize-salt: "change-me"
+
+# Rolling pre-buffer and post-attack flush window (combat-only recording).
+pre-combat-seconds: 5
+post-combat-seconds: 2
+
+# Async writer drain interval.
+writer-interval-ms: 2000
+
+# Drop newest combat flushes when the writer queue is this deep (never block).
+writer-queue-capacity: 256
+
+# Per-player rotation ring size (ticks). 128 ≈ 6.4s at 20 TPS.
+ring-capacity: 128
+
+# Per-player side-event ring (attacks + grim flags).
+event-ring-capacity: 64
+
+# Auto-pause recording when average MSPT exceeds this (0 = disabled).
+mspt-pause-threshold: 50.0
+
+# How often to sample MSPT / disk usage on the main thread (ms).
+safety-check-interval-ms: 5000
+
+# Cap total size of the recordings directory in MiB (0 = unlimited). Auto-pauses when exceeded.
+max-disk-mb: 10240
+
+# Relative to plugin data folder.
+recordings-dir: recordings

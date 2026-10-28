@@ -1,0 +1,24 @@
+name: grimml
+version: ${project.version}
+main: dev.grimml.GrimMLPlugin
+api-version: '1.21'
+description: Combat recording for Grim ML detection (recorder only)
+authors: [grimml]
+softdepend:
+  - packetevents
+  - GrimAC
+  - Geyser-Spigot
+  - floodgate
+  - ProtocolLib
+  - ViaVersion
+  - ViaBackwards
+  - ViaRewind
+commands:
+  grimml:
+    description: grimml recorder admin
+    usage: /grimml <status|pause|resume|reload>
+    permission: grimml.admin
+permissions:
+  grimml.admin:
+    description: Control the combat recorder
+    default: op
