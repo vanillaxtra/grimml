@@ -26,6 +26,7 @@ public final class GrimMLPlugin extends JavaPlugin {
     private RecordWriter writer;
     private PacketListener packetListener;
     private StateSampler stateSampler;
+    private DiskCapGuard diskCap;
     private GrimFlagHook grimHook;
     private GeyserHook geyserHook;
 
@@ -46,6 +47,9 @@ public final class GrimMLPlugin extends JavaPlugin {
             return;
         }
 
+        diskCap = new DiskCapGuard(this, config);
+        diskCap.start();
+
         geyserHook = new GeyserHook();
         geyserHook.init();
 
@@ -54,8 +58,7 @@ public final class GrimMLPlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new SessionLifecycle(registry, geyserHook), this);
         getServer().getPluginManager().registerEvents(new SprintSneakTracker(registry), this);
-        stateSampler = new StateSampler(this, registry, config, geyserHook,
-                new DiskCapGuard(this, config), new MsptGuard(this, config));
+        stateSampler = new StateSampler(this, registry, config, geyserHook, new MsptGuard(this, config));
         stateSampler.start();
 
         grimHook = new GrimFlagHook(this);
@@ -78,6 +81,9 @@ public final class GrimMLPlugin extends JavaPlugin {
         }
         if (stateSampler != null) {
             stateSampler.stop();
+        }
+        if (diskCap != null) {
+            diskCap.stop();
         }
         if (writer != null) {
             writer.stop();

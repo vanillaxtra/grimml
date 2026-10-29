@@ -26,7 +26,8 @@ event-ring-capacity: 64
 # Auto-pause recording when average MSPT exceeds this (0 = disabled).
 mspt-pause-threshold: 50.0
 
-# How often to sample MSPT / disk usage on the main thread (ms).
+# How often the grimml-disk thread measures the recordings directory (ms).
+# Player state and MSPT are still sampled on the main thread, more often than this.
 safety-check-interval-ms: 5000
 
 # Cap total size of the recordings directory in MiB (0 = unlimited). Auto-pauses when exceeded.

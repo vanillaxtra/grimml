@@ -16,7 +16,7 @@ Rule-based anticheats like Grim are good at catching movement and protocol cheat
 - **Captures:** yaw/pitch from rotation packets, attack packets, sprint/sneak/vehicle/elytra state, ping, client brand and protocol, and whether the player is on Bedrock (via Geyser/Floodgate).
 - **Weak labels from Grim:** when GrimAC is installed, its flags are stored in the same window.
 - **Anonymized:** player UUIDs are hashed with SHA-256 and a salt, and session ids are random per login. Raw UUIDs never reach disk.
-- **Built not to lag the server:** the packet path neither allocates nor locks. A single async writer uses a bounded queue and drops the newest windows instead of blocking.
+- **Built not to lag the server:** the packet path neither allocates nor locks. A single async writer uses a bounded queue and drops the newest windows instead of blocking. The disk-cap walk runs on its own thread, not on the server tick.
 - **Safety valves:** recording auto-pauses on high MSPT, auto-pauses over a disk cap, and can be paused by hand.
 
 ## Requirements
@@ -68,7 +68,7 @@ All commands need `grimml.admin` (op by default).
 | `ring-capacity` | `128` | rotation samples kept per player |
 | `event-ring-capacity` | `64` | attack/state/flag events kept per player |
 | `mspt-pause-threshold` | `50.0` | auto-pause above this MSPT (`0` disables); resumes below 80% of it |
-| `safety-check-interval-ms` | `5000` | how often state is sampled and the safety checks run |
+| `safety-check-interval-ms` | `5000` | how often the disk-cap walk runs on its own thread |
 | `max-disk-mb` | `10240` | auto-pause once recordings exceed this size (`0` = unlimited) |
 | `recordings-dir` | `recordings` | output folder, relative to the plugin folder |
 

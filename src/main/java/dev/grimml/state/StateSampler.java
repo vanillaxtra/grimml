@@ -6,29 +6,26 @@ import dev.grimml.buffer.SessionRegistry;
 import dev.grimml.config.PluginConfig;
 import dev.grimml.format.RecordTypes;
 import dev.grimml.geyser.GeyserHook;
-import dev.grimml.safety.DiskCapGuard;
 import dev.grimml.safety.MsptGuard;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-// main thread heartbeat samples flags and ping then flushes combat windows and runs safety valves
+// main thread heartbeat samples flags and ping then flushes combat windows and checks mspt
 public final class StateSampler {
 
     private final GrimMLPlugin plugin;
     private final SessionRegistry registry;
     private final PluginConfig config;
     private final GeyserHook geyser;
-    private final DiskCapGuard diskCap;
     private final MsptGuard mspt;
     private int tickTaskId = -1;
 
     public StateSampler(GrimMLPlugin plugin, SessionRegistry registry, PluginConfig config, GeyserHook geyser,
-                        DiskCapGuard diskCap, MsptGuard mspt) {
+                        MsptGuard mspt) {
         this.plugin = plugin;
         this.registry = registry;
         this.config = config;
         this.geyser = geyser;
-        this.diskCap = diskCap;
         this.mspt = mspt;
     }
 
@@ -64,7 +61,6 @@ public final class StateSampler {
 
             plugin.writer().offerSnapshotIfCombat(buf);
         }
-        diskCap.check();
         mspt.check();
     }
 }

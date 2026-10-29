@@ -14,11 +14,11 @@ one folder per function, one file per feature
 - `capture/PacketListener.java` - single PacketEvents listener, dispatch only
 - `capture/RotationCapture.java` - rotation + position/rotation packets
 - `capture/AttackCapture.java` - attack packets, opens combat window
-- `state/StateSampler.java` - main thread heartbeat: ping + sprint/sneak/vehicle/elytra/Bedrock flags, flush, safety valves
+- `state/StateSampler.java` - main thread heartbeat: ping + sprint/sneak/vehicle/elytra/Bedrock flags, flush, MSPT valve
 - `state/SessionLifecycle.java` - join/quit buffers, client brand + protocol
 - `state/SprintSneakTracker.java` - sprint/sneak toggle events
 - `safety/MsptGuard.java` - auto-pause on high MSPT
-- `safety/DiskCapGuard.java` - auto-pause over disk cap
+- `safety/DiskCapGuard.java` - `grimml-disk` thread measures recordings and auto-pauses over the disk cap
 - `grim/GrimFlagHook.java` - weak labels from Grim flags
 - `geyser/GeyserHook.java` - reflection-based Bedrock/Floodgate detection
 - `buffer/PlayerRingBuffer.java` - per-player preallocated rotation + event rings
@@ -43,6 +43,7 @@ flowchart LR
     D[Grim flag hook] -->|weak labels| B
     B -->|snapshot if combat| E[RecordWriter async thread]
     E -->|compress| F[.gmlml file]
+    G[grimml-disk thread] -->|pause if over cap| E
 ```
 
 ## commands & permissions
