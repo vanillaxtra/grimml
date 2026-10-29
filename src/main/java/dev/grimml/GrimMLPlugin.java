@@ -9,13 +9,19 @@ import dev.grimml.config.PluginConfig;
 import dev.grimml.fight.FightAssembler;
 import dev.grimml.geyser.GeyserHook;
 import dev.grimml.grim.GrimFlagHook;
+import dev.grimml.hooks.LiteBansHook;
 import dev.grimml.listeners.DamageListener;
 import dev.grimml.listeners.ValidityListener;
+import dev.grimml.listeners.VanillaBanListener;
+import dev.grimml.roster.BanLabelService;
+import dev.grimml.roster.RosterStore;
 import dev.grimml.safety.DiskCapGuard;
 import dev.grimml.safety.MsptGuard;
 import dev.grimml.state.SessionLifecycle;
 import dev.grimml.state.SprintSneakTracker;
 import dev.grimml.state.StateSampler;
+import dev.grimml.taxonomy.Taxonomy;
+import dev.grimml.taxonomy.TaxonomyLoader;
 import dev.grimml.writer.RecordWriter;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import org.bukkit.Bukkit;
@@ -34,12 +40,15 @@ public final class GrimMLPlugin extends JavaPlugin {
     private DiskCapGuard diskCap;
     private GrimFlagHook grimHook;
     private GeyserHook geyserHook;
+    private volatile Taxonomy taxonomy = Taxonomy.empty();
     private volatile boolean recordingEnabled;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        saveResource("taxonomy.yml", false);
         config.load(getConfig());
+        reloadTaxonomy();
 
         recordingEnabled = config.enabled();
         registry = new SessionRegistry(config, clock);
@@ -56,6 +65,7 @@ public final class GrimMLPlugin extends JavaPlugin {
                 RecordWriter.pluginVersion("packetevents")
         );
         writer.setAssembler(new FightAssembler(registry, config, clock, writer));
+        stampTaxonomy();
 
         diskCap = new DiskCapGuard(this, config);
         diskCap.start();
@@ -77,6 +87,10 @@ public final class GrimMLPlugin extends JavaPlugin {
         if (Bukkit.getPluginManager().isPluginEnabled("GrimAC")) {
             grimHook.enable();
         }
+
+        BanLabelService bans = new BanLabelService(this, new RosterStore(getDataFolder().toPath().resolve(config.rosterFile())));
+        getServer().getPluginManager().registerEvents(new VanillaBanListener(bans), this);
+        new LiteBansHook(this, bans).enable();
 
         GrimMLCommand cmd = new GrimMLCommand(this);
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
@@ -123,5 +137,29 @@ public final class GrimMLPlugin extends JavaPlugin {
 
     public boolean recordingEnabled() {
         return recordingEnabled && writer != null && !writer.isPaused();
+    }
+
+    public Taxonomy taxonomy() {
+        return taxonomy;
+    }
+
+    private void stampTaxonomy() {
+        if (writer == null || taxonomy == null) {
+            return;
+        }
+        writer.enqueueSessionLine("taxonomy " + taxonomy.version + " " + Long.toUnsignedString(taxonomy.hash, 36));
+    }
+
+    public void reloadTaxonomy() {
+        try {
+            taxonomy = TaxonomyLoader.load(getDataFolder().toPath().resolve("taxonomy.yml"));
+            stampTaxonomy();
+            getLogger().info("taxonomy v" + taxonomy.version + " modules " + taxonomy.modules.size());
+        } catch (Exception e) {
+            getLogger().warning("taxonomy load failed: " + e.getMessage());
+            if (taxonomy == null) {
+                taxonomy = Taxonomy.empty();
+            }
+        }
     }
 }
