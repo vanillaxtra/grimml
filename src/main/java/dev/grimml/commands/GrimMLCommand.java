@@ -1,28 +1,26 @@
 package dev.grimml.commands;
 
 import dev.grimml.GrimMLPlugin;
-import net.kyori.adventure.text.Component;
+import io.papermc.paper.command.brigadier.BasicCommand;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// routes /grimml to one class per subcommand
-public final class GrimMLCommand implements CommandExecutor, TabCompleter {
+// routes /grimml to one class per subcommand registered through the paper lifecycle command api
+public final class GrimMLCommand implements BasicCommand {
 
+    public static final String PERMISSION = "grimml.admin";
     private static final String USAGE = "<red>/grimml <status|pause|resume|reload>";
 
-    private final GrimMLPlugin plugin;
     private final Map<String, SubCommand> subs = new LinkedHashMap<>();
 
     public GrimMLCommand(GrimMLPlugin plugin) {
-        this.plugin = plugin;
         subs.put("status", new StatusCommand(plugin));
         subs.put("pause", new PauseCommand(plugin));
         subs.put("resume", new ResumeCommand(plugin));
@@ -30,18 +28,22 @@ public final class GrimMLCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public void execute(@NotNull CommandSourceStack source, @NotNull String[] args) {
+        CommandSender sender = source.getSender();
         SubCommand sub = args.length == 0 ? null : subs.get(args[0].toLowerCase());
         if (sub == null) {
-            msg(plugin, sender, USAGE);
-            return true;
+            msg(sender, USAGE);
+            return;
         }
         sub.execute(sender);
-        return true;
     }
 
+    // paper drops empty tokens so "/grimml " arrives with zero args
     @Override
-    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
+    public @NotNull Collection<String> suggest(@NotNull CommandSourceStack source, @NotNull String[] args) {
+        if (args.length == 0) {
+            return subs.keySet();
+        }
         if (args.length == 1) {
             return subs.keySet().stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
@@ -50,12 +52,12 @@ public final class GrimMLCommand implements CommandExecutor, TabCompleter {
         return List.of();
     }
 
-    static void msg(GrimMLPlugin plugin, CommandSender sender, String mini) {
-        Component c = MiniMessage.miniMessage().deserialize(mini);
-        if (sender instanceof org.bukkit.entity.Player p) {
-            p.sendMessage(c);
-        } else {
-            plugin.getComponentLogger().info(c);
-        }
+    @Override
+    public String permission() {
+        return PERMISSION;
+    }
+
+    static void msg(CommandSender sender, String mini) {
+        sender.sendMessage(MiniMessage.miniMessage().deserialize(mini));
     }
 }

@@ -14,6 +14,6 @@ public final class PauseCommand implements SubCommand {
     @Override
     public void execute(CommandSender sender) {
         plugin.writer().setPaused(true);
-        GrimMLCommand.msg(plugin, sender, "<yellow>writer paused");
+        GrimMLCommand.msg(sender, "<yellow>writer paused");
     }
 }

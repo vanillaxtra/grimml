@@ -14,6 +14,6 @@ public final class ResumeCommand implements SubCommand {
     @Override
     public void execute(CommandSender sender) {
         plugin.writer().setPaused(false);
-        GrimMLCommand.msg(plugin, sender, "<green>writer resumed");
+        GrimMLCommand.msg(sender, "<green>writer resumed");
     }
 }

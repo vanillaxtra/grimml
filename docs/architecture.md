@@ -2,7 +2,9 @@
 
 - **target:** Paper 1.21.1 through 26.x, Java 21 bytecode, Maven
 - **packet capture:** PacketEvents 2.14.0
-- **soft-depends:** GrimAC, Geyser-Spigot, floodgate, ViaVersion, ProtocolLib
+- **depends:** packetevents (hard, used directly at enable)
+- **soft-depends:** GrimAC, Geyser-Spigot, floodgate
+- **commands:** `/grimml` registered via Paper lifecycle `LifecycleEvents.COMMANDS` as a `BasicCommand`; plugin.yml has no `commands:` section
 
 ## structure
 one folder per function, one file per feature
@@ -29,7 +31,7 @@ one folder per function, one file per feature
 - `writer/SnapshotPool.java` - pooled snapshots
 - `writer/RecordingFiles.java` - recordings dir + `.gmlml` file naming
 - `privacy/Anonymizer.java` - salted UUID hashing + session ids
-- `commands/GrimMLCommand.java` - /grimml router + tab complete
+- `commands/GrimMLCommand.java` - /grimml `BasicCommand` router + suggestions, permission `grimml.admin`
 - `commands/StatusCommand.java`, `PauseCommand.java`, `ResumeCommand.java`, `ReloadCommand.java` - one per subcommand
 
 ## data flow

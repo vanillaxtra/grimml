@@ -13,6 +13,7 @@ import dev.grimml.state.SessionLifecycle;
 import dev.grimml.state.SprintSneakTracker;
 import dev.grimml.state.StateSampler;
 import dev.grimml.writer.RecordWriter;
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -63,8 +64,8 @@ public final class GrimMLPlugin extends JavaPlugin {
         }
 
         GrimMLCommand cmd = new GrimMLCommand(this);
-        getCommand("grimml").setExecutor(cmd);
-        getCommand("grimml").setTabCompleter(cmd);
+        getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
+                event -> event.registrar().register("grimml", "grimml recorder admin", cmd));
 
         getLogger().info("grimml recorder enabled");
     }
