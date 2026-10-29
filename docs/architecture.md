@@ -26,7 +26,7 @@ one folder per function, one file per feature
 - `buffer/SessionRegistry.java` - uuid to ring buffer map
 - `format/BinaryFormat.java` - compressed `.gmlml` window encoder
 - `format/RecordTypes.java` - record type tags + state flag bits
-- `format/BinaryFormatSelfCheck.java` - encoder round-trip check (`mvn exec:java`)
+- `format/BinaryFormatSelfCheck.java` - encoder round-trip check (runs in `mvn package`, or `mvn exec:java`)
 - `writer/RecordWriter.java` - single async writer thread with bounded queue
 - `writer/SnapshotPool.java` - pooled snapshots
 - `writer/RecordingFiles.java` - recordings dir + `.gmlml` file naming

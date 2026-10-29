@@ -35,7 +35,7 @@ There are no release builds yet, so build it yourself (needs JDK 21+ and Maven):
 ```bash
 git clone https://github.com/vanillaxtra/grimml
 cd grimml
-mvn clean package -DskipTests
+mvn clean package
 ```
 
 1. Copy `target/grimml-0.1.0-SNAPSHOT.jar` and PacketEvents into `plugins/`.
@@ -112,8 +112,9 @@ Open items are tracked in [docs/known-issues.md](docs/known-issues.md).
 ## Contributing
 
 ```bash
-mvn clean package -DskipTests   # build
-mvn exec:java                   # run the binary format self-check
+mvn clean package               # build + binary format self-check
+mvn clean package -DskipTests   # build only
+mvn exec:java                   # self-check on its own
 ```
 
 - One folder per function and one file per feature (for example `commands/StatusCommand.java`).
