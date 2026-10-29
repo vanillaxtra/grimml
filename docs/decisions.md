@@ -1,5 +1,28 @@
 # decisions
 
+## 2026-10-29 - taxonomy.yml owns clients/modules; grim only supplies check names
+
+- grim detects violations and does not know cheat clients or modules. GrimAPI 1.3.2.1 has `FlagEvent` → `check.getCheckName()` and per-user `GrimUser.getChecks()`, not a global list of every check
+- clients, modules, expected grim names, and setting schemas live in `plugins/grimml/taxonomy.yml`. numeric ids are 1-based yaml order; version plus sha-256-64 of the file go on the GML3 header and `sessions.idx`
+- `grim-checks.json` is learned at runtime from FlagEvent (and seeded from taxonomy `expected_grim` plus `getChecks()` on join). FlagEvent looks up the ring by uuid and never calls bukkit. file flush is async every 5s
+- `/grimml mark` is a time-range segment on one account, not an account-wide label. quit and disable close open segments with `interrupted`. settings validate against the module schema; `expected=` is a free grim-check name for tab complete
+- module detection is the training target; client id is supporting evidence only and brand strings are not trusted
+
+## 2026-10-29 - schema v3 markers
+
+- GML3 magic, schema 3; GML1/GML2 stay identifiable by magic and are not rewritten
+- header adds taxonomy version and hash after the version strings
+- MARKER `eA` is wall-clock ms, `eB` packs action/source/kv-count, `eC` label id, `eD` client id, `eE` module id, `eF` settings hash; following `MARKER_KV` events hold key/value hashes
+- test-account flag is already in the GML2 header byte and `FLAG_TEST_ACCOUNT`; uuids persist in `test-accounts.txt` and are applied on join
+
+## 2026-10-29 - litebans combat bans are suspect not cheat_confirmed
+
+- litebans `entryAdded` is async so the hook only appends `roster.csv` and a `sessions.idx` line; no bukkit calls
+- label is always `SUSPECT` with `valid_from` = now minus `ban-labels.backfill-days` (14); that is exclusion/validation, not a positive cheat class
+- only reasons matching `ban-labels.combat-reason-keywords`; empty list matches nothing
+- vanilla `PlayerKickEvent` with a BAN cause is a fallback and is deduped against litebans for 10s
+- uuid stays in the roster file only, never in `.gmlml` recordings; sidecar uses the hashed anon id
+
 ## 2026-10-29 - schema v2 fight windows
 
 - GML2 magic, schema 2; GML1 files remain identifiable by `GML1` and are not rewritten
