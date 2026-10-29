@@ -1,6 +1,9 @@
 package dev.grimml.config;
 
+import dev.grimml.roster.CombatReasonMatcher;
 import org.bukkit.configuration.file.FileConfiguration;
+
+import java.util.List;
 
 public final class PluginConfig {
 
@@ -23,6 +26,17 @@ public final class PluginConfig {
     private int bystanderRange;
     private int bystanderMax;
     private int staggerPerTick;
+    private boolean banLabelsEnabled;
+    private int banBackfillDays;
+    private String rosterFile;
+    private CombatReasonMatcher combatReasons = new CombatReasonMatcher(List.of());
+
+    private static final List<String> DEFAULT_COMBAT_REASONS = List.of(
+            "killaura", "kill aura", "aura", "aimassist", "aim assist", "aimbot",
+            "reach", "hitbox", "autoclick", "auto click", "triggerbot",
+            "crystal", "totem", "retotem", "shield", "autoblock", "scaffold",
+            "mace", "spear", "stun", "jump reset", "velocity", "antikb", "anti kb"
+    );
 
     public void load(FileConfiguration cfg) {
         enabled = cfg.getBoolean("enabled", true);
@@ -44,6 +58,11 @@ public final class PluginConfig {
         bystanderRange = Math.max(1, cfg.getInt("bystander-range", 16));
         bystanderMax = Math.max(0, cfg.getInt("bystander-max", 4));
         staggerPerTick = Math.max(1, cfg.getInt("stagger-players-per-tick", 8));
+        banLabelsEnabled = cfg.getBoolean("ban-labels.enabled", true);
+        banBackfillDays = Math.max(1, cfg.getInt("ban-labels.backfill-days", 14));
+        rosterFile = cfg.getString("ban-labels.roster-file", "roster.csv");
+        List<String> keys = cfg.getStringList("ban-labels.combat-reason-keywords");
+        combatReasons = new CombatReasonMatcher(keys.isEmpty() ? DEFAULT_COMBAT_REASONS : keys);
     }
 
     public boolean enabled() { return enabled; }
@@ -65,4 +84,8 @@ public final class PluginConfig {
     public int bystanderRange() { return bystanderRange; }
     public int bystanderMax() { return bystanderMax; }
     public int staggerPerTick() { return staggerPerTick; }
+    public boolean banLabelsEnabled() { return banLabelsEnabled; }
+    public int banBackfillDays() { return banBackfillDays; }
+    public String rosterFile() { return rosterFile; }
+    public CombatReasonMatcher combatReasons() { return combatReasons; }
 }

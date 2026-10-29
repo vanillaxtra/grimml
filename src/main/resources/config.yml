@@ -1,5 +1,5 @@
 # Schema version - bump when keys change; missing keys use defaults.
-config-version: 2
+config-version: 3
 
 # Master kill switch. false = no packet hooks write, writer drains then idles.
 enabled: true
@@ -49,3 +49,36 @@ bystander-max: 4
 
 # Main-thread potion/attribute reads per tick (rest wait for their slot).
 stagger-players-per-tick: 8
+
+# Auto-label combat bans as SUSPECT (not cheat_confirmed). Backfills last N days for offline join.
+ban-labels:
+  enabled: true
+  backfill-days: 14
+  roster-file: roster.csv
+  combat-reason-keywords:
+    - killaura
+    - kill aura
+    - aura
+    - aimassist
+    - aim assist
+    - aimbot
+    - reach
+    - hitbox
+    - autoclick
+    - auto click
+    - triggerbot
+    - combat
+    - fight
+    - crystal
+    - totem
+    - retotem
+    - shield
+    - autoblock
+    - scaffold
+    - mace
+    - spear
+    - stun
+    - jump reset
+    - velocity
+    - antikb
+    - anti kb
