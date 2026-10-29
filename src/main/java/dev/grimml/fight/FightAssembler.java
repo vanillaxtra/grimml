@@ -128,6 +128,9 @@ public final class FightAssembler {
         snap.msptEndCenti = snap.msptStartCenti;
         snap.tpsCenti = (int) (clock.tps() * 100);
         snap.testAccount = buf.testAccount;
+        var tax = writer.plugin().taxonomy();
+        snap.taxonomyVersion = tax.version;
+        snap.taxonomyHash = tax.hash;
         snap.mainHand = buf.mainHand;
         snap.gamemode = buf.gamemode;
         snap.healthMilli = buf.healthMilli;

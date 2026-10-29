@@ -43,6 +43,8 @@ public final class CombatSnapshot {
     public String grimVersion = "";
     public String peVersion = "";
     public boolean relativePositions;
+    public int taxonomyVersion;
+    public long taxonomyHash;
 
     public int frameCount;
     public final int[] fTick, fNsOff, fFlags, fHeldId, fOffId, fAck, fGroundY, fFall, fVehType, fVehId;

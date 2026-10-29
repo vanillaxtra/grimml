@@ -11,8 +11,9 @@ import java.util.zip.DeflaterOutputStream;
 
 public final class BinaryFormat {
 
-    public static final int SCHEMA = 2;
-    public static final byte[] MAGIC = {'G', 'M', 'L', '2'};
+    public static final int SCHEMA = 3;
+    public static final byte[] MAGIC = {'G', 'M', 'L', '3'};
+    public static final byte[] MAGIC_V2 = {'G', 'M', 'L', '2'};
     public static final byte[] MAGIC_V1 = {'G', 'M', 'L', '1'};
 
     private BinaryFormat() {}
@@ -70,6 +71,8 @@ public final class BinaryFormat {
             writeStr(out, snap.mcVersion);
             writeStr(out, snap.grimVersion);
             writeStr(out, snap.peVersion);
+            out.writeInt(snap.taxonomyVersion);
+            out.writeLong(snap.taxonomyHash);
 
             ByteArrayOutputStream records = new ByteArrayOutputStream(snap.frameCount * 40 + snap.eventCount * 32);
             DataOutputStream rec = new DataOutputStream(records);
@@ -156,6 +159,16 @@ public final class BinaryFormat {
             out.write(compressed);
         }
         return raw.toByteArray();
+    }
+
+    public static int schemaOf(byte[] data) {
+        if (data == null || data.length < 4) {
+            return 0;
+        }
+        if (data[0] != 'G' || data[1] != 'M' || data[2] != 'L') {
+            return 0;
+        }
+        return data[3] - '0';
     }
 
     public static int hashCheckName(String name) {

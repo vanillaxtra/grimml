@@ -40,11 +40,22 @@ public final class BinaryFormatSelfCheck {
         snap.fZ[1] = 3005;
         snap.fYaw[1] = 4600;
         snap.fPitch[1] = -1200;
-        snap.eventCount = 1;
+        snap.taxonomyVersion = 1;
+        snap.taxonomyHash = 0xabcL;
+        snap.eventCount = 2;
         snap.eType[0] = RecordTypes.ATTACK;
         snap.eTick[0] = 101;
         snap.eNanos[0] = 1_160_000L;
         snap.eA[0] = 55;
+        snap.eType[1] = RecordTypes.MARKER;
+        snap.eTick[1] = 101;
+        snap.eNanos[1] = 1_160_100L;
+        snap.eA[1] = 1_700_000_000_000L;
+        snap.eB[1] = RecordTypes.MARKER_START | (RecordTypes.SOURCE_STAFF << 8) | (1 << 16);
+        snap.eC[1] = 2;
+        snap.eD[1] = 1;
+        snap.eE[1] = 3;
+        snap.eF[1] = BinaryFormat.hashCheckName("strength=high");
 
         byte[] encoded = BinaryFormat.encodeWindow(snap);
         DataInputStream in = new DataInputStream(new ByteArrayInputStream(encoded));
@@ -59,8 +70,11 @@ public final class BinaryFormatSelfCheck {
         in.readUnsignedShort();
         long session = in.readLong();
         long anon = in.readLong();
-        boolean ok = magic[0] == 'G' && magic[1] == 'M' && magic[2] == 'L' && magic[3] == '2'
+        boolean ok = magic[0] == 'G' && magic[1] == 'M' && magic[2] == 'L' && magic[3] == '3'
                 && schema == BinaryFormat.SCHEMA
+                && BinaryFormat.schemaOf(encoded) == 3
+                && BinaryFormat.schemaOf(new byte[]{'G', 'M', 'L', '2'}) == 2
+                && BinaryFormat.schemaOf(new byte[]{'G', 'M', 'L', '1'}) == 1
                 && fight == snap.fightId
                 && window == snap.windowId
                 && role == RecordTypes.ROLE_ATTACKER
@@ -104,6 +118,11 @@ public final class BinaryFormatSelfCheck {
         skipStr(in);
         skipStr(in);
         skipStr(in);
+        int taxVer = in.readInt();
+        long taxHash = in.readLong();
+        if (taxVer != 1 || taxHash != 0xabcL) {
+            throw new AssertionError("taxonomy header");
+        }
         int compressedLen = in.readInt();
         byte[] compressed = new byte[compressedLen];
         in.readFully(compressed);
@@ -112,11 +131,88 @@ public final class BinaryFormatSelfCheck {
         if (frames != 2) {
             throw new AssertionError("expected 2 frames got " + frames);
         }
+        skipFrames(rec, frames);
+        int events = rec.readUnsignedShort();
+        if (events != 2) {
+            throw new AssertionError("expected 2 events got " + events);
+        }
+        skipEvent(rec);
+        rec.readByte();
+        rec.readInt();
+        rec.readInt();
+        rec.readByte();
+        rec.readLong();
+        long wall = rec.readLong();
+        int packed = rec.readInt();
+        int label = rec.readInt();
+        int client = rec.readInt();
+        int module = rec.readInt();
+        int settings = rec.readInt();
+        rec.readShort();
+        if (wall != 1_700_000_000_000L
+                || (packed & 0xff) != RecordTypes.MARKER_START
+                || label != 2 || client != 1 || module != 3
+                || settings != BinaryFormat.hashCheckName("strength=high")) {
+            throw new AssertionError("marker round-trip");
+        }
         System.out.println("binary format self-check passed: encoded " + encoded.length + " bytes schema " + schema);
     }
 
     private static void skipStr(DataInputStream in) throws Exception {
         int n = in.readUnsignedByte();
         in.readFully(new byte[n]);
+    }
+
+    private static void skipFrames(DataInputStream rec, int frames) throws Exception {
+        for (int i = 0; i < frames; i++) {
+            rec.readByte();
+            rec.readInt();
+            rec.readInt();
+            rec.readByte();
+            rec.readShort();
+            if (i == 0) {
+                rec.readInt();
+                rec.readInt();
+                rec.readInt();
+                rec.readInt();
+                rec.readInt();
+            } else {
+                BinaryFormat.readVar(rec);
+                BinaryFormat.readVar(rec);
+                BinaryFormat.readVar(rec);
+                BinaryFormat.readVar(rec);
+                BinaryFormat.readVar(rec);
+            }
+            rec.readInt();
+            rec.readByte();
+            rec.readByte();
+            rec.readByte();
+            rec.readInt();
+            rec.readByte();
+            rec.readInt();
+            rec.readByte();
+            rec.readShort();
+            rec.readShort();
+            rec.readInt();
+            rec.readInt();
+            rec.readInt();
+            rec.readInt();
+            rec.readInt();
+        }
+    }
+
+    private static void skipEvent(DataInputStream rec) throws Exception {
+        rec.readByte();
+        rec.readInt();
+        rec.readInt();
+        rec.readByte();
+        rec.readLong();
+        rec.readLong();
+        rec.readInt();
+        rec.readInt();
+        rec.readInt();
+        rec.readInt();
+        rec.readInt();
+        rec.readShort();
     }
 }
