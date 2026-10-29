@@ -3,7 +3,7 @@
 - [ ] `MsptGuard` clears any pause, including a disk-cap pause and `/grimml pause`, once MSPT drops below 80% of the threshold
 - [ ] GML1/GML2 files are not decoded by the current Java encoder; they are only identifiable by magic (`schemaOf`)
 - [ ] `AimModulo360` / `Reach` in `taxonomy.yml` `expected_grim` are guesses until a live FlagEvent confirms names
-- [ ] grimml-synth (offline synthetic windows) is a sibling repo, not this plugin
+- [ ] grimml-synth lives in `Documents/grimml-synth`; calibrate PARAM_SPACE from real test-account sessions before trusting it
 - [ ] Spear jab vs charge is recorded as a normal damage/attack pair; PacketEvents does not expose a dedicated spear packet (VERIFY)
 - [ ] Own-inventory open has no client packet on some versions; we infer from the first click
 - [ ] Grim prediction offset is not in GrimAPI 1.3.2.1 so setback records have position only
