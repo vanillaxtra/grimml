@@ -2,19 +2,22 @@ package dev.grimml.writer;
 
 import dev.grimml.GrimMLPlugin;
 import dev.grimml.buffer.CombatSnapshot;
-import dev.grimml.buffer.PlayerRingBuffer;
 import dev.grimml.config.PluginConfig;
+import dev.grimml.fight.FightAssembler;
 import dev.grimml.format.BinaryFormat;
+import org.bukkit.Bukkit;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 // single async writer thread drains snapshots to compressed files
 // bounded queue drops newest samples if writer falls behind
@@ -28,27 +31,53 @@ public final class RecordWriter {
         return t;
     });
     private final ArrayBlockingQueue<CombatSnapshot> queue;
+    private final ArrayBlockingQueue<byte[]> sidecarQueue;
     private final SnapshotPool pool;
     private final RecordingFiles files;
+    private final DropCounters drops = new DropCounters();
     private final AtomicBoolean paused = new AtomicBoolean(false);
     private final AtomicBoolean running = new AtomicBoolean(true);
-    private final AtomicLong droppedWindows = new AtomicLong(0);
     private final AtomicLong writtenWindows = new AtomicLong(0);
     private final AtomicLong writtenBytes = new AtomicLong(0);
+    private final AtomicReference<FightAssembler> assembler = new AtomicReference<>();
+    private volatile String mcVersion = "";
+    private volatile String grimVersion = "";
+    private volatile String peVersion = "";
+    private volatile String worldName = "";
 
     public RecordWriter(GrimMLPlugin plugin, PluginConfig config) throws IOException {
         this.plugin = plugin;
         this.config = config;
         this.queue = new ArrayBlockingQueue<>(config.writerQueueCapacity());
+        this.sidecarQueue = new ArrayBlockingQueue<>(64);
         this.files = new RecordingFiles(plugin, config);
         this.pool = new SnapshotPool(config);
-        scheduler.scheduleAtFixedRate(this::drain, config.writerIntervalMs(), config.writerIntervalMs(), TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(this::cycle, config.writerIntervalMs(), config.writerIntervalMs(), TimeUnit.MILLISECONDS);
     }
+
+    public void setAssembler(FightAssembler a) {
+        assembler.set(a);
+    }
+
+    public void setVersions(String mc, String grim, String pe) {
+        this.mcVersion = mc == null ? "" : mc;
+        this.grimVersion = grim == null ? "" : grim;
+        this.peVersion = pe == null ? "" : pe;
+    }
+
+    public void setWorldName(String world) {
+        this.worldName = world == null ? "" : world;
+    }
+
+    public String mcVersion() { return mcVersion; }
+    public String grimVersion() { return grimVersion; }
+    public String peVersion() { return peVersion; }
+    public String worldName() { return worldName; }
 
     public void stop() {
         running.set(false);
         scheduler.shutdown();
-        drain();
+        cycle();
         try {
             if (!scheduler.awaitTermination(2, TimeUnit.SECONDS)) {
                 scheduler.shutdownNow();
@@ -59,23 +88,37 @@ public final class RecordWriter {
         }
     }
 
-    // called once per sample period for each online player; snapshots only if combat is active
-    public void offerSnapshotIfCombat(PlayerRingBuffer buf) {
-        CombatSnapshot snap = pool.borrow();
-        long now = System.nanoTime();
-        long preNanos = config.preCombatSeconds() * 1_000_000_000L;
-        if (!buf.trySnapshot(snap, now, preNanos)) {
+    public CombatSnapshot borrow() {
+        return pool.borrow();
+    }
+
+    public void giveBack(CombatSnapshot snap) {
+        pool.giveBack(snap);
+    }
+
+    public void offerAssembled(CombatSnapshot snap) {
+        if (!running.get() || paused.get()) {
             pool.giveBack(snap);
             return;
         }
         if (!queue.offer(snap)) {
-            droppedWindows.incrementAndGet();
+            drops.window();
             pool.giveBack(snap);
+        }
+    }
+
+    public void offerSidecar(byte[] line) {
+        if (!sidecarQueue.offer(line)) {
+            drops.type(0);
         }
     }
 
     public Path recordingsDir() {
         return files.dir();
+    }
+
+    public DropCounters drops() {
+        return drops;
     }
 
     public void setPaused(boolean pause) {
@@ -87,7 +130,7 @@ public final class RecordWriter {
     }
 
     public long droppedWindows() {
-        return droppedWindows.get();
+        return drops.windows.get();
     }
 
     public long writtenWindows() {
@@ -98,7 +141,14 @@ public final class RecordWriter {
         return writtenBytes.get();
     }
 
-    private void drain() {
+    private void cycle() {
+        if (!paused.get()) {
+            FightAssembler a = assembler.get();
+            if (a != null) {
+                a.assemble();
+            }
+        }
+        drainSidecars();
         CombatSnapshot snap;
         while ((snap = queue.poll()) != null) {
             if (paused.get()) {
@@ -129,5 +179,31 @@ public final class RecordWriter {
                 pool.giveBack(snap);
             }
         }
+    }
+
+    private void drainSidecars() {
+        Path idx = files.dir().resolve("sessions.idx");
+        byte[] line;
+        while ((line = sidecarQueue.poll()) != null) {
+            try {
+                Files.write(idx, line, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            } catch (IOException e) {
+                plugin.getLogger().warning("failed to write session index: " + e.getMessage());
+            }
+        }
+    }
+
+    public void enqueueSessionLine(String line) {
+        byte[] b = (line + "\n").getBytes(StandardCharsets.UTF_8);
+        offerSidecar(b);
+    }
+
+    public GrimMLPlugin plugin() {
+        return plugin;
+    }
+
+    public static String pluginVersion(String name) {
+        var p = Bukkit.getPluginManager().getPlugin(name);
+        return p == null ? "" : p.getPluginMeta().getVersion();
     }
 }

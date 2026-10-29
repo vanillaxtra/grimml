@@ -13,12 +13,13 @@ public final class StatusCommand implements SubCommand {
     }
 
     @Override
-    public void execute(CommandSender sender) {
+    public void execute(CommandSender sender, String[] args) {
         RecordWriter w = plugin.writer();
         GrimMLCommand.msg(sender, "<green>enabled: " + plugin.recordingEnabled()
                 + " paused: " + w.isPaused()
                 + " written windows: " + w.writtenWindows()
                 + " dropped windows: " + w.droppedWindows()
-                + " written bytes: " + w.writtenBytes());
+                + " written bytes: " + w.writtenBytes()
+                + " " + w.drops().summary());
     }
 }

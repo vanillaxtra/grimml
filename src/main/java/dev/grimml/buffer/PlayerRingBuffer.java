@@ -1,152 +1,239 @@
 package dev.grimml.buffer;
 
+import dev.grimml.clock.TickClock;
 import dev.grimml.format.RecordTypes;
+import dev.grimml.item.ItemCategories;
 
 public final class PlayerRingBuffer {
 
     public final long sessionId;
     public final long anonPlayerId;
-    public final int ringCap;
-    public final int eventCap;
-
-    public final int[] rotTick;
-    public final float[] yaw;
-    public final float[] pitch;
-    public final long[] rotNanos;
-
-    public final byte[] eventType;
-    public final int[] eventTick;
-    public final long[] eventNanos;
-    public final int[] eventA;
-    public final int[] eventB;
-    public final int[] eventC;
-    public final short[] eventPing;
-
-    private int rotWrite;
-    private int rotCount;
-    private int eventWrite;
-    private int eventCount;
+    public final int entityId;
+    public final FrameRing frames;
+    public final EventRing events;
+    public final InventoryMirror inv = new InventoryMirror();
 
     public volatile int stateFlags;
     public volatile int pingMs;
+    public volatile int jitterMs;
+    public volatile int lastAckTx;
     public volatile long lastAttackNanos;
     public volatile long combatActiveUntilNanos;
+    public volatile long fightId;
+    public volatile byte triggerReason;
+    public volatile int validity;
+    public volatile int lastTargetEntityId;
+    public volatile long lastTargetAnonId;
 
     public volatile String clientBrand = "";
     public volatile int clientProtocol;
     public volatile boolean bedrock;
+    public volatile boolean testAccount;
+    public volatile boolean staff;
+    public volatile byte mainHand; // 0 right 1 left
+    public volatile int gamemode;
 
-    private final Object snapLock = new Object();
+    public volatile int healthMilli;
+    public volatile int absorptionMilli;
+    public volatile int food;
+    public volatile int pose;
+    public volatile int liveFlags;
+    public volatile int lastGroundYMilli;
+    public volatile int fallMilli;
+    public volatile int vehicleType;
+    public volatile int vehicleId;
+    public volatile int lastRttMs;
 
-    public PlayerRingBuffer(long sessionId, long anonPlayerId, int ringCap, int eventCap) {
+    public volatile int xMilli;
+    public volatile int yMilli;
+    public volatile int zMilli;
+    public volatile int yawCenti;
+    public volatile int pitchCenti;
+
+    public volatile int attrDamage;
+    public volatile int attrSpeed;
+    public volatile int attrRange;
+    public volatile int attrMove;
+    public volatile int attrJump;
+    public volatile int attrScale;
+    public volatile int attrKbRes;
+    public volatile int attrGravity;
+    public volatile int effectsPacked0;
+    public volatile int effectsPacked1;
+
+    public volatile long sessionStartEpoch;
+    public volatile long sessionStartNanos;
+
+    private int orderInTick;
+    private int orderTick = Integer.MIN_VALUE;
+    private int packetsThisTick;
+    private int openTick = Integer.MIN_VALUE;
+    private int scratchFlags;
+    private int lastNsOff;
+    private int lastOrd;
+    private boolean jumpWasOn;
+
+    private final TickClock clock;
+
+    public PlayerRingBuffer(long sessionId, long anonPlayerId, int entityId, int ringCap, int eventCap, TickClock clock) {
         this.sessionId = sessionId;
         this.anonPlayerId = anonPlayerId;
-        this.ringCap = ringCap;
-        this.eventCap = eventCap;
-        this.rotTick = new int[ringCap];
-        this.yaw = new float[ringCap];
-        this.pitch = new float[ringCap];
-        this.rotNanos = new long[ringCap];
-        this.eventType = new byte[eventCap];
-        this.eventTick = new int[eventCap];
-        this.eventNanos = new long[eventCap];
-        this.eventA = new int[eventCap];
-        this.eventB = new int[eventCap];
-        this.eventC = new int[eventCap];
-        this.eventPing = new short[eventCap];
+        this.entityId = entityId;
+        this.clock = clock;
+        this.frames = new FrameRing(ringCap);
+        this.events = new EventRing(eventCap);
+        this.sessionStartEpoch = System.currentTimeMillis();
+        this.sessionStartNanos = System.nanoTime();
     }
 
-    public void writeRotation(int tick, float y, float p, long nanos) {
-        int i = rotWrite;
-        rotTick[i] = tick;
-        yaw[i] = y;
-        pitch[i] = p;
-        rotNanos[i] = nanos;
-        rotWrite = (i + 1) % ringCap;
-        if (rotCount < ringCap) {
-            rotCount++;
+    public int nextOrder(int tick) {
+        if (orderTick != tick) {
+            if (openTick != Integer.MIN_VALUE && openTick != tick) {
+                commitFrame();
+            }
+            orderTick = tick;
+            orderInTick = 0;
+            packetsThisTick = 0;
+            openTick = tick;
+        }
+        packetsThisTick++;
+        return ++orderInTick;
+    }
+
+    public void applyFlying(int tick, int nsOff, int ord, int x, int y, int z, int yaw, int pitch, boolean onGround, boolean horiz, boolean hasPos, boolean hasRot) {
+        if (hasPos) {
+            xMilli = x;
+            yMilli = y;
+            zMilli = z;
+            if (onGround) {
+                lastGroundYMilli = y;
+                fallMilli = 0;
+            } else if (lastGroundYMilli != 0) {
+                int fall = lastGroundYMilli - y;
+                fallMilli = Math.max(0, fall);
+            }
+        }
+        if (hasRot) {
+            yawCenti = yaw;
+            pitchCenti = pitch;
+        }
+        if (onGround) {
+            scratchFlags |= FrameRing.F_ON_GROUND;
+        } else {
+            scratchFlags &= ~FrameRing.F_ON_GROUND;
+        }
+        if (horiz) {
+            scratchFlags |= FrameRing.F_HORIZ_COLL;
+        } else {
+            scratchFlags &= ~FrameRing.F_HORIZ_COLL;
+        }
+        lastNsOff = nsOff;
+        lastOrd = ord;
+        if (openTick != Integer.MIN_VALUE && openTick != tick) {
+            flushOpenFrame();
+        }
+        openTick = tick;
+    }
+
+    public void applyInput(boolean w, boolean a, boolean s, boolean d, boolean jump, boolean sneak, boolean sprint) {
+        int f = scratchFlags;
+        f &= ~(FrameRing.F_INPUT_W | FrameRing.F_INPUT_A | FrameRing.F_INPUT_S | FrameRing.F_INPUT_D
+                | FrameRing.F_JUMP | FrameRing.F_SNEAK | FrameRing.F_SPRINT | FrameRing.F_INPUT_INFERRED | FrameRing.F_JUMP_EDGE);
+        if (w) f |= FrameRing.F_INPUT_W;
+        if (a) f |= FrameRing.F_INPUT_A;
+        if (s) f |= FrameRing.F_INPUT_S;
+        if (d) f |= FrameRing.F_INPUT_D;
+        if (jump) f |= FrameRing.F_JUMP;
+        if (sneak) f |= FrameRing.F_SNEAK;
+        if (sprint) f |= FrameRing.F_SPRINT;
+        if (jump && !jumpWasOn) {
+            f |= FrameRing.F_JUMP_EDGE;
+        }
+        jumpWasOn = jump;
+        scratchFlags = f;
+        if (sneak) {
+            liveFlags |= RecordTypes.FLAG_SNEAK;
+        } else {
+            liveFlags &= ~RecordTypes.FLAG_SNEAK;
+        }
+        if (sprint) {
+            liveFlags |= RecordTypes.FLAG_SPRINT;
+        } else {
+            liveFlags &= ~RecordTypes.FLAG_SPRINT;
         }
     }
 
-    public void writeEvent(byte type, int tick, long nanos, int a, int b, int c, int ping) {
-        int i = eventWrite;
-        eventType[i] = type;
-        eventTick[i] = tick;
-        eventNanos[i] = nanos;
-        eventA[i] = a;
-        eventB[i] = b;
-        eventC[i] = c;
-        eventPing[i] = (short) Math.min(Short.MAX_VALUE, Math.max(0, ping));
-        eventWrite = (i + 1) % eventCap;
-        if (eventCount < eventCap) {
-            eventCount++;
+    public void markClientTickEnd() {
+        scratchFlags |= FrameRing.F_CLIENT_TICK_END;
+        flushOpenFrame();
+    }
+
+    public void commitFrame() {
+        flushOpenFrame();
+    }
+
+    private void flushOpenFrame() {
+        if (openTick == Integer.MIN_VALUE) {
+            return;
+        }
+        frames.write(
+                openTick, lastNsOff, lastOrd, clock.lastDurationMs(),
+                xMilli, yMilli, zMilli, yawCenti, pitchCenti,
+                scratchFlags | liveInputFlags(), pose,
+                inv.held(), inv.heldCat(), inv.heldId(), inv.offCat(), inv.offId(),
+                packetsThisTick, pingMs, jitterMs, lastAckTx,
+                lastGroundYMilli, fallMilli, vehicleType, vehicleId
+        );
+        if (frames.overflows() > 0) {
+            validity |= RecordTypes.VALID_PARTIAL;
+        }
+        packetsThisTick = 0;
+        scratchFlags &= ~(FrameRing.F_CLIENT_TICK_END | FrameRing.F_JUMP_EDGE);
+        openTick = Integer.MIN_VALUE;
+    }
+
+    public void writeEvent(byte type, int tick, int nsOff, int ord, long nanos, long a, int b, int c, int d, int e, int f) {
+        events.write(type, tick, nsOff, ord, nanos, a, b, c, d, e, f, pingMs);
+        if (events.overflows() > 0) {
+            validity |= RecordTypes.VALID_PARTIAL;
         }
     }
 
-    public void markAttack(long nowNanos, long postNanos) {
+    public void markCombat(long nowNanos, long postNanos, byte trigger) {
         lastAttackNanos = nowNanos;
         long until = nowNanos + postNanos;
         if (until > combatActiveUntilNanos) {
             combatActiveUntilNanos = until;
         }
+        triggerReason = trigger;
     }
 
     public boolean isCombatActive(long nowNanos) {
         return nowNanos <= combatActiveUntilNanos;
     }
 
-    // copy combat-window samples into out returns false if nothing to flush
-    
-    public boolean trySnapshot(CombatSnapshot out, long nowNanos, long preNanos) {
-        long lastAttack = lastAttackNanos;
-        if (lastAttack == 0L) {
-            return false;
+    public void orValidity(int bit) {
+        validity |= bit;
+    }
+
+    public boolean jumpHeld() {
+        return (scratchFlags & FrameRing.F_JUMP) != 0;
+    }
+
+    public long distSqTo(PlayerRingBuffer other) {
+        long dx = (long) xMilli - other.xMilli;
+        long dy = (long) yMilli - other.yMilli;
+        long dz = (long) zMilli - other.zMilli;
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    private int liveInputFlags() {
+        int f = scratchFlags;
+        if ((liveFlags & RecordTypes.FLAG_SPRINT) != 0) f |= FrameRing.F_SPRINT;
+        if ((liveFlags & RecordTypes.FLAG_SNEAK) != 0) f |= FrameRing.F_SNEAK;
+        if ((liveFlags & RecordTypes.FLAG_BLOCKING) != 0) {
+            // blocking is in liveFlags via RecordTypes not frame bits
         }
-        if (!isCombatActive(nowNanos) && nowNanos > lastAttack + preNanos) {
-            return false;
-        }
-        long windowStart = Math.max(0L, lastAttack - preNanos);
-
-        synchronized (snapLock) {
-            out.reset();
-            out.sessionId = sessionId;
-            out.anonPlayerId = anonPlayerId;
-            out.stateFlags = stateFlags | (bedrock ? RecordTypes.FLAG_BEDROCK : 0);
-            out.pingMs = pingMs;
-            out.clientBrand = clientBrand;
-            out.clientProtocol = clientProtocol;
-            out.windowStartNanos = windowStart;
-            out.windowEndNanos = nowNanos;
-
-            int rc = rotCount;
-            int rw = rotWrite;
-            int rStart = (rw - rc + ringCap) % ringCap;
-            for (int n = 0; n < rc; n++) {
-                int i = (rStart + n) % ringCap;
-                long t = rotNanos[i];
-                if (t < windowStart || t > nowNanos) {
-                    continue;
-                }
-                if (!out.addRotation(rotTick[i], yaw[i], pitch[i], t)) {
-                    break;
-                }
-            }
-
-            int ec = eventCount;
-            int ew = eventWrite;
-            int eStart = (ew - ec + eventCap) % eventCap;
-            for (int n = 0; n < ec; n++) {
-                int i = (eStart + n) % eventCap;
-                long t = eventNanos[i];
-                if (t < windowStart || t > nowNanos) {
-                    continue;
-                }
-                if (!out.addEvent(eventType[i], eventTick[i], t, eventA[i], eventB[i], eventC[i], eventPing[i])) {
-                    break;
-                }
-            }
-
-            return out.rotCount > 0 || out.eventCount > 0;
-        }
+        return f;
     }
 }

@@ -12,11 +12,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// routes /grimml to one class per subcommand registered through the paper lifecycle command api
 public final class GrimMLCommand implements BasicCommand {
 
     public static final String PERMISSION = "grimml.admin";
-    private static final String USAGE = "<red>/grimml <status|pause|resume|reload>";
+    private static final String USAGE = "<red>/grimml <status|pause|resume|reload|mark|testaccount>";
 
     private final Map<String, SubCommand> subs = new LinkedHashMap<>();
 
@@ -25,6 +24,8 @@ public final class GrimMLCommand implements BasicCommand {
         subs.put("pause", new PauseCommand(plugin));
         subs.put("resume", new ResumeCommand(plugin));
         subs.put("reload", new ReloadCommand(plugin));
+        subs.put("mark", new MarkCommand(plugin, plugin.clock()));
+        subs.put("testaccount", new TestAccountCommand(plugin));
     }
 
     @Override
@@ -35,10 +36,9 @@ public final class GrimMLCommand implements BasicCommand {
             msg(sender, USAGE);
             return;
         }
-        sub.execute(sender);
+        sub.execute(sender, args);
     }
 
-    // paper drops empty tokens so "/grimml " arrives with zero args
     @Override
     public @NotNull Collection<String> suggest(@NotNull CommandSourceStack source, @NotNull String[] args) {
         if (args.length == 0) {
@@ -49,7 +49,11 @@ public final class GrimMLCommand implements BasicCommand {
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .toList();
         }
-        return List.of();
+        SubCommand sub = subs.get(args[0].toLowerCase());
+        if (sub == null) {
+            return List.of();
+        }
+        return sub.suggest(args);
     }
 
     @Override

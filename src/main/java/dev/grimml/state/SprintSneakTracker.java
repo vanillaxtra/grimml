@@ -10,7 +10,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.player.PlayerToggleSprintEvent;
 
-// records sprint and sneak toggles between sampler passes
 public final class SprintSneakTracker implements Listener {
 
     private final SessionRegistry registry;
@@ -21,24 +20,24 @@ public final class SprintSneakTracker implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onSprint(PlayerToggleSprintEvent event) {
-        updateStateFlags(event.getPlayer(), RecordTypes.FLAG_SPRINT, event.isSprinting());
+        update(event.getPlayer(), RecordTypes.FLAG_SPRINT, event.isSprinting());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onSneak(PlayerToggleSneakEvent event) {
-        updateStateFlags(event.getPlayer(), RecordTypes.FLAG_SNEAK, event.isSneaking());
+        update(event.getPlayer(), RecordTypes.FLAG_SNEAK, event.isSneaking());
     }
 
-    private void updateStateFlags(Player player, int flag, boolean set) {
+    private void update(Player player, int flag, boolean set) {
         PlayerRingBuffer buf = registry.get(player.getUniqueId());
         if (buf == null) {
             return;
         }
         if (set) {
-            buf.stateFlags |= flag;
+            buf.liveFlags |= flag;
         } else {
-            buf.stateFlags &= ~flag;
+            buf.liveFlags &= ~flag;
         }
-        buf.writeEvent(RecordTypes.STATE, player.getTicksLived(), System.nanoTime(), buf.stateFlags, 0, 0, buf.pingMs);
+        buf.stateFlags = buf.liveFlags;
     }
 }

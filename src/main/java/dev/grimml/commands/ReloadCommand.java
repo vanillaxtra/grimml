@@ -12,7 +12,7 @@ public final class ReloadCommand implements SubCommand {
     }
 
     @Override
-    public void execute(CommandSender sender) {
+    public void execute(CommandSender sender, String[] args) {
         plugin.reloadConfig();
         plugin.config().load(plugin.getConfig());
         GrimMLCommand.msg(sender, "<green>config reloaded");

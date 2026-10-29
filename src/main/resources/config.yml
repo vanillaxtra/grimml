@@ -1,5 +1,5 @@
 # Schema version - bump when keys change; missing keys use defaults.
-config-version: 1
+config-version: 2
 
 # Master kill switch. false = no packet hooks write, writer drains then idles.
 enabled: true
@@ -17,21 +17,35 @@ writer-interval-ms: 2000
 # Drop newest combat flushes when the writer queue is this deep (never block).
 writer-queue-capacity: 256
 
-# Per-player rotation ring size (ticks). 128 ≈ 6.4s at 20 TPS.
-ring-capacity: 128
+# Per-player frame ring size (ticks). 160 ≈ 8s at 20 TPS.
+ring-capacity: 160
 
-# Per-player side-event ring (attacks + grim flags).
-event-ring-capacity: 64
+# Per-player event ring (attacks flags clicks etc).
+event-ring-capacity: 128
 
 # Auto-pause recording when average MSPT exceeds this (0 = disabled).
 mspt-pause-threshold: 50.0
 
 # How often the grimml-disk thread measures the recordings directory (ms).
-# Player state and MSPT are still sampled on the main thread, more often than this.
 safety-check-interval-ms: 5000
 
 # Cap total size of the recordings directory in MiB (0 = unlimited). Auto-pauses when exceeded.
-max-disk-mb: 10240
+max-disk-mb: 20480
 
 # Relative to plugin data folder.
 recordings-dir: recordings
+
+# Header tags written into every window so servers stay separable offline.
+server-id: default
+mode-kit: unknown
+map-id: unknown
+
+# absolute for ffa arenas relative for survival privacy
+position-mode: absolute
+
+# Fight snapshot: nearby players included with the attacker and target.
+bystander-range: 16
+bystander-max: 4
+
+# Main-thread potion/attribute reads per tick (rest wait for their slot).
+stagger-players-per-tick: 8

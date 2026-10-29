@@ -12,7 +12,7 @@ public final class PauseCommand implements SubCommand {
     }
 
     @Override
-    public void execute(CommandSender sender) {
+    public void execute(CommandSender sender, String[] args) {
         plugin.writer().setPaused(true);
         GrimMLCommand.msg(sender, "<yellow>writer paused");
     }

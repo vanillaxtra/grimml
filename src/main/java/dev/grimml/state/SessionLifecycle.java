@@ -1,6 +1,7 @@
 package dev.grimml.state;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import dev.grimml.GrimMLPlugin;
 import dev.grimml.buffer.PlayerRingBuffer;
 import dev.grimml.buffer.SessionRegistry;
 import dev.grimml.geyser.GeyserHook;
@@ -11,13 +12,14 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-// creates a buffer with client metadata on join and drops it on quit
 public final class SessionLifecycle implements Listener {
 
+    private final GrimMLPlugin plugin;
     private final SessionRegistry registry;
     private final GeyserHook geyser;
 
-    public SessionLifecycle(SessionRegistry registry, GeyserHook geyser) {
+    public SessionLifecycle(GrimMLPlugin plugin, SessionRegistry registry, GeyserHook geyser) {
+        this.plugin = plugin;
         this.registry = registry;
         this.geyser = geyser;
     }
@@ -27,17 +29,28 @@ public final class SessionLifecycle implements Listener {
         Player player = event.getPlayer();
         PlayerRingBuffer buf = registry.getOrCreate(player);
         buf.bedrock = geyser.isBedrock(player);
-        buf.clientBrand = clientBrand(player);
+        buf.clientBrand = player.getClientBrandName() == null ? "" : player.getClientBrandName();
         buf.clientProtocol = clientProtocol(player);
+        buf.staff = player.hasPermission("grimml.admin") || player.isOp();
+        buf.gamemode = player.getGameMode().ordinal();
+        registry.entities.put(player.getEntityId(), player.getUniqueId(), buf.anonPlayerId);
+        plugin.writer().enqueueSessionLine("join " + Long.toUnsignedString(buf.anonPlayerId, 36)
+                + " " + Long.toUnsignedString(buf.sessionId, 36)
+                + " " + buf.sessionStartEpoch
+                + " " + buf.clientProtocol
+                + " " + (buf.bedrock ? "bedrock" : "java"));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
-        registry.remove(event.getPlayer().getUniqueId());
-    }
-
-    private String clientBrand(Player player) {
-        return player.getClientBrandName() == null ? "" : player.getClientBrandName();
+        Player player = event.getPlayer();
+        PlayerRingBuffer buf = registry.get(player.getUniqueId());
+        if (buf != null) {
+            plugin.writer().enqueueSessionLine("quit " + Long.toUnsignedString(buf.anonPlayerId, 36)
+                    + " " + Long.toUnsignedString(buf.sessionId, 36)
+                    + " " + System.currentTimeMillis());
+        }
+        registry.remove(player.getUniqueId());
     }
 
     private int clientProtocol(Player player) {
