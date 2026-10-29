@@ -1,5 +1,12 @@
 # decisions
 
+## 2026-10-29 - disk cap walk off the server thread
+
+- `StateSampler.sampleAll` was calling `DiskCapGuard` on the main thread. `Files.walk` plus `File.isFile` plus `Files.size` stat'd every recording on the tick and showed up as ~97% of the server thread
+- the walk now lives on a daemon thread named `grimml-disk`, started from `onEnable` and joined from `onDisable`. it sleeps `safety-check-interval-ms` between passes and reads that value each cycle so `/grimml reload` applies
+- file size comes from the `BasicFileAttributes` the walk already fetched, so each file is lstat'd once. an interrupt mid-walk stops the walk and does not pause from a partial total
+- MSPT sampling stays on the main thread. `Bukkit.getAverageTickTime` is a server-thread call
+
 ## 2026-10-28 - Phase 1 recorder only
 
 - no detection, no punishments, no ML inference; only capture combat windows to disk

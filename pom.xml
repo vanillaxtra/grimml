@@ -126,6 +126,17 @@
                             <skip>${skipTests}</skip>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>disk-cap-self-check</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>dev.grimml.safety.DiskCapSelfCheck</mainClass>
+                            <skip>${skipTests}</skip>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
