@@ -149,6 +149,17 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>grim-check-catalog-self-check</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>dev.grimml.grim.GrimCheckCatalogSelfCheck</mainClass>
+                            <skip>${skipTests}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>taxonomy-self-check</id>
                         <phase>test</phase>
                         <goals>
