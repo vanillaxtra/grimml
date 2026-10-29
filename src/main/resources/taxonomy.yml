@@ -1,0 +1,55 @@
+version: 1
+clients:
+  - vanilla_baseline
+  - client_a
+  - client_b
+modules:
+  aim_assist:
+    expected_grim:
+      - AimModulo360
+      - Reach
+    settings:
+      strength: [low, mid, high]
+      smoothing: float
+      fov: int
+      speed: float
+  killaura:
+    expected_grim:
+      - Reach
+    settings:
+      reach: float
+      cps: float
+      rotations: [snap, smooth, silent]
+      switch_delay_ms: int
+  stun_slam_macro:
+    settings:
+      swap_delay_ticks: int
+      jitter: float
+  auto_totem:
+    settings:
+      delay_ms: int
+      jitter: float
+  jump_reset:
+    settings:
+      offset_ticks: int
+      chance: float
+  triggerbot:
+    settings:
+      delay_ms: int
+      jitter: float
+  autoclicker:
+    settings:
+      cps: float
+      pattern: [fixed, jitter, butterfly, burst]
+  reach:
+    settings:
+      extra_blocks: float
+  scaffold:
+    settings:
+      place_delay_ticks: int
+  auto_shield:
+    settings:
+      delay_ticks: int
+  attribute_swap:
+    settings:
+      swap_delay_ticks: int
