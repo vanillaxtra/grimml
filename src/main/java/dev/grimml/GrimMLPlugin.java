@@ -1,13 +1,19 @@
 package dev.grimml;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import dev.grimml.buffer.SessionRegistry;
+import dev.grimml.capture.PacketListener;
 import dev.grimml.commands.GrimMLCommand;
-import dev.grimml.configs.PluginConfig;
-import dev.grimml.hooks.*;
-import dev.grimml.listeners.StateMetadataListener;
-import dev.grimml.record.*;
+import dev.grimml.config.PluginConfig;
+import dev.grimml.geyser.GeyserHook;
+import dev.grimml.grim.GrimFlagHook;
+import dev.grimml.safety.DiskCapGuard;
+import dev.grimml.safety.MsptGuard;
+import dev.grimml.state.SessionLifecycle;
+import dev.grimml.state.SprintSneakTracker;
+import dev.grimml.state.StateSampler;
+import dev.grimml.writer.RecordWriter;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
@@ -18,13 +24,11 @@ public final class GrimMLPlugin extends JavaPlugin {
     private SessionRegistry registry;
     private RecordWriter writer;
     private PacketListener packetListener;
-    private StateMetadataListener stateListener;
+    private StateSampler stateSampler;
     private GrimFlagHook grimHook;
     private GeyserHook geyserHook;
 
     private volatile boolean recordingEnabled;
-    private volatile double lastMspt = 0;
-    private long lastTickCheck;
 
     @Override
     public void onEnable() {
@@ -47,9 +51,11 @@ public final class GrimMLPlugin extends JavaPlugin {
         packetListener = new PacketListener(this, registry);
         PacketEvents.getAPI().getEventManager().registerListener(packetListener);
 
-        stateListener = new StateMetadataListener(this, registry, config, geyserHook);
-        getServer().getPluginManager().registerEvents(stateListener, this);
-        stateListener.start();
+        getServer().getPluginManager().registerEvents(new SessionLifecycle(registry, geyserHook), this);
+        getServer().getPluginManager().registerEvents(new SprintSneakTracker(registry), this);
+        stateSampler = new StateSampler(this, registry, config, geyserHook,
+                new DiskCapGuard(this, config), new MsptGuard(this, config));
+        stateSampler.start();
 
         grimHook = new GrimFlagHook(this);
         if (Bukkit.getPluginManager().isPluginEnabled("GrimAC")) {
@@ -69,8 +75,8 @@ public final class GrimMLPlugin extends JavaPlugin {
         if (packetListener != null) {
             PacketEvents.getAPI().getEventManager().unregisterListener(packetListener);
         }
-        if (stateListener != null) {
-            stateListener.stop();
+        if (stateSampler != null) {
+            stateSampler.stop();
         }
         if (writer != null) {
             writer.stop();
@@ -92,45 +98,5 @@ public final class GrimMLPlugin extends JavaPlugin {
 
     public boolean recordingEnabled() {
         return recordingEnabled && writer != null && !writer.isPaused();
-    }
-
-    public String clientBrand(Player player) {
-        if (player == null) {
-            return "";
-        }
-        return player.getClientBrandName() == null ? "" : player.getClientBrandName();
-    }
-
-    public int clientProtocol(Player player) {
-        try {
-            var user = PacketEvents.getAPI().getPlayerManager().getUser(player);
-            return user == null ? 0 : user.getClientVersion().getProtocolVersion();
-        } catch (Throwable t) {
-            return 0;
-        }
-    }
-
-    public void checkMsptPause() {
-        if (config.msptPauseThreshold() <= 0) {
-            return;
-        }
-        long now = System.currentTimeMillis();
-        if (now - lastTickCheck < 1000L) {
-            return;
-        }
-        lastTickCheck = now;
-        double mspt = Bukkit.getAverageTickTime();
-        lastMspt = mspt;
-        if (mspt > config.msptPauseThreshold()) {
-            if (!writer.isPaused()) {
-                writer.setPaused(true);
-                getLogger().warning("mspt " + mspt + " over threshold " + config.msptPauseThreshold() + "; pausing recorder");
-            }
-        } else if (mspt < config.msptPauseThreshold() * 0.8) {
-            if (writer.isPaused()) {
-                writer.setPaused(false);
-                getLogger().info("mspt recovered; resuming recorder");
-            }
-        }
     }
 }

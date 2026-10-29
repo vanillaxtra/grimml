@@ -1,4 +1,4 @@
-package dev.grimml.record;
+package dev.grimml.format;
 
 // Wire-format type tags for .gmlml records. 
 public final class RecordTypes {

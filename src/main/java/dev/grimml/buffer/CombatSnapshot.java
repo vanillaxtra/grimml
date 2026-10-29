@@ -1,4 +1,4 @@
-package dev.grimml.record;
+package dev.grimml.buffer;
 
 
 public final class CombatSnapshot {

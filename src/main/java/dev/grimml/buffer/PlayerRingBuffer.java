@@ -1,5 +1,6 @@
-package dev.grimml.record;
+package dev.grimml.buffer;
 
+import dev.grimml.format.RecordTypes;
 
 public final class PlayerRingBuffer {
 

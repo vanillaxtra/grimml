@@ -1,30 +1,29 @@
-package dev.grimml.hooks;
+package dev.grimml.capture;
 
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerPositionAndRotation;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerRotation;
 import dev.grimml.GrimMLPlugin;
-import dev.grimml.record.PlayerRingBuffer;
-import dev.grimml.record.RecordTypes;
-import dev.grimml.record.SessionRegistry;
+import dev.grimml.buffer.PlayerRingBuffer;
+import dev.grimml.buffer.SessionRegistry;
 import org.bukkit.entity.Player;
 
-// reads only movement/attack packets on the netty thread
+// single packetevents listener on the netty thread dispatches to preallocated capture handlers
 // zero allocation on hot path no entity lookup for hit offset in phase 1
 public final class PacketListener extends PacketListenerAbstract {
 
     private final GrimMLPlugin plugin;
     private final SessionRegistry registry;
+    private final RotationCapture rotation = new RotationCapture();
+    private final AttackCapture attack;
 
     public PacketListener(GrimMLPlugin plugin, SessionRegistry registry) {
         super(PacketListenerPriority.LOWEST);
         this.plugin = plugin;
         this.registry = registry;
+        this.attack = new AttackCapture(plugin);
     }
 
     @Override
@@ -47,19 +46,11 @@ public final class PacketListener extends PacketListenerAbstract {
 
         var type = event.getPacketType();
         if (type == PacketType.Play.Client.PLAYER_ROTATION) {
-            var pkt = new WrapperPlayClientPlayerRotation(event);
-            buf.writeRotation(tick, pkt.getYaw(), pkt.getPitch(), nanos);
+            rotation.onRotation(event, buf, tick, nanos);
         } else if (type == PacketType.Play.Client.PLAYER_POSITION_AND_ROTATION) {
-            var pkt = new WrapperPlayClientPlayerPositionAndRotation(event);
-            buf.writeRotation(tick, pkt.getYaw(), pkt.getPitch(), nanos);
+            rotation.onPositionAndRotation(event, buf, tick, nanos);
         } else if (type == PacketType.Play.Client.INTERACT_ENTITY) {
-            var pkt = new WrapperPlayClientInteractEntity(event);
-            if (pkt.getAction() == WrapperPlayClientInteractEntity.InteractAction.ATTACK) {
-                int targetId = pkt.getEntityId();
-                buf.writeEvent(RecordTypes.ATTACK, tick, nanos, targetId, 0, 0, buf.pingMs);
-                long postNanos = plugin.config().postCombatSeconds() * 1_000_000_000L;
-                buf.markAttack(nanos, postNanos);
-            }
+            attack.onInteract(event, buf, tick, nanos);
         }
     }
 

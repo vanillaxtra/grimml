@@ -1,4 +1,4 @@
-package dev.grimml.hooks;
+package dev.grimml.geyser;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;

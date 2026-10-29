@@ -1,4 +1,6 @@
-package dev.grimml.record;
+package dev.grimml.format;
+
+import dev.grimml.buffer.CombatSnapshot;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;

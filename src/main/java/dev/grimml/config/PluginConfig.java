@@ -1,4 +1,4 @@
-package dev.grimml.configs;
+package dev.grimml.config;
 
 import org.bukkit.configuration.file.FileConfiguration;
 

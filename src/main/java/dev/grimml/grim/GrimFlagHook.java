@@ -1,4 +1,4 @@
-package dev.grimml.hooks;
+package dev.grimml.grim;
 
 import ac.grim.grimac.api.GrimAPIProvider;
 import ac.grim.grimac.api.GrimAbstractAPI;
@@ -6,9 +6,9 @@ import ac.grim.grimac.api.event.EventBus;
 import ac.grim.grimac.api.event.events.FlagEvent;
 import ac.grim.grimac.api.plugin.GrimPlugin;
 import dev.grimml.GrimMLPlugin;
-import dev.grimml.record.BinaryFormat;
-import dev.grimml.record.PlayerRingBuffer;
-import dev.grimml.record.RecordTypes;
+import dev.grimml.format.BinaryFormat;
+import dev.grimml.buffer.PlayerRingBuffer;
+import dev.grimml.format.RecordTypes;
 import org.bukkit.entity.Player;
 
 

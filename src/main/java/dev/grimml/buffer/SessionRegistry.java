@@ -1,6 +1,7 @@
-package dev.grimml.record;
+package dev.grimml.buffer;
 
-import dev.grimml.configs.PluginConfig;
+import dev.grimml.config.PluginConfig;
+import dev.grimml.privacy.Anonymizer;
 import org.bukkit.entity.Player;
 
 import java.util.Map;

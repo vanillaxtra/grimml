@@ -1,4 +1,4 @@
-package dev.grimml.record;
+package dev.grimml.privacy;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
