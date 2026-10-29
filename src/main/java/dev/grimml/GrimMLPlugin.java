@@ -8,6 +8,7 @@ import dev.grimml.commands.GrimMLCommand;
 import dev.grimml.config.PluginConfig;
 import dev.grimml.fight.FightAssembler;
 import dev.grimml.geyser.GeyserHook;
+import dev.grimml.grim.GrimCheckCatalog;
 import dev.grimml.grim.GrimFlagHook;
 import dev.grimml.hooks.LiteBansHook;
 import dev.grimml.listeners.DamageListener;
@@ -39,7 +40,9 @@ public final class GrimMLPlugin extends JavaPlugin {
     private StateSampler stateSampler;
     private DiskCapGuard diskCap;
     private GrimFlagHook grimHook;
+    private GrimCheckCatalog grimChecks;
     private GeyserHook geyserHook;
+    private org.bukkit.scheduler.BukkitTask grimFlushTask;
     private volatile Taxonomy taxonomy = Taxonomy.empty();
     private volatile boolean recordingEnabled;
 
@@ -83,10 +86,14 @@ public final class GrimMLPlugin extends JavaPlugin {
         stateSampler = new StateSampler(this, registry, config, geyserHook, new MsptGuard(this, config), clock);
         stateSampler.start();
 
-        grimHook = new GrimFlagHook(this, clock);
+        grimChecks = new GrimCheckCatalog(getDataFolder().toPath().resolve("grim-checks.json"));
+        grimChecks.load();
+        seedTaxonomyChecks();
+        grimHook = new GrimFlagHook(this, clock, grimChecks);
         if (Bukkit.getPluginManager().isPluginEnabled("GrimAC")) {
             grimHook.enable();
         }
+        grimFlushTask = getServer().getScheduler().runTaskTimerAsynchronously(this, grimChecks::flush, 100L, 100L);
 
         BanLabelService bans = new BanLabelService(this, new RosterStore(getDataFolder().toPath().resolve(config.rosterFile())));
         getServer().getPluginManager().registerEvents(new VanillaBanListener(bans), this);
@@ -107,6 +114,12 @@ public final class GrimMLPlugin extends JavaPlugin {
         }
         if (stateSampler != null) {
             stateSampler.stop();
+        }
+        if (grimFlushTask != null) {
+            grimFlushTask.cancel();
+        }
+        if (grimChecks != null) {
+            grimChecks.flush();
         }
         if (diskCap != null) {
             diskCap.stop();
@@ -143,6 +156,25 @@ public final class GrimMLPlugin extends JavaPlugin {
         return taxonomy;
     }
 
+    public GrimCheckCatalog grimChecks() {
+        return grimChecks;
+    }
+
+    public GrimFlagHook grimHook() {
+        return grimHook;
+    }
+
+    private void seedTaxonomyChecks() {
+        if (grimChecks == null || taxonomy == null) {
+            return;
+        }
+        for (var m : taxonomy.modules.values()) {
+            for (String n : m.expectedGrim) {
+                grimChecks.learn(n);
+            }
+        }
+    }
+
     private void stampTaxonomy() {
         if (writer == null || taxonomy == null) {
             return;
@@ -154,6 +186,7 @@ public final class GrimMLPlugin extends JavaPlugin {
         try {
             taxonomy = TaxonomyLoader.load(getDataFolder().toPath().resolve("taxonomy.yml"));
             stampTaxonomy();
+            seedTaxonomyChecks();
             getLogger().info("taxonomy v" + taxonomy.version + " modules " + taxonomy.modules.size());
         } catch (Exception e) {
             getLogger().warning("taxonomy load failed: " + e.getMessage());

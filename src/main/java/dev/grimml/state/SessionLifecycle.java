@@ -39,6 +39,9 @@ public final class SessionLifecycle implements Listener {
                 + " " + buf.sessionStartEpoch
                 + " " + buf.clientProtocol
                 + " " + (buf.bedrock ? "bedrock" : "java"));
+        if (plugin.grimHook() != null) {
+            plugin.grimHook().seedPlayer(player);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

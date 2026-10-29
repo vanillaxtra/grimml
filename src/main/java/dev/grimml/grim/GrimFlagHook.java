@@ -1,7 +1,9 @@
 package dev.grimml.grim;
 
+import ac.grim.grimac.api.AbstractCheck;
 import ac.grim.grimac.api.GrimAPIProvider;
 import ac.grim.grimac.api.GrimAbstractAPI;
+import ac.grim.grimac.api.GrimUser;
 import ac.grim.grimac.api.event.EventBus;
 import ac.grim.grimac.api.event.events.FlagEvent;
 import ac.grim.grimac.api.event.events.GrimPlayerSetbackEvent;
@@ -17,29 +19,30 @@ public final class GrimFlagHook {
 
     private final GrimMLPlugin plugin;
     private final TickClock clock;
+    private final GrimCheckCatalog catalog;
     private GrimPlugin grim;
+    private GrimAbstractAPI api;
 
-    public GrimFlagHook(GrimMLPlugin plugin, TickClock clock) {
+    public GrimFlagHook(GrimMLPlugin plugin, TickClock clock, GrimCheckCatalog catalog) {
         this.plugin = plugin;
         this.clock = clock;
+        this.catalog = catalog;
     }
 
     public void enable() {
         try {
-            GrimAbstractAPI api = GrimAPIProvider.get();
+            api = GrimAPIProvider.get();
             grim = api.getGrimPlugin(plugin);
             EventBus bus = api.getEventBus();
             bus.get(FlagEvent.class).onFlag(grim, (user, check, verbose, cancelled) -> {
                 try {
-                    Player player = plugin.getServer().getPlayer(user.getUniqueId());
-                    if (player == null) {
-                        return cancelled;
-                    }
-                    PlayerRingBuffer buf = plugin.registry().get(player.getUniqueId());
+                    String name = check.getCheckName();
+                    catalog.learn(name);
+                    PlayerRingBuffer buf = plugin.registry().get(user.getUniqueId());
                     if (buf == null) {
                         return cancelled;
                     }
-                    int checkHash = BinaryFormat.hashCheckName(check.getCheckName());
+                    int checkHash = BinaryFormat.hashCheckName(name);
                     long nanos = System.nanoTime();
                     int tick = clock.tick();
                     int ord = buf.nextOrder(tick);
@@ -47,7 +50,7 @@ public final class GrimFlagHook {
                     buf.writeEvent(RecordTypes.GRIM_FLAG, tick, clock.nsOffset(nanos), ord, nanos,
                             checkHash, vl, 0, 0, 0, 0);
                     buf.markCombat(nanos, plugin.config().postCombatSeconds() * 1_000_000_000L, RecordTypes.TRIGGER_FLAG);
-                    plugin.writer().enqueueSessionLine("grim " + Integer.toHexString(checkHash) + " " + check.getCheckName());
+                    plugin.writer().enqueueSessionLine("grim " + Integer.toHexString(checkHash) + " " + name);
                 } catch (Throwable t) {
                     plugin.getLogger().warning("grim flag hook error: " + t.getMessage());
                 }
@@ -55,11 +58,7 @@ public final class GrimFlagHook {
             });
             try {
                 bus.get(GrimPlayerSetbackEvent.class).onPlayerSetback(grim, (user, flags, x, y, z, t) -> {
-                    Player player = plugin.getServer().getPlayer(user.getUniqueId());
-                    if (player == null) {
-                        return;
-                    }
-                    PlayerRingBuffer buf = plugin.registry().get(player.getUniqueId());
+                    PlayerRingBuffer buf = plugin.registry().get(user.getUniqueId());
                     if (buf == null) {
                         return;
                     }
@@ -73,6 +72,23 @@ public final class GrimFlagHook {
             }
         } catch (NoClassDefFoundError | IllegalStateException ignored) {
             plugin.getLogger().info("grim not present; flag labels disabled");
+        }
+    }
+
+    // main thread only grim getGrimUser takes a player
+    public void seedPlayer(Player player) {
+        if (api == null || player == null) {
+            return;
+        }
+        try {
+            GrimUser user = api.getGrimUser(player);
+            if (user == null) {
+                return;
+            }
+            for (AbstractCheck check : user.getChecks()) {
+                catalog.learn(check.getCheckName());
+            }
+        } catch (Throwable ignored) {
         }
     }
 
