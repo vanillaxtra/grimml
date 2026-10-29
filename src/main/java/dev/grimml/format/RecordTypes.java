@@ -26,8 +26,9 @@ public final class RecordTypes {
     public static final byte BUCKET = 23;
     public static final byte ELYTRA = 24;
     public static final byte STATUS = 25;
+    public static final byte MARKER_KV = 26;
 
-    public static final int TYPE_COUNT = 26;
+    public static final int TYPE_COUNT = 27;
 
     public static final int FLAG_SPRINT = 1;
     public static final int FLAG_SNEAK = 1 << 1;
@@ -79,6 +80,11 @@ public final class RecordTypes {
     public static final byte LABEL_STAFF_MARKER = 1;
     public static final byte LABEL_BAN_BACKFILL = 2;
     public static final byte LABEL_REPLAY_CONFIRMED = 3;
+
+    public static final int MARKER_END = 0;
+    public static final int MARKER_START = 1;
+    public static final int MARKER_INTERRUPTED = 2;
+    public static final int SOURCE_STAFF = 1;
 
     private RecordTypes() {}
 }
