@@ -10,6 +10,7 @@ softdepend:
   - GrimAC
   - Geyser-Spigot
   - floodgate
+  - LiteBans
 # /grimml is registered in code through the paper lifecycle command api
 permissions:
   grimml.admin:
