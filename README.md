@@ -13,7 +13,7 @@ Rule-based anticheats like Grim are good at catching movement and protocol cheat
 ## Features
 
 - **Combat-only recording.** A rolling pre-buffer (5s by default) and a post-buffer (2s) are kept per player, and a window is only saved around attacks.
-- **Captures:** yaw/pitch from rotation packets, attack packets, sprint/sneak/vehicle/elytra state, ping, client brand and protocol, and whether the player is on Bedrock (via Geyser/Floodgate).
+- **Captures:** per-tick position and rotation, input bits when the protocol sends them, attacks with target anon ids, damage, held item, inventory clicks, shield/totem/knockback, Grim flags, ping, client brand/protocol, and Bedrock via Geyser/Floodgate.
 - **Weak labels from Grim:** when GrimAC is installed, its flags are stored in the same window.
 - **Anonymized:** player UUIDs are hashed with SHA-256 and a salt, and session ids are random per login. Raw UUIDs never reach disk.
 - **Built not to lag the server:** the packet path neither allocates nor locks. A single async writer uses a bounded queue and drops the newest windows instead of blocking. The disk-cap walk runs on its own thread, not on the server tick.
@@ -54,6 +54,8 @@ All commands need `grimml.admin` (op by default).
 | `/grimml pause` | stop saving new windows |
 | `/grimml resume` | resume saving |
 | `/grimml reload` | reload `config.yml` |
+| `/grimml mark <start\|end> <label> [client] [module] [settings]` | write a MARKER into this session |
+| `/grimml testaccount [on\|off]` | flag this session as test traffic |
 
 ## Configuration
 
@@ -74,17 +76,13 @@ All commands need `grimml.admin` (op by default).
 
 ## Output format
 
-Each combat window becomes one file: `<date>_<anonId>_<session>_<rand>.gmlml`.
+Each combat window becomes one file: `<date>_<anonId>_<session>_<rand>.gmlml`. New files use magic `GML2` (schema 2). Existing `GML1` files stay on disk unchanged.
 
-- **Header:** magic `GML1`, schema version, session id, anonymized player id, window start/end (nanos), state flags, ping, client protocol, client brand.
-- **Body:** a Deflate-compressed list of records:
+- **Header:** fight/window ids, role, trigger, validity, session/anon ids, wall-clock epoch + nanos, boot id, ping/protocol, kit/server/map, versions.
+- **Body:** Deflate-compressed per-tick frames (delta-encoded positions) plus events (attack, damage, swing, use-item, held-slot, click, place, knockback, totem, shield, marker, grim, …).
+- **Sidecar:** `recordings/sessions.idx` join/quit/mark/grim-hash lines.
 
-| Type | Id | Fields |
-|---|---|---|
-| ROTATION | 1 | tick, yaw, pitch, nanos |
-| ATTACK | 2 | tick, nanos, target entity id, reserved, ping |
-| STATE | 3 | tick, nanos, flags (sprint, sneak, vehicle, elytra, bedrock), ping |
-| GRIM_FLAG | 4 | tick, nanos, check name hash (FNV-1a), ping |
+Attack records store the target **anon id**, not only a raw entity id. A fight flush snapshots the attacker, the defender, and nearby bystanders.
 
 The encoder lives in `format/BinaryFormat.java`, and `format/BinaryFormatSelfCheck.java` is a working decoder example.
 
@@ -104,7 +102,7 @@ More detail is in [docs/architecture.md](docs/architecture.md) and [docs/decisio
 ## Non-goals (Phase 1)
 
 - No detection, alerts or punishments.
-- No hit-offset calculation; that is left to offline feature extraction.
+- Hit-offset is stored when the attack packet carries a hit vector; full aim error is computed offline from attacker and target frames.
 - No Folia support yet.
 
 Open items are tracked in [docs/known-issues.md](docs/known-issues.md).

@@ -1,7 +1,11 @@
 # known issues
 
 - [ ] `MsptGuard` clears any pause, including a disk-cap pause and `/grimml pause`, once MSPT drops below 80% of the threshold
-- [ ] Phase 1 does not compute hit offset from target hitbox; plan to add during offline feature extraction
+- [ ] GML1 files are not decoded by the current Java encoder/self-check; they are only left on disk with a different magic
+- [ ] Spear jab vs charge is recorded as a normal damage/attack pair; PacketEvents does not expose a dedicated spear packet (VERIFY)
+- [ ] Own-inventory open has no client packet on some versions; we infer from the first click
+- [ ] Grim prediction offset is not in GrimAPI 1.3.2.1 so setback records have position only
+- [ ] Enchant levels on the inventory mirror are not filled from PacketEvents yet (category and name hash are)
 - [ ] No Folia-aware schedulers yet; current code uses Bukkit scheduler and works on Paper
-- [ ] Bedrock detection uses reflection; review after Via/Floodbase API changes
-- [ ] Phase 2 labeling tools are not built yet
+- [ ] Bedrock detection uses reflection; review after Via/Floodgate API changes
+- [ ] Phase 2 offline labeling pipeline is not built yet

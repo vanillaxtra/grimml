@@ -1,5 +1,20 @@
 # decisions
 
+## 2026-10-29 - schema v2 fight windows
+
+- GML2 magic, schema 2; GML1 files remain identifiable by `GML1` and are not rewritten
+- per-tick frames replace rotation-only rings; seqlock per slot so the writer can copy other players without tearing or blocking netty
+- fight windows: on flush the writer copies attacker, target (entityId to anonId), and up to 4 bystanders within range using last milliblock positions, no bukkit on that thread
+- target anon id is written on every attack; raw entity ids stay as a secondary field
+- window validity bits mark death respawn teleport setback world gamemode vanish lag overflow instead of dropping the window
+- header carries wall-clock epoch paired with nanoTime plus boot id, server-id, kit, map-id
+- session join/quit and grim check-name lines go to `sessions.idx` on the writer thread
+- `/grimml mark` writes a MARKER event so cheat sessions can be self-labelled
+- main-thread potion/attribute/health reads are staggered (`stagger-players-per-tick`)
+- positions default to absolute (ffa); `position-mode: relative` subtracts the first frame of the window at encode time
+- player input packet is used when PacketEvents delivers it; otherwise movement/sprint/sneak bits stay inferred from flying and bukkit toggles
+- grim transaction ping and last received tx are sampled on the staggered main-thread pass, not on netty
+
 ## 2026-10-29 - disk cap walk off the server thread
 
 - `StateSampler.sampleAll` was calling `DiskCapGuard` on the main thread. `Files.walk` plus `File.isFile` plus `Files.size` stat'd every recording on the tick and showed up as ~97% of the server thread
