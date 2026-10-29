@@ -24,7 +24,7 @@ public final class GrimMLCommand implements BasicCommand {
         subs.put("pause", new PauseCommand(plugin));
         subs.put("resume", new ResumeCommand(plugin));
         subs.put("reload", new ReloadCommand(plugin));
-        subs.put("mark", new MarkCommand(plugin, plugin.clock()));
+        subs.put("mark", new MarkCommand(plugin));
         subs.put("testaccount", new TestAccountCommand(plugin));
     }
 

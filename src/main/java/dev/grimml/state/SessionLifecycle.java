@@ -33,6 +33,9 @@ public final class SessionLifecycle implements Listener {
         buf.clientProtocol = clientProtocol(player);
         buf.staff = player.hasPermission("grimml.admin") || player.isOp();
         buf.gamemode = player.getGameMode().ordinal();
+        if (plugin.testAccounts() != null && plugin.testAccounts().isTest(player.getUniqueId())) {
+            buf.testAccount = true;
+        }
         registry.entities.put(player.getEntityId(), player.getUniqueId(), buf.anonPlayerId);
         plugin.writer().enqueueSessionLine("join " + Long.toUnsignedString(buf.anonPlayerId, 36)
                 + " " + Long.toUnsignedString(buf.sessionId, 36)
@@ -52,6 +55,7 @@ public final class SessionLifecycle implements Listener {
             plugin.writer().enqueueSessionLine("quit " + Long.toUnsignedString(buf.anonPlayerId, 36)
                     + " " + Long.toUnsignedString(buf.sessionId, 36)
                     + " " + System.currentTimeMillis());
+            plugin.closeOpen(player.getUniqueId(), buf, true);
         }
         registry.remove(player.getUniqueId());
     }

@@ -37,6 +37,9 @@ public final class TaxonomySelfCheck {
         if (TaxonomyLoader.validateKv(m, List.of("fov=x")) == null) {
             throw new AssertionError("int should fail");
         }
+        if (TaxonomyLoader.validateKv(m, List.of("expected=Reach")) != null) {
+            throw new AssertionError("expected grim check is free");
+        }
         System.out.println("taxonomy self-check passed");
     }
 }

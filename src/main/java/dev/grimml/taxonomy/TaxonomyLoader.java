@@ -82,6 +82,9 @@ public final class TaxonomyLoader {
             }
             String key = pair.substring(0, eq);
             String val = pair.substring(eq + 1);
+            if (key.equalsIgnoreCase("expected")) {
+                continue;
+            }
             SettingSpec spec = module.settings.get(key);
             if (spec == null) {
                 for (var e : module.settings.entrySet()) {
@@ -97,6 +100,16 @@ public final class TaxonomyLoader {
             String err = spec.validate(val);
             if (err != null) {
                 return err;
+            }
+        }
+        return null;
+    }
+
+    public static String validateFree(List<String> kv) {
+        for (String pair : kv) {
+            int eq = pair.indexOf('=');
+            if (eq <= 0) {
+                return "bad setting " + pair;
             }
         }
         return null;

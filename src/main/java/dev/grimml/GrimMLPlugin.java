@@ -1,6 +1,7 @@
 package dev.grimml;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import dev.grimml.buffer.PlayerRingBuffer;
 import dev.grimml.buffer.SessionRegistry;
 import dev.grimml.capture.PacketListener;
 import dev.grimml.clock.TickClock;
@@ -21,6 +22,10 @@ import dev.grimml.safety.MsptGuard;
 import dev.grimml.state.SessionLifecycle;
 import dev.grimml.state.SprintSneakTracker;
 import dev.grimml.state.StateSampler;
+import dev.grimml.format.RecordTypes;
+import dev.grimml.mark.MarkTracker;
+import dev.grimml.mark.MarkerWriter;
+import dev.grimml.mark.TestAccounts;
 import dev.grimml.taxonomy.Taxonomy;
 import dev.grimml.taxonomy.TaxonomyLoader;
 import dev.grimml.writer.RecordWriter;
@@ -44,6 +49,8 @@ public final class GrimMLPlugin extends JavaPlugin {
     private GeyserHook geyserHook;
     private org.bukkit.scheduler.BukkitTask grimFlushTask;
     private volatile Taxonomy taxonomy = Taxonomy.empty();
+    private final MarkTracker marks = new MarkTracker();
+    private TestAccounts testAccounts;
     private volatile boolean recordingEnabled;
 
     @Override
@@ -51,6 +58,8 @@ public final class GrimMLPlugin extends JavaPlugin {
         saveDefaultConfig();
         saveResource("taxonomy.yml", false);
         config.load(getConfig());
+        testAccounts = new TestAccounts(getDataFolder().toPath().resolve("test-accounts.txt"));
+        testAccounts.load();
         reloadTaxonomy();
 
         recordingEnabled = config.enabled();
@@ -103,12 +112,13 @@ public final class GrimMLPlugin extends JavaPlugin {
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> event.registrar().register("grimml", "grimml recorder admin", cmd));
 
-        getLogger().info("grimml recorder enabled schema 2");
+        getLogger().info("grimml recorder enabled schema 3");
     }
 
     @Override
     public void onDisable() {
         recordingEnabled = false;
+        closeOpenMarks(true);
         if (packetListener != null) {
             PacketEvents.getAPI().getEventManager().unregisterListener(packetListener);
         }
@@ -162,6 +172,42 @@ public final class GrimMLPlugin extends JavaPlugin {
 
     public GrimFlagHook grimHook() {
         return grimHook;
+    }
+
+    public MarkTracker marks() {
+        return marks;
+    }
+
+    public TestAccounts testAccounts() {
+        return testAccounts;
+    }
+
+    public void closeOpen(java.util.UUID uuid, PlayerRingBuffer buf, boolean interrupted) {
+        if (writer == null || buf == null) {
+            return;
+        }
+        var prev = marks.end(uuid);
+        if (prev == null) {
+            return;
+        }
+        long post = config.postCombatSeconds() * 1_000_000_000L;
+        MarkerWriter.write(buf, clock, writer, post, RecordTypes.MARKER_END,
+                prev.labelId, prev.clientId, prev.moduleId, java.util.List.of(prev.kv), interrupted);
+    }
+
+    public void closeOpenMarks(boolean interrupted) {
+        if (writer == null || registry == null) {
+            return;
+        }
+        long post = config.postCombatSeconds() * 1_000_000_000L;
+        for (var open : marks.drainAll()) {
+            var buf = registry.get(open.uuid);
+            if (buf == null) {
+                continue;
+            }
+            MarkerWriter.write(buf, clock, writer, post, RecordTypes.MARKER_END,
+                    open.labelId, open.clientId, open.moduleId, java.util.List.of(open.kv), interrupted);
+        }
     }
 
     private void seedTaxonomyChecks() {
