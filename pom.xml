@@ -149,6 +149,39 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>lag-filter-self-check</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>dev.grimml.grim.LagFilterSelfCheck</mainClass>
+                            <skip>${skipTests}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>promotion-self-check</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>dev.grimml.grim.PromotionSelfCheck</mainClass>
+                            <skip>${skipTests}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>score-math-self-check</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>dev.grimml.grim.ScoreMathSelfCheck</mainClass>
+                            <skip>${skipTests}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>flag-queue-self-check</id>
                         <phase>test</phase>
                         <goals>
