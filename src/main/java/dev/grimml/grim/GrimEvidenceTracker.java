@@ -82,6 +82,10 @@ public final class GrimEvidenceTracker {
         return queue;
     }
 
+    public EvidenceStore store() {
+        return store;
+    }
+
     public void cycle() {
         GrimWeights w = weights;
         if (!enabled || w == null) {

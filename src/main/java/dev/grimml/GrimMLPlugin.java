@@ -197,6 +197,10 @@ public final class GrimMLPlugin extends JavaPlugin {
         return evidence;
     }
 
+    public EvidenceStore evidenceStore() {
+        return evidence == null ? null : evidence.store();
+    }
+
     public GrimWeights grimWeights() {
         return grimWeights;
     }
