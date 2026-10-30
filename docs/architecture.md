@@ -6,7 +6,7 @@
 - **depends:** packetevents (hard, used directly at enable)
 - **soft-depends:** GrimAC, Geyser-Spigot, floodgate, LiteBans
 - **commands:** `/grimml` registered via Paper lifecycle `LifecycleEvents.COMMANDS` as a `BasicCommand`; plugin.yml has no `commands:` section
-- **config schema version:** 3
+- **config schema version:** 4
 
 ## structure
 one folder per function, one file per feature
@@ -27,6 +27,7 @@ one folder per function, one file per feature
 - `writer/RecordWriter.java` - async drain, session sidecar
 - `taxonomy/` - `taxonomy.yml` clients, modules, setting schemas, stable ids, file hash
 - `grim/GrimCheckCatalog.java` - FlagEvent check names persisted to `grim-checks.json`
+- `grim/GrimEvidenceTracker.java` - 1 Hz weak labels; FlagEvent copies primitives into `FlagQueue`
 - `mark/` - open segments, marker kv events, `test-accounts.txt`
 - `commands/` - status, pause, resume, reload, mark, testaccount
 - `roster/` - combat-reason matcher, append-only `roster.csv`, ban label service
@@ -56,3 +57,6 @@ flowchart LR
 | `/grimml mark start <account> <label> [client] [module] [key=value...]` | `grimml.admin` | time-range MARKER; console/RCON; labels `LEGIT_CONFIRMED` or `CHEAT` |
 | `/grimml mark end <account>` | `grimml.admin` | close the open segment |
 | `/grimml testaccount [account] [on\|off]` | `grimml.admin` | persist test-account uuids; header flag so they never mix with normal players |
+| `/grimml suspects [limit]` | `grimml.admin` | top decaying grim scores, anon ids only |
+| `/grimml review next` | `grimml.admin` | next `GRIM_WEAK` window for staff replay |
+| `/grimml review mark <id> confirmed\|legit\|unsure` | `grimml.admin` | writes `replay-confirmed` / legit; never overwrites staff markers |
