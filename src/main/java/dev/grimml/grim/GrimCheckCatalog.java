@@ -1,5 +1,7 @@
 package dev.grimml.grim;
 
+import dev.grimml.format.BinaryFormat;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,6 +17,7 @@ public final class GrimCheckCatalog {
 
     private final Path file;
     private final ConcurrentHashMap<String, Boolean> names = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, String> byHash = new ConcurrentHashMap<>();
     private final AtomicBoolean dirty = new AtomicBoolean(false);
 
     public GrimCheckCatalog(Path file) {
@@ -36,6 +39,7 @@ public final class GrimCheckCatalog {
         if (name == null || name.isEmpty()) {
             return false;
         }
+        byHash.putIfAbsent(BinaryFormat.hashCheckName(name), name);
         if (names.putIfAbsent(name, Boolean.TRUE) == null) {
             dirty.set(true);
             return true;
@@ -74,6 +78,10 @@ public final class GrimCheckCatalog {
         return list;
     }
 
+    public String nameOf(int hash) {
+        return byHash.get(hash);
+    }
+
     public List<String> complete(String prefix) {
         String p = prefix == null ? "" : prefix;
         List<String> out = new ArrayList<>();
@@ -105,7 +113,9 @@ public final class GrimCheckCatalog {
                 }
             }
             if (n.length() > 0) {
-                names.put(n.toString(), Boolean.TRUE);
+                String s = n.toString();
+                names.put(s, Boolean.TRUE);
+                byHash.putIfAbsent(BinaryFormat.hashCheckName(s), s);
             }
         }
     }
