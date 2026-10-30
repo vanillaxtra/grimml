@@ -20,13 +20,15 @@ public final class GrimFlagHook {
     private final GrimMLPlugin plugin;
     private final TickClock clock;
     private final GrimCheckCatalog catalog;
+    private final FlagQueue flags;
     private GrimPlugin grim;
     private GrimAbstractAPI api;
 
-    public GrimFlagHook(GrimMLPlugin plugin, TickClock clock, GrimCheckCatalog catalog) {
+    public GrimFlagHook(GrimMLPlugin plugin, TickClock clock, GrimCheckCatalog catalog, FlagQueue flags) {
         this.plugin = plugin;
         this.clock = clock;
         this.catalog = catalog;
+        this.flags = flags;
     }
 
     public void enable() {
@@ -51,6 +53,12 @@ public final class GrimFlagHook {
                             checkHash, vl, 0, 0, 0, 0);
                     buf.markCombat(nanos, plugin.config().postCombatSeconds() * 1_000_000_000L, RecordTypes.TRIGGER_FLAG);
                     plugin.writer().enqueueSessionLine("grim " + Integer.toHexString(checkHash) + " " + name);
+                    if (flags != null) {
+                        flags.offer(buf.anonPlayerId, buf.sessionId, checkHash, tick, nanos,
+                                buf.pingMs, buf.jitterMs, buf.validity, cancelled ? 1 : 0,
+                                buf.sessionStartNanos, buf.lastTeleportNanos, buf.lastWorldNanos,
+                                buf.lastRespawnNanos, buf.lastSetbackNanos);
+                    }
                 } catch (Throwable t) {
                     plugin.getLogger().warning("grim flag hook error: " + t.getMessage());
                 }
