@@ -63,6 +63,13 @@ public final class PlayerRingBuffer {
 
     public volatile long sessionStartEpoch;
     public volatile long sessionStartNanos;
+    public volatile long lastTeleportNanos;
+    public volatile long lastWorldNanos;
+    public volatile long lastRespawnNanos;
+    public volatile long lastSetbackNanos;
+    public volatile byte labelSource;
+    public volatile int grimConfidenceCenti;
+    public volatile int grimCheckHash;
 
     private int orderInTick;
     private int orderTick = Integer.MIN_VALUE;
@@ -214,6 +221,28 @@ public final class PlayerRingBuffer {
 
     public void orValidity(int bit) {
         validity |= bit;
+        long now = System.nanoTime();
+        if ((bit & RecordTypes.VALID_TELEPORT) != 0) {
+            lastTeleportNanos = now;
+        }
+        if ((bit & RecordTypes.VALID_WORLD) != 0) {
+            lastWorldNanos = now;
+        }
+        if ((bit & RecordTypes.VALID_RESPAWN) != 0) {
+            lastRespawnNanos = now;
+        }
+        if ((bit & RecordTypes.VALID_SETBACK) != 0) {
+            lastSetbackNanos = now;
+        }
+    }
+
+    public void stampGrimWeak(int checkHash, int confidenceCenti) {
+        if (RecordTypes.protectedLabel(labelSource)) {
+            return;
+        }
+        labelSource = RecordTypes.LABEL_GRIM_WEAK;
+        grimCheckHash = checkHash;
+        grimConfidenceCenti = confidenceCenti;
     }
 
     public boolean jumpHeld() {

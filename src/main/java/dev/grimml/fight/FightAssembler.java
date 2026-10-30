@@ -104,6 +104,7 @@ public final class FightAssembler {
         snap.windowId = ThreadLocalRandom.current().nextLong() ^ now ^ buf.anonPlayerId;
         snap.role = role;
         snap.trigger = buf.triggerReason;
+        snap.labelSource = buf.labelSource;
         snap.validity = buf.validity;
         snap.sessionId = buf.sessionId;
         snap.anonPlayerId = buf.anonPlayerId;
