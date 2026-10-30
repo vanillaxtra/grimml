@@ -149,6 +149,17 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>flag-queue-self-check</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>dev.grimml.grim.FlagQueueSelfCheck</mainClass>
+                            <skip>${skipTests}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>grim-weights-self-check</id>
                         <phase>test</phase>
                         <goals>
