@@ -16,6 +16,7 @@ public final class ReloadCommand implements SubCommand {
         plugin.reloadConfig();
         plugin.config().load(plugin.getConfig());
         plugin.reloadTaxonomy();
-        GrimMLCommand.msg(sender, "<green>config and taxonomy reloaded");
+        plugin.reloadWeights();
+        GrimMLCommand.msg(sender, "<green>config taxonomy and grim-weights reloaded");
     }
 }

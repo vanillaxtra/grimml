@@ -9,8 +9,13 @@ import dev.grimml.commands.GrimMLCommand;
 import dev.grimml.config.PluginConfig;
 import dev.grimml.fight.FightAssembler;
 import dev.grimml.geyser.GeyserHook;
+import dev.grimml.grim.EvidenceStore;
+import dev.grimml.grim.FlagQueue;
 import dev.grimml.grim.GrimCheckCatalog;
+import dev.grimml.grim.GrimEvidenceTracker;
 import dev.grimml.grim.GrimFlagHook;
+import dev.grimml.grim.GrimWeights;
+import dev.grimml.grim.GrimWeightsLoader;
 import dev.grimml.hooks.LiteBansHook;
 import dev.grimml.listeners.DamageListener;
 import dev.grimml.listeners.ValidityListener;
@@ -46,6 +51,8 @@ public final class GrimMLPlugin extends JavaPlugin {
     private DiskCapGuard diskCap;
     private GrimFlagHook grimHook;
     private GrimCheckCatalog grimChecks;
+    private GrimEvidenceTracker evidence;
+    private volatile GrimWeights grimWeights = GrimWeights.empty();
     private GeyserHook geyserHook;
     private org.bukkit.scheduler.BukkitTask grimFlushTask;
     private volatile Taxonomy taxonomy = Taxonomy.empty();
@@ -57,10 +64,12 @@ public final class GrimMLPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         saveResource("taxonomy.yml", false);
+        saveResource("grim-weights.yml", false);
         config.load(getConfig());
         testAccounts = new TestAccounts(getDataFolder().toPath().resolve("test-accounts.txt"));
         testAccounts.load();
         reloadTaxonomy();
+        reloadWeights();
 
         recordingEnabled = config.enabled();
         registry = new SessionRegistry(config, clock);
@@ -98,7 +107,14 @@ public final class GrimMLPlugin extends JavaPlugin {
         grimChecks = new GrimCheckCatalog(getDataFolder().toPath().resolve("grim-checks.json"));
         grimChecks.load();
         seedTaxonomyChecks();
-        grimHook = new GrimFlagHook(this, clock, grimChecks);
+        FlagQueue flagQueue = new FlagQueue(config.grimEvidenceQueueCap());
+        evidence = new GrimEvidenceTracker(
+                flagQueue, clock, registry, grimChecks,
+                new EvidenceStore(getDataFolder().toPath().resolve(config.grimLabelsFile()),
+                        getDataFolder().toPath().resolve(config.grimReviewFile())),
+                writer, grimWeights, config.grimEvidenceEnabled());
+        evidence.start();
+        grimHook = new GrimFlagHook(this, clock, grimChecks, flagQueue);
         if (Bukkit.getPluginManager().isPluginEnabled("GrimAC")) {
             grimHook.enable();
         }
@@ -124,6 +140,9 @@ public final class GrimMLPlugin extends JavaPlugin {
         }
         if (stateSampler != null) {
             stateSampler.stop();
+        }
+        if (evidence != null) {
+            evidence.stop();
         }
         if (grimFlushTask != null) {
             grimFlushTask.cancel();
@@ -172,6 +191,14 @@ public final class GrimMLPlugin extends JavaPlugin {
 
     public GrimFlagHook grimHook() {
         return grimHook;
+    }
+
+    public GrimEvidenceTracker evidence() {
+        return evidence;
+    }
+
+    public GrimWeights grimWeights() {
+        return grimWeights;
     }
 
     public MarkTracker marks() {
@@ -226,6 +253,22 @@ public final class GrimMLPlugin extends JavaPlugin {
             return;
         }
         writer.enqueueSessionLine("taxonomy " + taxonomy.version + " " + Long.toUnsignedString(taxonomy.hash, 36));
+    }
+
+    public void reloadWeights() {
+        try {
+            grimWeights = GrimWeightsLoader.load(getDataFolder().toPath().resolve("grim-weights.yml"));
+            if (evidence != null) {
+                evidence.setWeights(grimWeights);
+                evidence.setEnabled(config.grimEvidenceEnabled());
+            }
+            getLogger().info("grim-weights v" + grimWeights.version + " checks " + grimWeights.checks.size());
+        } catch (Exception e) {
+            getLogger().warning("grim-weights load failed: " + e.getMessage());
+            if (grimWeights == null) {
+                grimWeights = GrimWeights.empty();
+            }
+        }
     }
 
     public void reloadTaxonomy() {

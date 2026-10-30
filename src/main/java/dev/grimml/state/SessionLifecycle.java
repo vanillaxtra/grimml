@@ -56,6 +56,9 @@ public final class SessionLifecycle implements Listener {
                     + " " + Long.toUnsignedString(buf.sessionId, 36)
                     + " " + System.currentTimeMillis());
             plugin.closeOpen(player.getUniqueId(), buf, true);
+            if (plugin.evidence() != null) {
+                plugin.evidence().sessionEnd(buf.anonPlayerId, buf.sessionId);
+            }
         }
         registry.remove(player.getUniqueId());
     }
