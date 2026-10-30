@@ -1,5 +1,14 @@
 # decisions
 
+## 2026-10-30 - grim-auto labels are weak suspects, never train grim features on them
+
+- FlagEvent is a weak signal. Auto-labels are `GRIM_WEAK` (window) and `GRIM_PLAYER_SUSPECT` (player sidecar), never `CHEAT_CONFIRMED`
+- netty only copies primitives into a bounded MPSC `FlagQueue`; the `grimml-evidence` thread (1 Hz) decays scores, applies lag filters, and writes sidecars
+- unknown check names get weight 0 in `grim-weights.yml` and stay in `grim-checks.json` for review
+- staff-marker and replay-confirmed window labels are never overwritten
+- sidecar files use anon ids only
+- **Grim-derived features must not be inputs to models trained on grim-auto labels.** those labels exist so combat behavior grim does *not* cover can be pretrained; feeding grim flags back in just copies grim. evaluate only on staff/replay-confirmed labels. weight weak positives by confidence and sample ~100 for staff review before trusting precision
+
 ## 2026-10-29 - taxonomy.yml owns clients/modules; grim only supplies check names
 
 - grim detects violations and does not know cheat clients or modules. GrimAPI 1.3.2.1 has `FlagEvent` → `check.getCheckName()` and per-user `GrimUser.getChecks()`, not a global list of every check
