@@ -1,5 +1,5 @@
 # Schema version - bump when keys change; missing keys use defaults.
-config-version: 3
+config-version: 4
 
 # Master kill switch. false = no packet hooks write, writer drains then idles.
 enabled: true
@@ -82,3 +82,10 @@ ban-labels:
     - velocity
     - antikb
     - anti kb
+
+# Weak grim-auto labels. never cheat_confirmed. kill switch below.
+grim-evidence:
+  enabled: true
+  queue-capacity: 1024
+  labels-file: grim-labels.csv
+  review-file: grim-review.csv

@@ -30,6 +30,10 @@ public final class PluginConfig {
     private int banBackfillDays;
     private String rosterFile;
     private CombatReasonMatcher combatReasons = new CombatReasonMatcher(List.of());
+    private boolean grimEvidenceEnabled;
+    private int grimEvidenceQueueCap;
+    private String grimLabelsFile;
+    private String grimReviewFile;
 
     private static final List<String> DEFAULT_COMBAT_REASONS = List.of(
             "killaura", "kill aura", "aura", "aimassist", "aim assist", "aimbot",
@@ -63,6 +67,10 @@ public final class PluginConfig {
         rosterFile = cfg.getString("ban-labels.roster-file", "roster.csv");
         List<String> keys = cfg.getStringList("ban-labels.combat-reason-keywords");
         combatReasons = new CombatReasonMatcher(keys.isEmpty() ? DEFAULT_COMBAT_REASONS : keys);
+        grimEvidenceEnabled = cfg.getBoolean("grim-evidence.enabled", true);
+        grimEvidenceQueueCap = Math.max(32, cfg.getInt("grim-evidence.queue-capacity", 1024));
+        grimLabelsFile = cfg.getString("grim-evidence.labels-file", "grim-labels.csv");
+        grimReviewFile = cfg.getString("grim-evidence.review-file", "grim-review.csv");
     }
 
     public boolean enabled() { return enabled; }
@@ -88,4 +96,8 @@ public final class PluginConfig {
     public int banBackfillDays() { return banBackfillDays; }
     public String rosterFile() { return rosterFile; }
     public CombatReasonMatcher combatReasons() { return combatReasons; }
+    public boolean grimEvidenceEnabled() { return grimEvidenceEnabled; }
+    public int grimEvidenceQueueCap() { return grimEvidenceQueueCap; }
+    public String grimLabelsFile() { return grimLabelsFile; }
+    public String grimReviewFile() { return grimReviewFile; }
 }
