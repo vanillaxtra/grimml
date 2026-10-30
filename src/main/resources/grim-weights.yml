@@ -1,0 +1,97 @@
+# Per-check weights for grim-auto suspect labels. Unknown names get weight 0
+# and are appended to grim-checks.json for review. Names are guesses until
+# FlagEvent confirms them (case-insensitive match).
+version: 1
+defaults:
+  unknown-weight: 0.0
+  unknown-category: packet
+  unknown-trust: 0.2
+lag:
+  max-ping-ms: 180
+  max-jitter-ms: 80
+  max-mspt: 40.0
+  settle-seconds: 10
+score:
+  half-life-seconds: 1800
+  promote-threshold: 8.0
+  promote-distinct-checks: 2
+  promote-window-seconds: 3600
+  promote-same-check-sessions: 2
+  confidence-scale: 0.12
+checks:
+  Reach:
+    weight: 3.0
+    category: combat
+    trust: 0.85
+  Hitboxes:
+    weight: 2.6
+    category: combat
+    trust: 0.8
+  Hitbox:
+    weight: 2.6
+    category: combat
+    trust: 0.8
+  AimModulo360:
+    weight: 2.2
+    category: combat
+    trust: 0.7
+  AimDuplicateLook:
+    weight: 1.8
+    category: combat
+    trust: 0.65
+  Knockback:
+    weight: 1.6
+    category: combat
+    trust: 0.6
+  Explosion:
+    weight: 1.2
+    category: combat
+    trust: 0.55
+  Timer:
+    weight: 1.4
+    category: packet
+    trust: 0.5
+  BadPackets:
+    weight: 0.8
+    category: packet
+    trust: 0.4
+  GroundSpoof:
+    weight: 0.5
+    category: movement
+    trust: 0.3
+  NoFall:
+    weight: 0.4
+    category: movement
+    trust: 0.3
+  Phase:
+    weight: 0.4
+    category: world
+    trust: 0.3
+  Simulation:
+    weight: 0.6
+    category: movement
+    trust: 0.35
+  Offset:
+    weight: 0.6
+    category: movement
+    trust: 0.35
+  Scaffold:
+    weight: 1.5
+    category: world
+    trust: 0.55
+  AirLiquidPlace:
+    weight: 1.2
+    category: world
+    trust: 0.5
+  FarPlace:
+    weight: 1.2
+    category: world
+    trust: 0.5
+  Inventory:
+    weight: 0.7
+    category: packet
+    trust: 0.4
+  MultiActions:
+    weight: 0.7
+    category: packet
+    trust: 0.4
