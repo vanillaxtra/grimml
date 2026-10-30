@@ -80,11 +80,19 @@ public final class RecordTypes {
     public static final byte LABEL_STAFF_MARKER = 1;
     public static final byte LABEL_BAN_BACKFILL = 2;
     public static final byte LABEL_REPLAY_CONFIRMED = 3;
+    public static final byte LABEL_GRIM_WEAK = 4;
+    public static final byte LABEL_GRIM_PLAYER = 5;
 
     public static final int MARKER_END = 0;
     public static final int MARKER_START = 1;
     public static final int MARKER_INTERRUPTED = 2;
     public static final int SOURCE_STAFF = 1;
+    public static final int SOURCE_GRIM_WINDOW = 2;
+    public static final int SOURCE_GRIM_PLAYER = 3;
+
+    public static boolean protectedLabel(byte source) {
+        return source == LABEL_STAFF_MARKER || source == LABEL_REPLAY_CONFIRMED;
+    }
 
     private RecordTypes() {}
 }
