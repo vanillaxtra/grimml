@@ -70,6 +70,8 @@ public final class PlayerRingBuffer {
     public volatile byte labelSource;
     public volatile int grimConfidenceCenti;
     public volatile int grimCheckHash;
+    // when true only TRIGGER_MARKER activates flush; events still write to ring
+    public volatile boolean markOnly;
 
     private int orderInTick;
     private int orderTick = Integer.MIN_VALUE;
@@ -207,6 +209,10 @@ public final class PlayerRingBuffer {
     }
 
     public void markCombat(long nowNanos, long postNanos, byte trigger) {
+        if (markOnly && trigger != RecordTypes.TRIGGER_MARKER) {
+            lastAttackNanos = nowNanos;
+            return;
+        }
         lastAttackNanos = nowNanos;
         long until = nowNanos + postNanos;
         if (until > combatActiveUntilNanos) {
