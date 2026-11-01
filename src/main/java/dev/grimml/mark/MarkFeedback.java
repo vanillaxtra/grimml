@@ -31,12 +31,24 @@ public final class MarkFeedback implements Runnable {
         }
     }
 
+    // extract client-name= value from kv pairs, empty string if absent
+    static String clientNameOf(String[] kv) {
+        if (kv == null) return "";
+        for (String pair : kv) {
+            if (pair.regionMatches(true, 0, "client-name=", 0, 12)) {
+                return pair.substring(12);
+            }
+        }
+        return "";
+    }
+
     private String bar(MarkTracker.Open o, PlayerRingBuffer buf) {
         long elapsedSec = (System.nanoTime() - o.startNanos) / 1_000_000_000L;
         String elapsed = String.format("%d:%02d", elapsedSec / 60, elapsedSec % 60);
 
         String label = Labels.name(o.labelId);
         String module = plugin.taxonomy().moduleName(o.moduleId);
+        String clientName = clientNameOf(o.kv);
 
         int ping = buf.pingMs;
         int jitter = buf.jitterMs;
@@ -52,6 +64,7 @@ public final class MarkFeedback implements Runnable {
         StringBuilder sb = new StringBuilder();
         sb.append(dotColor).append("◉ <white>").append(label);
         if (!module.isEmpty()) sb.append(" ").append(module);
+        if (!clientName.isEmpty()) sb.append(" <gray>(</gray><white>").append(clientName).append("</white><gray>)</gray>");
         sb.append("</white> <gray>•</gray> <aqua>").append(elapsed).append("</aqua>");
         sb.append(" <gray>|</gray> ").append(pingColor).append("p:").append(ping).append("ms</>");
         sb.append(" <gray>|</gray> ").append(jitterColor).append("j:").append(jitter).append("ms</>");
