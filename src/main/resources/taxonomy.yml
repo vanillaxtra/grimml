@@ -8,7 +8,7 @@ clients:
 # Add any names relevant to your test pool; order and case are preserved.
 client-names:
   - meteor
-  - vape
+  - vapev4
   - vape_lite
   - liquidbounce
   - wurst
@@ -19,6 +19,8 @@ client-names:
   - prestige
   - inertia
   - nova
+  - doomsday
+  
 
 modules:
   aim_assist:
