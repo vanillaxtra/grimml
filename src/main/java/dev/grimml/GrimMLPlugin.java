@@ -16,7 +16,7 @@ import dev.grimml.grim.GrimEvidenceTracker;
 import dev.grimml.grim.GrimFlagHook;
 import dev.grimml.grim.GrimWeights;
 import dev.grimml.grim.GrimWeightsLoader;
-import dev.grimml.hooks.LiteBansHook;
+import dev.grimml.hooks.LiteBansBridge;
 import dev.grimml.listeners.DamageListener;
 import dev.grimml.listeners.ValidityListener;
 import dev.grimml.listeners.VanillaBanListener;
@@ -122,7 +122,7 @@ public final class GrimMLPlugin extends JavaPlugin {
 
         BanLabelService bans = new BanLabelService(this, new RosterStore(getDataFolder().toPath().resolve(config.rosterFile())));
         getServer().getPluginManager().registerEvents(new VanillaBanListener(bans), this);
-        new LiteBansHook(this, bans).enable();
+        LiteBansBridge.enableIfPresent(this, bans);
 
         GrimMLCommand cmd = new GrimMLCommand(this);
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
