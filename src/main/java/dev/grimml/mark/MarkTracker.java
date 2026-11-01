@@ -42,6 +42,10 @@ public final class MarkTracker {
         return open.get(uuid);
     }
 
+    public java.util.Collection<Open> allOpen() {
+        return open.values();
+    }
+
     public Open[] drainAll() {
         Open[] out = open.values().toArray(Open[]::new);
         open.clear();
