@@ -1,5 +1,13 @@
 # decisions
 
+## 2026-11-01 - mark-only mode and action bar feedback
+
+- `recording-mode: mark-only` in config causes `PlayerRingBuffer.markCombat()` to silently return for any trigger other than `TRIGGER_MARKER`; events still write to the ring so pre-buffer is intact when a mark starts
+- `SessionRegistry.getOrCreate` sets `buf.markOnly` from config; `/grimml reload` calls `registry.propagateMarkOnly()` to update live sessions
+- `MarkFeedback` runs every 4 ticks on the main thread; iterates `MarkTracker.allOpen()`, finds the online player, sends an action bar with elapsed time + quality indicators (ping/jitter/mspt coloured green/yellow/red, frame count)
+- quality thresholds: ping < 80 green, < 180 yellow, ≥ 180 red; mspt < 15 green, < 30 yellow (lag filter cuts at 40); jitter < 30 green, < 70 yellow
+- frame count: > 60 green (several seconds of clean buffer), > 20 yellow, ≤ 20 red
+
 ## 2026-11-01 - load LiteBans only if its api class is present
 
 - `new LiteBansHook()` from `onEnable` loaded `Events$Listener` and crashed grimml when LiteBans was not installed (`NoClassDefFoundError`)
