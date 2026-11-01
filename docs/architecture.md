@@ -32,6 +32,7 @@ one folder per function, one file per feature
 - `commands/` - status, pause, resume, reload, mark, testaccount
 - `roster/` - combat-reason matcher, append-only `roster.csv`, ban label service
 - `hooks/LiteBansHook.java` - combat bans become SUSPECT with a 14-day backfill
+- `hooks/LiteBansBridge.java` - loads the hook only when LiteBans and its api class are present
 - `listeners/VanillaBanListener.java` - vanilla `/ban` kick fallback
 
 ## data flow

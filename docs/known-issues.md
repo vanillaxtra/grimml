@@ -13,3 +13,5 @@
 - [ ] Bedrock detection uses reflection; review after Via/Floodgate API changes
 - [ ] Phase 2 offline labeling pipeline is not built yet (roster.csv is the join key for SUSPECT bans)
 - [ ] Ban-reason keywords are substring matches so staff should keep LiteBans reasons specific (`killaura`, not `cheating`)
+- [ ] Grim 2.3.74 `PacketHidePlayerInfo` throws `IndexOutOfBoundsException` on 1.21.11 `PlayerInfoUpdate` (shaded PacketEvents vs Leaf/TAB/AntiPopup). that is Grim, not grimml
+- [ ] Grim 2.3.74 warns that the string `FlagEvent` handler is deprecated; compile-time GrimAPI 1.3.2.1 only has that signature

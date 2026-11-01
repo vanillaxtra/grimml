@@ -1,5 +1,11 @@
 # decisions
 
+## 2026-11-01 - load LiteBans only if its api class is present
+
+- `new LiteBansHook()` from `onEnable` loaded `Events$Listener` and crashed grimml when LiteBans was not installed (`NoClassDefFoundError`)
+- `GrimMLPlugin` now calls `LiteBansBridge.enableIfPresent`, which returns before touching `LiteBansHook` unless plugin `LiteBans` exists and `litebans.api.Events` loads
+- vanilla ban kicks still label SUSPECT without LiteBans
+
 ## 2026-10-30 - grim-auto labels are weak suspects, never train grim features on them
 
 - FlagEvent is a weak signal. Auto-labels are `GRIM_WEAK` (window) and `GRIM_PLAYER_SUSPECT` (player sidecar), never `CHEAT_CONFIRMED`
