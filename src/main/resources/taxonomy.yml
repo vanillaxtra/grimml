@@ -3,6 +3,23 @@ clients:
   - vanilla_baseline
   - client_a
   - client_b
+
+# Free-text cheat client names used only for tab-complete on client-name= KV.
+# Add any names relevant to your test pool; order and case are preserved.
+client-names:
+  - meteor
+  - vape
+  - vape_lite
+  - liquidbounce
+  - wurst
+  - aristois
+  - sigma
+  - rise
+  - ares
+  - prestige
+  - inertia
+  - nova
+
 modules:
   aim_assist:
     expected_grim:

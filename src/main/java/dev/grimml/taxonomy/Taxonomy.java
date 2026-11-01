@@ -12,16 +12,19 @@ public final class Taxonomy {
     public final long hash;
     public final List<String> clients;
     public final Map<String, ModuleSpec> modules;
+    // free-text cheat client names for tab-complete (meteor, vape, etc.)
+    public final List<String> clientNames;
 
-    public Taxonomy(int version, long hash, List<String> clients, Map<String, ModuleSpec> modules) {
+    public Taxonomy(int version, long hash, List<String> clients, Map<String, ModuleSpec> modules, List<String> clientNames) {
         this.version = version;
         this.hash = hash;
         this.clients = clients;
         this.modules = modules;
+        this.clientNames = clientNames;
     }
 
     public static Taxonomy empty() {
-        return new Taxonomy(0, 0L, List.of(), Map.of());
+        return new Taxonomy(0, 0L, List.of(), Map.of(), List.of());
     }
 
     public boolean hasClient(String name) {

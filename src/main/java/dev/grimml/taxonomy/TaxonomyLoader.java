@@ -33,6 +33,7 @@ public final class TaxonomyLoader {
     public static Taxonomy parse(YamlConfiguration yaml, long hash) {
         int version = yaml.getInt("version", 1);
         List<String> clients = yaml.getStringList("clients");
+        List<String> clientNames = yaml.getStringList("client-names");
         Map<String, ModuleSpec> modules = new LinkedHashMap<>();
         ConfigurationSection mods = yaml.getConfigurationSection("modules");
         if (mods != null) {
@@ -46,7 +47,7 @@ public final class TaxonomyLoader {
                 modules.put(name, new ModuleSpec(name, grim, settings));
             }
         }
-        return new Taxonomy(version, hash, List.copyOf(clients), Map.copyOf(modules));
+        return new Taxonomy(version, hash, List.copyOf(clients), Map.copyOf(modules), List.copyOf(clientNames));
     }
 
     static Map<String, SettingSpec> parseSettings(ConfigurationSection sec) {
@@ -82,7 +83,7 @@ public final class TaxonomyLoader {
             }
             String key = pair.substring(0, eq);
             String val = pair.substring(eq + 1);
-            if (key.equalsIgnoreCase("expected")) {
+            if (key.equalsIgnoreCase("expected") || key.equalsIgnoreCase("client-name")) {
                 continue;
             }
             SettingSpec spec = module.settings.get(key);
