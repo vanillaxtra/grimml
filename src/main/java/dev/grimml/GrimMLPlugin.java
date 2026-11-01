@@ -55,6 +55,7 @@ public final class GrimMLPlugin extends JavaPlugin {
     private volatile GrimWeights grimWeights = GrimWeights.empty();
     private GeyserHook geyserHook;
     private org.bukkit.scheduler.BukkitTask grimFlushTask;
+    private org.bukkit.scheduler.BukkitTask feedbackTask;
     private volatile Taxonomy taxonomy = Taxonomy.empty();
     private final MarkTracker marks = new MarkTracker();
     private TestAccounts testAccounts;
@@ -128,6 +129,9 @@ public final class GrimMLPlugin extends JavaPlugin {
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> event.registrar().register("grimml", "grimml recorder admin", cmd));
 
+        // 4-tick interval (~200 ms) is fast enough to feel live without saturating the scheduler
+        feedbackTask = getServer().getScheduler().runTaskTimer(this, new dev.grimml.mark.MarkFeedback(this), 4L, 4L);
+
         getLogger().info("grimml recorder enabled schema 3");
     }
 
@@ -143,6 +147,9 @@ public final class GrimMLPlugin extends JavaPlugin {
         }
         if (evidence != null) {
             evidence.stop();
+        }
+        if (feedbackTask != null) {
+            feedbackTask.cancel();
         }
         if (grimFlushTask != null) {
             grimFlushTask.cancel();
