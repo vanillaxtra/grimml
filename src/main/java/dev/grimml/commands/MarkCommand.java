@@ -158,6 +158,15 @@ public final class MarkCommand implements SubCommand {
                 }
                 return out;
             }
+            if (key.equalsIgnoreCase("client-name")) {
+                List<String> out = new ArrayList<>();
+                for (String n : plugin.taxonomy().clientNames) {
+                    if (n.regionMatches(true, 0, val, 0, val.length())) {
+                        out.add("client-name=" + n);
+                    }
+                }
+                return out;
+            }
             if (spec != null) {
                 SettingSpec s = spec.settings.get(key);
                 if (s == null) {
@@ -183,6 +192,9 @@ public final class MarkCommand implements SubCommand {
         }
         List<String> keys = new ArrayList<>();
         keys.add("expected=");
+        if (!alreadySet(args, "client-name")) {
+            keys.add("client-name=");
+        }
         if (spec != null) {
             for (String k : spec.settings.keySet()) {
                 if (!alreadySet(args, k)) {
