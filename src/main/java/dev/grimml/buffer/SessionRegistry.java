@@ -27,9 +27,15 @@ public final class SessionRegistry {
             long anonId = Anonymizer.anonId(player.getUniqueId(), config.anonymizeSalt());
             int entityId = player.getEntityId();
             PlayerRingBuffer buf = new PlayerRingBuffer(sessionId, anonId, entityId, config.ringCapacity(), config.eventRingCapacity(), clock);
+            buf.markOnly = config.markOnly();
             entities.put(entityId, u, anonId);
             return buf;
         });
+    }
+
+    // call after config reload to apply the current recording-mode to live sessions
+    public void propagateMarkOnly(boolean markOnly) {
+        buffers.values().forEach(b -> b.markOnly = markOnly);
     }
 
     public PlayerRingBuffer get(UUID uuid) {
