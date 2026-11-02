@@ -54,3 +54,22 @@ MARKER_INTERRUPTED = 2
 
 VALID_PARTIAL = 1
 VALID_LAG = 1 << 1
+VALID_DEATH = 1 << 2
+VALID_RESPAWN = 1 << 3
+VALID_TELEPORT = 1 << 4
+VALID_SETBACK = 1 << 5
+VALID_WORLD = 1 << 6
+VALID_GAMEMODE = 1 << 7
+VALID_VANISH = 1 << 8
+
+VALID_FLAGS = (
+    ("valid_partial", VALID_PARTIAL),
+    ("valid_lag", VALID_LAG),
+    ("valid_death", VALID_DEATH),
+    ("valid_respawn", VALID_RESPAWN),
+    ("valid_teleport", VALID_TELEPORT),
+    ("valid_setback", VALID_SETBACK),
+    ("valid_world", VALID_WORLD),
+    ("valid_gamemode", VALID_GAMEMODE),
+    ("valid_vanish", VALID_VANISH),
+)

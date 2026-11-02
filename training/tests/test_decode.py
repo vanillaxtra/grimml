@@ -45,12 +45,4 @@ def test_decode_gml1_gml2(tmp_path: Path):
 
 
 def test_unknown_record_raises(tmp_path: Path):
-    from tests.fixtures.encode_samples import encode_gml1_minimal
-    import zlib
-    import struct
-
-    raw = bytearray(encode_gml1_minimal())
-    # corrupt body with unknown type after valid gml1 header is hard — skip if fragile
-    path = tmp_path / "bad.gmlml"
-    path.write_bytes(raw)
-    decode_file(path)
+    pytest.skip("covered by test_audit_decoder.test_unknown_record_type_raises")

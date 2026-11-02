@@ -103,9 +103,8 @@ def _decode_gml1(stream: BytesIO, window_key: str, file_name: str) -> dict:
         "pe_version": None,
         "taxonomy_version": None,
         "taxonomy_hash": None,
-        "valid_partial": None,
-        "valid_lag": None,
     }
+    win.update({name: None for name, _bit in R.VALID_FLAGS})
     return {"window": win, "frames": frames, "events": events, "markers": markers}
 
 
@@ -199,7 +198,7 @@ def _decode_gml23(stream: BytesIO, window_key: str, schema: int, file_name: str)
         "pe_version": pe_version,
         "taxonomy_version": tax_ver,
         "taxonomy_hash": tax_hash,
-        "valid_partial": bool(validity & R.VALID_PARTIAL) if validity else False,
-        "valid_lag": bool(validity & R.VALID_LAG) if validity else False,
     }
+    for name, bit in R.VALID_FLAGS:
+        win[name] = bool(validity & bit)
     return {"window": win, "frames": frames, "events": events, "markers": markers}

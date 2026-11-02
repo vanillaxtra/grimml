@@ -105,6 +105,14 @@ def encode_gml3_selfcheck() -> bytes:
     return out.getvalue()
 
 
+def encode_gml3_with_validity(validity: int) -> bytes:
+    raw = bytearray(encode_gml3_selfcheck())
+    # magic(4)+schema(1)+fight(8)+window(8)+role+trigger+label(3) = 24; validity is uint16
+    off = 4 + 1 + 8 + 8 + 3
+    struct.pack_into(">H", raw, off, validity & 0xFFFF)
+    return bytes(raw)
+
+
 def encode_gml1_minimal() -> bytes:
     rec = BytesIO()
     rec.write(bytes([R.ROTATION]))
