@@ -2,6 +2,8 @@
 
 Python package under `training/`. Mixed unsorted `.gmlml` dumps are expected: cheat vs legit is inside MARKER records, not folders.
 
+Leakage/eval audit: [AUDIT.md](AUDIT.md) (2026-11-02). All checklist FAILs have tests.
+
 Legend: ✅ done · 🔶 partial · ⬜ todo
 
 ## ingest (80GB mixed dump)
