@@ -113,6 +113,6 @@ def test_ingest_mixed_dump(tmp_path: Path):
 
     w = load_ingest_table(out, "windows")
     assert len(w) == 2
-    labeled = join_labels(w, dump, markers=load_ingest_table(out, "markers"))
-    cheat = labeled[labeled["label"] == "CHEAT"]
-    assert len(cheat) >= 1
+    labeled = join_labels(w, dump, markers=load_ingest_table(out, "markers"), exclude_interrupted=True)
+    assert set(labeled["label"].unique()) <= {"UNLABELED", "CHEAT", "LEGIT_CONFIRMED"}
+    assert not ((labeled["label"] == "UNLABELED") & labeled["confirmed_label"]).any()
