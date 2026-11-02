@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-import math
-
 import numpy as np
 import pandas as pd
 
-GRIM_FEATURE_PREFIXES = ("grim_",)
-SNAP_YAW_CENTI = 1500
+from grimml_train.features.forbidden import GRIM_FEATURE_PREFIXES, assert_no_forbidden_features
+
 NAN = float("nan")
+SNAP_YAW_CENTI = 1500
+
+# combat kinematics only; identity/grim excluded. ping/jitter watched as confounds (C5)
 FEATURE_COLUMNS = [
-    "frame_count",
-    "event_count",
     "yaw_vel_mean",
     "yaw_vel_std",
     "yaw_vel_abs_mean",
@@ -27,7 +26,7 @@ FEATURE_COLUMNS = [
     "click_gap_cv",
     "ping_ms",
     "jitter_ms",
-    "mspt_start_centi",
+    "frame_count",
 ]
 
 
@@ -54,13 +53,15 @@ def _gcd_grid(deltas: np.ndarray) -> float:
 def features_from_decoded(decoded: dict) -> dict:
     frames = decoded.get("frames") or []
     events = decoded.get("events") or []
+    # labels/markers are not read here
+    events = [e for e in events if e.get("event_type") not in ("marker", "marker_kv")]
     schema = decoded.get("window", {}).get("schema_version", 0)
     yaw = _arr([f.get("yaw_centi") for f in frames if f.get("yaw_centi") is not None])
     pitch = _arr([f.get("pitch_centi") for f in frames if f.get("pitch_centi") is not None])
     xs = _arr([f.get("x_milli") for f in frames if f.get("x_milli") is not None])
-    ys = _arr([f.get("y_milli") for f in frames if f.get("y_milli") is not None])
     zs = _arr([f.get("z_milli") for f in frames if f.get("z_milli") is not None])
     flags = [f.get("flags") for f in frames]
+    acks = [f.get("ack_tick") for f in frames if f.get("ack_tick") not in (None, 0)]
 
     row = {
         "frame_count": len(frames),
@@ -79,8 +80,9 @@ def features_from_decoded(decoded: dict) -> dict:
         "cps": NAN,
         "click_gap_mean_ms": NAN,
         "click_gap_cv": NAN,
-        "grim_flag_count": 0,
         "has_xyz": bool(xs.size and schema >= 2),
+        "timing_ack_compensated": bool(acks),
+        "gml1_xyz_nan": schema == 1,
     }
     if yaw.size >= 2:
         dy = np.diff(yaw)
@@ -103,6 +105,8 @@ def features_from_decoded(decoded: dict) -> dict:
     known = [1 for f in flags if f is not None]
     if known:
         row["on_ground_frac"] = float(len(grounded) / len(known))
+    elif schema < 2:
+        row["on_ground_frac"] = NAN
 
     attacks = [e for e in events if e.get("event_type") == "attack"]
     row["attack_count"] = len(attacks)
@@ -118,8 +122,6 @@ def features_from_decoded(decoded: dict) -> dict:
             span = float((nanos.max() - nanos.min()) / 1e9)
             if span > 0:
                 row["cps"] = float((nanos.size - 1) / span)
-    row["grim_flag_count"] = sum(1 for e in events if e.get("event_type") == "grim_flag")
-    _ = math, ys
     return row
 
 
@@ -130,7 +132,6 @@ def extract_window_features(
     exclude_grim_features: bool = True,
     weak_label_mask: pd.Series | None = None,
 ) -> pd.DataFrame:
-    # kept for the old two-step path; ingest uses features_from_decoded instead
     if windows.empty:
         return pd.DataFrame()
     grouped_f = {k: g.to_dict("records") for k, g in frames.groupby("window_key")} if not frames.empty else {}
@@ -146,12 +147,9 @@ def extract_window_features(
             }
         )
         feat["window_key"] = wk
-        feat["schema_version"] = w.get("schema_version")
         feat["ping_ms"] = w.get("ping_ms")
         feat["jitter_ms"] = w.get("jitter_ms")
         rows.append(feat)
     feat = pd.DataFrame(rows)
-    if exclude_grim_features and weak_label_mask is not None and weak_label_mask.any():
-        drop = [c for c in feat.columns if any(c.startswith(p) for p in GRIM_FEATURE_PREFIXES)]
-        feat.loc[weak_label_mask.reindex(feat.index, fill_value=False), drop] = np.nan
+    assert_no_forbidden_features([c for c in feat.columns if c != "window_key"], allow_grim=not exclude_grim_features)
     return feat
