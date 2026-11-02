@@ -1,0 +1,13 @@
+seed: 42
+# unsorted dump of .gmlml files is fine — labels live inside MARKER records
+recordings_dir: D:/grimml-dump
+sidecar_dir: D:/grimml-dump
+out_dir: out
+marker_trim_seconds: 0.5
+exclude_grim_features_when_weak_labels: true
+workers: 0
+shard_size: 4000
+keep_unlabeled: true
+keep_frames: false
+skip_bad_files: true
+resume: true

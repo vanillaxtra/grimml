@@ -147,14 +147,15 @@ Most capture work is **implemented in code**; what’s left is verification, map
 
 ---
 
-## ⬜ Training pipeline (`grimml-train`)
+## 🔶 Training pipeline (`training/`)
 
-- [ ] `.gmlml` decoder → parquet (all GML versions)
-- [ ] Label joiner (roster + markers + sidecars)
-- [ ] Data inventory report
-- [ ] Feature extraction + grouped splits + LightGBM baseline
-- [ ] Eval: FP rate first, Bedrock/ping/skill/client breakdowns
-- [ ] Per-player aggregation, multi-task heads, ONNX + parity test
+See **`training/TODOtraining.md`** for detail.
+
+- [x] `.gmlml` decoder → parquet (GML1/GML2/GML3) in `training/grimml_train/decode/`
+- [x] Label joiner (sidecars + priority rules) — marker time-range trim 🔶
+- [x] Inventory report (basic)
+- [x] Feature extraction + grouped splits + LightGBM baseline (minimal)
+- [ ] Eval breakdowns, multi-task, grouped CV, full ONNX parity
 
 ---
 
@@ -181,7 +182,7 @@ Most capture work is **implemented in code**; what’s left is verification, map
 |---|---|---|
 | **M1: Recorder live** | ✅ **you:** deployed all servers, perf OK | Formal bot benchmark + map files still optional |
 | **M2: Labels working** | 🔶 pilot cheat marks in progress | Roster + legit marks + full operator schedule still open |
-| **M3: First model** | ⬜ no `grimml-train` | Beats baseline on held-out operator **and** client |
+| **M3: First model** | 🔶 `training/` scaffold | Beats baseline on held-out operator **and** client |
 | **M4: Alert-only** | ⬜ | Staff reviewing live alerts |
 | **M5: Punishments** | ⬜ | FP rate holds on real traffic |
 

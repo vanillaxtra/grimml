@@ -20,7 +20,7 @@ Rule-based anticheats like Grim are good at catching movement and protocol cheat
 - **Anonymized:** SHA-256 salted player ids, random session ids; sidecars use anon ids only.
 - **Performance:** seqlock rings, single async writer, drop-newest under load, MSPT and disk-cap auto-pause.
 
-Sibling repo **grimml-synth** (Python) generates synthetic labeled windows for pretraining; **grimml-train** is not in this repo yet.
+Sibling repo **grimml-synth** (Python) generates synthetic pretraining windows. The **training/** folder in this repo holds the decode → train pipeline (`TODOtraining.md`).
 
 ## Requirements
 
@@ -104,7 +104,7 @@ More detail: [docs/architecture.md](docs/architecture.md), [docs/decisions.md](d
 
 - No trained model, ONNX inference, alerts, or punishments.
 - No Folia-aware schedulers yet (Paper single-region scheduler).
-- Full multi-version `.gmlml` decoder for training belongs in **grimml-train** (not started).
+- Full training/inference automation lives under **`training/`** (see `training/TODOtraining.md`); alert-only server plugin is still out of scope.
 
 Open bugs and quirks: [docs/known-issues.md](docs/known-issues.md).
 
