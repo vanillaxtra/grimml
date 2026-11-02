@@ -28,6 +28,8 @@ This is where i can keep track of the different clients i have run cheats on and
 | 02/11/26 | Auto W Tap | CHANCE:100 HOLD_LENGTH_MIN:100 HOLD_LENGTH_MAX:200 REACTION_TIME_MIN:10 REACTION_TIME_MAX:30 | 2:46 | m56635106 | notauthorised |
 |  |  |  |  |  |  |
 | 02/11/26 | Wind Charge Aura | REACH:2.95 HUMANIZED:TRUE | 1:59 | m126182c9 | notauthorised | 
+|  |  |  |  |  |  |
+| 02/11/26 | Auto Mace | STUNSLAM:TRUE CHANCE:100 SILENT_AIM:TRUE SWAP_BACK:TRUE | 7:21 | mc8bdb2be | notauthorised | 
 
 
 ## Doomsday
