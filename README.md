@@ -11,7 +11,7 @@ Rule-based anticheats like Grim are good at catching movement and protocol cheat
 
 ## Features
 
-- **Combat windows** with rolling pre/post buffer (configurable). Optional **`recording-mode: mark-only`** so windows flush only while `/grimml mark` is open (packets still buffer).
+- **Combat windows** with rolling pre/post buffer (configurable). Optional **`recording-mode: mark-only`** so `.gmlml` files are written only for the marked player while `/grimml mark` is open (everyone still buffers packets).
 - **GML3 capture:** per-tick frames (position, rotation, input flags, ping, ack tick), fight-linked attacker/target/bystander snapshots, attacks with target anon ids, damage, swings, use-item, inventory/window, shield/totem/knockback, block place, setbacks, markers, and more.
 - **Staff labeling:** `taxonomy.yml` defines clients/modules/settings; `/grimml mark start` writes time-range MARKER records with optional `client-name=meteor` (or any free text) plus module settings.
 - **Live mark feedback:** marked players see an action bar with label/module/client name and data-quality hints (ping, jitter, mspt, frame count).
@@ -68,7 +68,7 @@ All commands need `grimml.admin` (op by default). Console/RCON supported where n
 | Key | Default | Meaning |
 |---|---|---|
 | `enabled` | `true` | master switch |
-| `recording-mode` | `auto` | `mark-only` = flush windows only during an open mark segment |
+| `recording-mode` | `auto` | `mark-only` = `.gmlml` only for the marked player during an open mark |
 | `anonymize-salt` | `change-me` | player id hashing salt |
 | `pre-combat-seconds` / `post-combat-seconds` | `5` / `2` | combat window timing |
 | `ring-capacity` / `event-ring-capacity` | `160` / `128` | per-player buffers |

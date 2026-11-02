@@ -32,7 +32,7 @@ Legend: ✅ done in repo · 🔶 partial / needs verify · ⬜ not done · 👤 
 - [x] Auto-close open marks on quit/disable with **interrupted**
 - [x] Learn Grim check names from `FlagEvent` → `grim-checks.json`
 - [x] `label_source` on windows (staff / ban-backfill / grim-weak / replay-confirmed; protected labels not overwritten)
-- [x] **`recording-mode: mark-only`** — no auto combat flush unless a mark segment is open (events still buffer)
+- [x] **`recording-mode: mark-only`** — `.gmlml` only for the marked player while a mark is open (events still buffer for everyone)
 - [x] **Mark action bar** — live quality hint (ping, jitter, mspt, frame count, label/module/client-name) while mark is open
 
 ---

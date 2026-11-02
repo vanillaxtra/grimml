@@ -1,5 +1,11 @@
 # decisions
 
+## 2026-11-02 - mark-only writes .gmlml only for the marked player
+
+- `recording-mode: mark-only` used to still snapshot the marked player's target and nearby players as separate files (ROLE_DEFENDER / ROLE_BYSTANDER)
+- assembler now skips any buffer without `markActive` in mark-only, and does not offer nearby copies
+- auto mode is unchanged: attacker + defender + bystanders
+
 ## 2026-11-02 - mark sessions flush the ring for the whole open duration
 
 - `/grimml mark start` used to call `markCombat` with only `post-combat-seconds` (2s), so a 4-minute cheat session wrote ~one 8s window

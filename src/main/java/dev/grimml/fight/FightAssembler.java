@@ -35,18 +35,23 @@ public final class FightAssembler {
         int maxBy = Math.min(config.bystanderMax(), nearby.length);
 
         for (PlayerRingBuffer attacker : registry.allBuffers()) {
+            if (!shouldFlush(attacker.markOnly, attacker.markActive, attacker.isCombatActive(now), attacker.lastAttackNanos)) {
+                continue;
+            }
             if (attacker.markActive) {
                 attacker.combatActiveUntilNanos = now + 1_000_000_000L;
-            } else if (!attacker.isCombatActive(now) || attacker.lastAttackNanos == 0L) {
-                continue;
-            } else if (now > attacker.combatActiveUntilNanos && now > attacker.lastAttackNanos + pre) {
-                continue;
             }
             long fightId = attacker.fightId;
             if (fightId == 0L) {
                 fightId = ThreadLocalRandom.current().nextLong() ^ now;
                 attacker.fightId = fightId;
             }
+
+            offer(attacker, RecordTypes.ROLE_ATTACKER, fightId, now, pre);
+            if (!includeNearby(attacker.markOnly)) {
+                continue;
+            }
+
             PlayerRingBuffer defender = attacker.lastTargetEntityId == 0
                     ? null
                     : registry.byEntityId(attacker.lastTargetEntityId);
@@ -81,7 +86,6 @@ public final class FightAssembler {
                 }
             }
 
-            offer(attacker, RecordTypes.ROLE_ATTACKER, fightId, now, pre);
             if (defender != null) {
                 offer(defender, RecordTypes.ROLE_DEFENDER, fightId, now, pre);
             }
@@ -91,6 +95,21 @@ public final class FightAssembler {
                 nearby[i] = null;
             }
         }
+    }
+
+    // mark-only: only the open /grimml mark account, never nearby players
+    static boolean shouldFlush(boolean markOnly, boolean markActive, boolean combatActive, long lastAttackNanos) {
+        if (markOnly) {
+            return markActive;
+        }
+        if (markActive) {
+            return true;
+        }
+        return combatActive && lastAttackNanos != 0L;
+    }
+
+    static boolean includeNearby(boolean markOnly) {
+        return !markOnly;
     }
 
     private void offer(PlayerRingBuffer buf, byte role, long fightId, long now, long pre) {

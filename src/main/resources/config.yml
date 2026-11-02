@@ -83,8 +83,8 @@ ban-labels:
     - antikb
     - anti kb
 
-# recording-mode: auto  = normal (combat triggers flush windows)
-#                mark-only = windows only flush when /grimml mark is active
+# recording-mode: auto  = combat windows for attacker + target + nearby
+#                mark-only = .gmlml files only for the marked player, only while /grimml mark is open
 recording-mode: auto
 
 # Weak grim-auto labels. never cheat_confirmed. kill switch below.

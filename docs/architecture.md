@@ -19,7 +19,7 @@ one folder per function, one file per feature
 - `buffer/PlayerRingBuffer.java` - live state plus rings
 - `buffer/SessionRegistry.java` - uuid map
 - `buffer/CombatSnapshot.java` - pooled copy for the writer
-- `fight/FightAssembler.java` - writer-thread attacker/target/bystander snapshots
+- `fight/FightAssembler.java` - writer-thread attacker/target/bystander snapshots; mark-only skips everyone except the open mark
 - `capture/` - PacketEvents handlers (flying, input, attack, held, inventory, actions, outgoing)
 - `listeners/DamageListener.java`, `listeners/ValidityListener.java`
 - `item/ItemCategories.java`, `item/ItemUtil.java`
