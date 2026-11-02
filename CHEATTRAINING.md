@@ -1,5 +1,7 @@
 # grimml
 
+This is where i can keep track of the different clients i have run cheats on and what settings so that when i eventually get through to training the data, i can find them from file name if there are any issues. i will be able to tell exactly what cheat / module is the issue. I plan in the future for this to fill up with lots of different modules and clients as you can see i added a few for the moment and am testing prestige client currently
+
 ## Prestige
 | Date | Module | Settings | Duration | ID | By |
 | -------- | ------- | ------- | ------- | ------- | ------- |
