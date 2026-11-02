@@ -14,6 +14,10 @@
 |  |  |  |  |  |  |
 | 02/11/26 | Auto Spear Swap | SWAP_DELAY_MIN:20 SWAP_DELAY_MAX:70 SWAP_BACK:TRUE | 3:10 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_f37313a1.gmlml | notauthorised |
 | 02/11/26 | Auto Spear Swap | SWAP_DELAY_MIN:0 SWAP_DELAY_MAX:0 SWAP_BACK:TRUE | 1:46 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_dccadfce.gmlml | notauthorised |
+|  |  |  |  |  |  |
+| 02/11/26 | Auto Spear Swap | WIND_CHARGE_DELAY:120 MOVING_DELAY:80 LEGIT_ROTATE:FALSE | 1:10 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_f519891a.gmlml | notauthorised |
+| 02/11/26 | Auto Spear Swap | WIND_CHARGE_DELAY:120 MOVING_DELAY:80 LEGIT_ROTATE:TRUE | 0:53 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_2b4138d1.gmlml | notauthorised |
+| 02/11/26 | Auto Spear Swap | WIND_CHARGE_DELAY:50 MOVING_DELAY:50 LEGIT_ROTATE:TRUE | 1:07 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_fd015117.gmlml | notauthorised |
 
 ## Doomsday
 | Date | Module | Settings | Duration | ID | By |
