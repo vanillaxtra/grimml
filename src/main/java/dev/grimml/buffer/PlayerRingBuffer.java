@@ -72,6 +72,8 @@ public final class PlayerRingBuffer {
     public volatile int grimCheckHash;
     // when true only TRIGGER_MARKER activates flush; events still write to ring
     public volatile boolean markOnly;
+    // open /grimml mark segment: writer keeps dumping the ring until end
+    public volatile boolean markActive;
 
     private int orderInTick;
     private int orderTick = Integer.MIN_VALUE;

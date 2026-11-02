@@ -231,6 +231,7 @@ public final class GrimMLPlugin extends JavaPlugin {
         long post = config.postCombatSeconds() * 1_000_000_000L;
         MarkerWriter.write(buf, clock, writer, post, RecordTypes.MARKER_END,
                 prev.labelId, prev.clientId, prev.moduleId, java.util.List.of(prev.kv), interrupted);
+        buf.markActive = false;
     }
 
     public void closeOpenMarks(boolean interrupted) {
@@ -245,6 +246,7 @@ public final class GrimMLPlugin extends JavaPlugin {
             }
             MarkerWriter.write(buf, clock, writer, post, RecordTypes.MARKER_END,
                     open.labelId, open.clientId, open.moduleId, java.util.List.of(open.kv), interrupted);
+            buf.markActive = false;
         }
     }
 

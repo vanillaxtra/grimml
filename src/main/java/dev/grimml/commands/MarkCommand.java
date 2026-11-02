@@ -58,6 +58,7 @@ public final class MarkCommand implements SubCommand {
             }
             MarkerWriter.write(buf, plugin.clock(), plugin.writer(), post, RecordTypes.MARKER_END,
                     prev.labelId, prev.clientId, prev.moduleId, List.of(prev.kv), false);
+            buf.markActive = false;
             GrimMLCommand.msg(sender, "<green>marked end " + target.getName());
             return;
         }
@@ -112,6 +113,7 @@ public final class MarkCommand implements SubCommand {
         }
         MarkerWriter.write(buf, plugin.clock(), plugin.writer(), post, RecordTypes.MARKER_START,
                 labelId, clientId, moduleId, kv, false);
+        buf.markActive = true;
         GrimMLCommand.msg(sender, "<green>marked start " + target.getName() + " " + Labels.name(labelId)
                 + (module.isEmpty() ? "" : " " + module));
     }

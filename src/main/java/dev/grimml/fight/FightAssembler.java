@@ -35,10 +35,11 @@ public final class FightAssembler {
         int maxBy = Math.min(config.bystanderMax(), nearby.length);
 
         for (PlayerRingBuffer attacker : registry.allBuffers()) {
-            if (!attacker.isCombatActive(now) || attacker.lastAttackNanos == 0L) {
+            if (attacker.markActive) {
+                attacker.combatActiveUntilNanos = now + 1_000_000_000L;
+            } else if (!attacker.isCombatActive(now) || attacker.lastAttackNanos == 0L) {
                 continue;
-            }
-            if (now > attacker.combatActiveUntilNanos && now > attacker.lastAttackNanos + pre) {
+            } else if (now > attacker.combatActiveUntilNanos && now > attacker.lastAttackNanos + pre) {
                 continue;
             }
             long fightId = attacker.fightId;
@@ -94,7 +95,10 @@ public final class FightAssembler {
 
     private void offer(PlayerRingBuffer buf, byte role, long fightId, long now, long pre) {
         CombatSnapshot snap = writer.borrow();
-        long windowStart = Math.max(0L, buf.lastAttackNanos - pre);
+        // mark sessions dump the whole ring every writer cycle (~8s of frames, overlapping)
+        long windowStart = buf.markActive
+                ? now - (long) config.ringCapacity() * 50_000_000L
+                : Math.max(0L, buf.lastAttackNanos - pre);
         snap.reset();
         if (!snap.copyFrom(buf, windowStart, now)) {
             writer.giveBack(snap);

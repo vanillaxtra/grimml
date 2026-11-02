@@ -1,5 +1,12 @@
 # decisions
 
+## 2026-11-02 - mark sessions flush the ring for the whole open duration
+
+- `/grimml mark start` used to call `markCombat` with only `post-combat-seconds` (2s), so a 4-minute cheat session wrote ~one 8s window
+- `PlayerRingBuffer.markActive` stays true until `mark end` / quit / disable; the writer copies the full frame ring every `writer-interval-ms` for that player
+- one `.gmlml` per flush (same anon+session, new random suffix). a 4 min mark at 2s interval is ~120 overlapping ~8s files covering the whole segment, not one file
+- `recording-mode: mark-only` still suppresses combat triggers; markActive is what keeps those long sessions recording
+
 ## 2026-11-01 - mark-only mode and action bar feedback
 
 - `recording-mode: mark-only` in config causes `PlayerRingBuffer.markCombat()` to silently return for any trigger other than `TRIGGER_MARKER`; events still write to the ring so pre-buffer is intact when a mark starts
