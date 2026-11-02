@@ -13,16 +13,11 @@ This is where i can keep track of the different clients i have run cheats on and
 | 02/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 3:57 | mf2dd0754 | notauthorised |
 |  |  |  |  |  |  |
 | 02/11/26 | Auto Mace | HORS_TARGET_DISTANCE:5.0 MIN_FALL_DISTANCE:10 STUNSLAM:FALSE SILENT_AIM:TRUE SWAP_BACK:FALSE | 4:36 | m89ff4396 | notauthorised |
-| 02/11/26 | Auto Mace | HORS_TARGET_DISTANCE:5.0 MIN_FALL_DISTANCE:10 STUNSLAM:FALSE SILENT_AIM:TRUE SWAP_BACK:TRUE | 4:08 | 2026-11-02_122vv30244253_3kzj68rezian7_6432e19c.gmlml | notauthorised |
 |  |  |  |  |  |  |
-| 02/11/26 | Auto Spear Swap | SWAP_DELAY_MIN:20 SWAP_DELAY_MAX:70 SWAP_BACK:TRUE | 3:10 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_f37313a1.gmlml | notauthorised |
-| 02/11/26 | Auto Spear Swap | SWAP_DELAY_MIN:0 SWAP_DELAY_MAX:0 SWAP_BACK:TRUE | 1:46 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_dccadfce.gmlml | notauthorised |
+| 02/11/26 | Auto Lunge | SWAP_DELAY_MIN:20 SWAP_DELAY_MAX:70 SWAP_BACK:TRUE | 2:18 | m3ddf06f9 | notauthorised |
+| 02/11/26 | Auto Lunge | SWAP_DELAY_MIN:0 SWAP_DELAY_MAX:0 SWAP_BACK:TRUE | 2:13 | mb6a1b94b | notauthorised |
 |  |  |  |  |  |  |
-| 02/11/26 | Auto Spear Swap | WIND_CHARGE_DELAY:120 MOVING_DELAY:80 LEGIT_ROTATE:FALSE | 1:10 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_f519891a.gmlml | notauthorised |
-| 02/11/26 | Auto Spear Swap | WIND_CHARGE_DELAY:120 MOVING_DELAY:80 LEGIT_ROTATE:TRUE | 0:53 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_2b4138d1.gmlml | notauthorised |
-| 02/11/26 | Auto Spear Swap | WIND_CHARGE_DELAY:50 MOVING_DELAY:50 LEGIT_ROTATE:TRUE | 1:07 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_fd015117.gmlml | notauthorised |
-|  |  |  |  |  |  |
-| 02/11/26 | Auto Breach Swap |  | 1:50 | 2026-11-02_3a820t8u0df9g_2fi0gty2smjf5_25a2f721.gmlml | notauthorised | 
+| 02/11/26 | Auto Breach Swap | CHANCE:100 | 2:00 | m2fe00ef9 | notauthorised | 
 |  |  |  |  |  |  |
 | 02/11/26 | Auto Diagonal Pearl Catch | SWAP_BACK:TRUE LEGIT_ROTATE:TRUE | 1:19 | 2026-11-02_3a820t8u0df9g_2fi0gty2smjf5_04be09f7.gmlml | notauthorised |
 |  |  |  |  |  |  |
