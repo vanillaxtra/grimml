@@ -39,6 +39,9 @@ This is where i can keep track of the different clients i have run cheats on and
 | 02/11/26 | Auto Pearl Catch | WIND_CHARGE_DELAY:120 MOVING_DELAY:80 LEGIT_ROTATE:FALSE SMOOTHING:0.0 | 1:43 | m2bf596fd | notauthorised |
 | 02/11/26 | Auto Pearl Catch | WIND_CHARGE_DELAY:50 MOVING_DELAY:50 LEGIT_ROTATE:FALSE SMOOTHING:0.0 | 1:45 | m626f669b | notauthorised |
 | 02/11/26 | Auto Pearl Catch | WIND_CHARGE_DELAY:50 MOVING_DELAY:50 LEGIT_ROTATE:TRUE SMOOTHING:0.5 | 2:23 | m426bed25 | notauthorised |
+|  |  |  |  |  |  |
+| 02/11/26 | Auto Diagonal Pearl Catch | WIND_CHARGE_DELAY:50 SILENT_AIM:TRUE LEGIT_ROTATE:FALSE | 3:20 | m85069287 | notauthorised |
+| 02/11/26 | Auto Diagonal Pearl Catch | WIND_CHARGE_DELAY:50 SILENT_AIM:TRUE LEGIT_ROTATE:TRUE | 4:21 | m1bd74715 | notauthorised |
 
 
 ## Doomsday
