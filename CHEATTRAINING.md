@@ -19,14 +19,13 @@ This is where i can keep track of the different clients i have run cheats on and
 |  |  |  |  |  |  |
 | 02/11/26 | Auto Breach Swap | CHANCE:100 | 2:00 | m2fe00ef9 | notauthorised | 
 |  |  |  |  |  |  |
-| 02/11/26 | Auto Diagonal Pearl Catch | SWAP_BACK:TRUE LEGIT_ROTATE:TRUE | 1:19 | 2026-11-02_3a820t8u0df9g_2fi0gty2smjf5_04be09f7.gmlml | notauthorised |
+| 02/11/26 | Silent Aim | CONTINOUS_TRACKING:FALSE | 2:39 | mb1f6fa34 | notauthorised |
+| 02/11/26 | Silent Aim | CONTINOUS_TRACKING:TRUE | 5:11 | md5e8301b | notauthorised |
 |  |  |  |  |  |  |
-| 02/11/26 | Silent Aim | CONTINOUS_TRACKING:FALSE | 1:19 | 2026-11-02_3a820t8u0df9g_2fi0gty2smjf5_20324e56.gmlml | notauthorised |
-| 02/11/26 | Silent Aim | CONTINOUS_TRACKING:TRUE | 3:12 | 2026-11-02_3a820t8u0df9g_2fi0gty2smjf5_865f26a4.gmlml | notauthorised |
+| 02/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100 | 4:14 | m12b44916 | notauthorised |
+| 02/11/26 | Triggerbot | DELAY_MIN_MS:25 DELAY_MAX_MS:50 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100 | 2:49 | m109c3312 | notauthorised |
 |  |  |  |  |  |  |
-| 02/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100 | 3:38 | 2026-11-02_3a820t8u0df9g_2fi0gty2smjf5_cd4dd0ad.gmlml | notauthorised |
-| 02/11/26 | Triggerbot |  |  |  | notauthorised |
-| 02/11/26 | Triggerbot |  |  |  | notauthorised |
+| 02/11/26 | Auto W Tap | CHANCE:100 HOLD_LENGTH_MIN:100 HOLD_LENGTH_MAX:200 REACTION_TIME_MIN:10 REACTION_TIME_MAX:30 | 2:46 | m56635106 | notauthorised |
 
 
 ## Doomsday
