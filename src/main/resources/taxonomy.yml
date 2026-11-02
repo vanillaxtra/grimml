@@ -44,6 +44,9 @@ modules:
       switch_delay_ms: int
       humanized: [true, false]
       miss_chance: float
+  silent_aim:
+    settings:
+      continous_tracking: [true, false]
 
   stun_slam:
     settings:
@@ -68,8 +71,14 @@ modules:
       wind_charge_delay: int
       swap_back: [true, false]
       legit_rotate: [true, false]
-      
 
+  triggerbot:
+    settings:
+      delay_min_ms: int
+      delay_max_ms: int
+      miss_chance: float
+      cooldown_min_percent: int
+      cooldown_max_percent: int
   auto_mace:
     settings:
       horizontal_target_distance: float
@@ -85,10 +94,6 @@ modules:
     settings:
       offset_ticks: int
       chance: float
-  triggerbot:
-    settings:
-      delay_ms: int
-      jitter: float
   autoclicker:
     settings:
       cps: float
