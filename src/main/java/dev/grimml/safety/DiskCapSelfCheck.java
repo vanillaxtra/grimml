@@ -9,9 +9,9 @@ public final class DiskCapSelfCheck {
     public static void main(String[] args) throws Exception {
         Path dir = Files.createTempDirectory("grimml-disk");
         try {
-            Files.write(dir.resolve("a.gmlml"), new byte[100]);
+            Files.write(dir.resolve("a.gml"), new byte[100]);
             Path nested = Files.createDirectory(dir.resolve("sub"));
-            Files.write(nested.resolve("b.gmlml"), new byte[50]);
+            Files.write(nested.resolve("b.gml"), new byte[50]);
             long size = DiskCapGuard.directorySize(dir);
             long missing = DiskCapGuard.directorySize(dir.resolve("nope"));
             if (size != 150L || missing != 0L) {

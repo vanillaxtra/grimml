@@ -29,7 +29,7 @@ public final class RecordingFiles {
         String name = datePrefix + "_" + Long.toUnsignedString(anonPlayerId, 36)
                 + "_" + Long.toUnsignedString(sessionId, 36)
                 + "_" + UUID.randomUUID().toString().substring(0, 8)
-                + ".gmlml";
+                + ".gml";
         return recordingsDir.resolve(name);
     }
 }
