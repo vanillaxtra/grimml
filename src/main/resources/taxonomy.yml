@@ -56,6 +56,12 @@ modules:
       swap_delay_max: int
       swap_back: [true, false]
 
+  auto_pearl_catch:
+    settings:
+      wind_charge_delay: int
+      moving_delay: int
+      legit_rotate: [true, false]
+
   auto_mace:
     settings:
       horizontal_target_distance: float
