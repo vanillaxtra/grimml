@@ -20,6 +20,9 @@ This is where i can keep track of the different clients i have run cheats on and
 | 02/11/26 | Auto Spear Swap | WIND_CHARGE_DELAY:120 MOVING_DELAY:80 LEGIT_ROTATE:FALSE | 1:10 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_f519891a.gmlml | notauthorised |
 | 02/11/26 | Auto Spear Swap | WIND_CHARGE_DELAY:120 MOVING_DELAY:80 LEGIT_ROTATE:TRUE | 0:53 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_2b4138d1.gmlml | notauthorised |
 | 02/11/26 | Auto Spear Swap | WIND_CHARGE_DELAY:50 MOVING_DELAY:50 LEGIT_ROTATE:TRUE | 1:07 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_fd015117.gmlml | notauthorised |
+|  |  |  |  |  |  |
+| 02/11/26 | Auto Breach Swap |  | 1:50 | 2026-11-02_3a820t8u0df9g_2fi0gty2smjf5_77e06ff6.gmlml | notauthorised |
+
 
 ## Doomsday
 | Date | Module | Settings | Duration | ID | By |
