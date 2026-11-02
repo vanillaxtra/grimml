@@ -36,7 +36,7 @@ public final class GrimFlagHook {
             api = GrimAPIProvider.get();
             grim = api.getGrimPlugin(plugin);
             EventBus bus = api.getEventBus();
-            bus.get(FlagEvent.class).onFlag(grim, (user, check, verbose, cancelled) -> {
+            bus.get(FlagEvent.class).onFlagSupplier(grim, (user, check, verbose, cancelled) -> {
                 try {
                     String name = check.getCheckName();
                     catalog.learn(name);
@@ -83,13 +83,12 @@ public final class GrimFlagHook {
         }
     }
 
-    // main thread only grim getGrimUser takes a player
     public void seedPlayer(Player player) {
         if (api == null || player == null) {
             return;
         }
         try {
-            GrimUser user = api.getGrimUser(player);
+            GrimUser user = api.getGrimUser(player.getUniqueId());
             if (user == null) {
                 return;
             }

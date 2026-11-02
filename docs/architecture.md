@@ -1,6 +1,6 @@
 # grimml - architecture
 
-- **target:** Paper 1.21.1 through 26.x, Java 21 bytecode, Maven
+- **target:** Paper 1.21.11 through 26.3, Java 21 bytecode, Maven (`-Xlint:all -Werror`)
 - **packet capture:** PacketEvents 2.14.0
 - **schema:** GML3 (schema 3); GML1/GML2 files stay identifiable by magic, not rewritten
 - **depends:** packetevents (hard, used directly at enable)
@@ -43,7 +43,7 @@ flowchart LR
     C[Main tick sampler] -->|staggered bukkit state| B
     D[Damage validity grim] -->|event primitives| B
     E[Writer thread] -->|seqlock copy nearby| F[FightAssembler]
-    F --> G[.gmlml GML3]
+    F --> G[.gml GML3]
     H[grimml-disk] -->|pause if over cap| E
 ```
 

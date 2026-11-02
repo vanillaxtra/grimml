@@ -2,6 +2,8 @@ package dev.grimml.capture;
 
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.item.HashedStack;
+import com.github.retrooper.packetevents.protocol.item.ItemStack;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientClickWindow;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCloseWindow;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerOpenWindow;
@@ -55,9 +57,10 @@ public final class InventoryCapture {
         int tick = clock.tick();
         int ord = buf.nextOrder(tick);
         int mode = pkt.getWindowClickType() == null ? 0 : pkt.getWindowClickType().ordinal();
+        ItemStack carried = pkt.getCarriedHashedStack().map(HashedStack::asItemStack).orElse(ItemStack.EMPTY);
         buf.writeEvent(RecordTypes.CLICK, tick, clock.nsOffset(nanos), ord, nanos,
                 pkt.getWindowId(), pkt.getSlot() | (pkt.getButton() << 16), mode,
-                ItemUtil.category(pkt.getCarriedItemStack()), ItemUtil.nameId(pkt.getCarriedItemStack()), 0);
+                ItemUtil.category(carried), ItemUtil.nameId(carried), 0);
         if (buf.isCombatActive(nanos) || buf.lastAttackNanos != 0L) {
             buf.markCombat(nanos, plugin.config().postCombatSeconds() * 1_000_000_000L, RecordTypes.TRIGGER_CLICK);
         }

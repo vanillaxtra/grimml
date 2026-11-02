@@ -11,7 +11,6 @@ import dev.grimml.buffer.PlayerRingBuffer;
 import dev.grimml.clock.TickClock;
 import org.bukkit.entity.Player;
 
-// netty thread dispatch only primitives written into rings
 public final class PacketListener extends PacketListenerAbstract {
 
     private final GrimMLPlugin plugin;
@@ -56,10 +55,14 @@ public final class PacketListener extends PacketListenerAbstract {
             input.onInput(event, buf);
         } else if (type == PacketType.Play.Client.CLIENT_TICK_END) {
             buf.markClientTickEnd();
+        } else if (type == PacketType.Play.Client.ATTACK) {
+            attack.onAttack(event, buf, clock, nanos);
         } else if (type == PacketType.Play.Client.INTERACT_ENTITY) {
             attack.onInteract(event, buf, clock, nanos);
         } else if (type == PacketType.Play.Client.HELD_ITEM_CHANGE) {
             held.onHeld(event, buf, clock, nanos);
+        } else if (type == PacketType.Play.Client.PUNCH) {
+            actions.onPunch(buf, clock, nanos);
         } else if (type == PacketType.Play.Client.ANIMATION) {
             actions.onSwing(event, buf, clock, nanos);
         } else if (type == PacketType.Play.Client.USE_ITEM) {

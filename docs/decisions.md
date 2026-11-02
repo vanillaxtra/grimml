@@ -1,5 +1,13 @@
 # decisions
 
+## 2026-11-02 - paper 1.21.11 to 26.3 on maven, 26.x capture, no deprecated api
+
+- built against paper-api 1.21.11 and GrimAPI 1.6.0.13, `api-version: '1.21.11'`; compiler runs `-Xlint:all -Werror`
+- 26.1+ sends attacks as `ATTACK` instead of `INTERACT_ENTITY` and 26.3 sends swings as `PUNCH`; both are captured now, before this 26.x recorded no attacks or swings
+- deprecated or obsolete calls replaced: `Attribute.valueOf` by the constants, `getGrimUser(Player)` by `getGrimUser(UUID)`, packetevents `getTarget()` by `getLocation()`, `getCarriedItemStack()` by `getCarriedHashedStack()`, `World#getName()` by `World#getKey()`, Grim `onFlag` by `onFlagSupplier`
+- server log fixes: `taxonomy.yml` and `grim-weights.yml` only saved when missing, GrimAPI not called when GrimAC is absent
+- recordings are named `.gml` instead of `.gmlml`; the format inside is still GML3
+
 ## 2026-11-01 - mark-only mode and action bar feedback
 
 - `recording-mode: mark-only` in config causes `PlayerRingBuffer.markCombat()` to silently return for any trigger other than `TRIGGER_MARKER`; events still write to the ring so pre-buffer is intact when a mark starts

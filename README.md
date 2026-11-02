@@ -1,5 +1,5 @@
 # grimml
-![license](https://img.shields.io/badge/license-MIT-blue) ![java](https://img.shields.io/badge/java-21%2B-orange) ![paper](https://img.shields.io/badge/paper-1.21.1%20--%2026.x-lightgrey) ![status](https://img.shields.io/badge/phase-1%20recorder-yellow) 
+![license](https://img.shields.io/badge/license-MIT-blue) ![java](https://img.shields.io/badge/java-21%2B-orange) ![paper](https://img.shields.io/badge/paper-1.21.11%20--%2026.3-lightgrey) ![status](https://img.shields.io/badge/phase-1%20recorder-yellow) 
 
 A Paper plugin that records anonymized PvP combat data next to [Grim Anticheat](https://github.com/GrimAnticheat/Grim), to build a dataset for machine-learning cheat detection.
 
@@ -22,7 +22,7 @@ Rule-based anticheats like Grim are good at catching movement and protocol cheat
 
 | | |
 |---|---|
-| Server | Paper (or a fork such as Leaf), 1.21.1 through 26.x |
+| Server | Paper (or a fork such as Leaf), 1.21.11 through 26.3 |
 | Java | 21+ |
 | Required plugin | [PacketEvents](https://github.com/retrooper/packetevents) 2.14.0+ |
 | Optional plugins | GrimAC (flag labels), Geyser-Spigot / floodgate (Bedrock flag) |
@@ -75,7 +75,7 @@ All commands need `grimml.admin` (op by default).
 
 ## Output format
 
-Each combat window becomes one file: `<date>_<anonId>_<session>_<rand>.gmlml`. New files use magic `GML2` (schema 2). Existing `GML1` files stay on disk unchanged.
+Each combat window becomes one file: `<date>_<anonId>_<session>_<rand>.gml`. New files use magic `GML2` (schema 2). Existing `GML1` files stay on disk unchanged.
 
 - **Header:** fight/window ids, role, trigger, validity, session/anon ids, wall-clock epoch + nanos, boot id, ping/protocol, kit/server/map, versions.
 - **Body:** Deflate-compressed per-tick frames (delta-encoded positions) plus events (attack, damage, swing, use-item, held-slot, click, place, knockback, totem, shield, marker, grim, …).
@@ -93,7 +93,7 @@ flowchart LR
     C[Main thread sampler] -->|state, ping| B
     D[Grim flag hook] -->|weak labels| B
     B -->|snapshot if in combat| E[Async writer]
-    E -->|compress| F[.gmlml file]
+    E -->|compress| F[.gml file]
 ```
 
 More detail is in [docs/architecture.md](docs/architecture.md) and [docs/decisions.md](docs/decisions.md).

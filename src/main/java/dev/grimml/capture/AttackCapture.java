@@ -1,7 +1,7 @@
 package dev.grimml.capture;
 
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
-import com.github.retrooper.packetevents.protocol.player.InteractionHand;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAttack;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import dev.grimml.GrimMLPlugin;
 import dev.grimml.buffer.PlayerRingBuffer;
@@ -10,6 +10,8 @@ import dev.grimml.format.RecordTypes;
 import dev.grimml.item.ItemCategories;
 
 public final class AttackCapture {
+
+    private static final int HIT_NONE = packHit(0, 0, 0);
 
     private final GrimMLPlugin plugin;
 
@@ -22,22 +24,23 @@ public final class AttackCapture {
         if (pkt.getAction() != WrapperPlayClientInteractEntity.InteractAction.ATTACK) {
             return;
         }
+        record(buf, clock, nanos, pkt.getEntityId(), pkt.isSneaking().orElse(false));
+    }
+
+    public void onAttack(PacketReceiveEvent event, PlayerRingBuffer buf, TickClock clock, long nanos) {
+        var pkt = new WrapperPlayClientAttack(event);
+        record(buf, clock, nanos, pkt.getEntityId(), (buf.liveFlags & RecordTypes.FLAG_SNEAK) != 0);
+    }
+
+    private void record(PlayerRingBuffer buf, TickClock clock, long nanos, int targetId, boolean sneaking) {
         int tick = clock.tick();
         int ord = buf.nextOrder(tick);
-        int targetId = pkt.getEntityId();
         long targetAnon = plugin.registry().entities.anonOf(targetId);
-        int hand = pkt.getHand() == InteractionHand.OFF_HAND ? 1 : 0;
-        int sneak = pkt.isSneaking().orElse(false) ? 1 : 0;
-        int hitPacked = 0;
-        var target = pkt.getTarget();
-        if (target.isPresent()) {
-            var v = target.get();
-            hitPacked = packHit(v.x, v.y, v.z);
-        }
+        int sneak = sneaking ? 1 : 0;
         buf.lastTargetEntityId = targetId;
         buf.lastTargetAnonId = targetAnon;
         buf.writeEvent(RecordTypes.ATTACK, tick, clock.nsOffset(nanos), ord, nanos,
-                targetAnon, targetId, hand | (sneak << 1) | (buf.inv.heldCat() << 8), hitPacked, buf.inv.heldId(), buf.lastAckTx);
+                targetAnon, targetId, (sneak << 1) | (buf.inv.heldCat() << 8), HIT_NONE, buf.inv.heldId(), buf.lastAckTx);
         long post = plugin.config().postCombatSeconds() * 1_000_000_000L;
         byte trigger = RecordTypes.TRIGGER_ATTACK;
         if (buf.inv.heldCat() == ItemCategories.MACE && buf.fallMilli > 2000) {

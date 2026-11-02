@@ -18,7 +18,6 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.Collection;
 
-// one tick heartbeat for the clock plus a staggered slice of bukkit state
 public final class StateSampler {
 
     private final GrimMLPlugin plugin;
@@ -110,20 +109,23 @@ public final class StateSampler {
             buf.vehicleId = 0;
             buf.vehicleType = 0;
         }
-        buf.attrDamage = attr(player, "GENERIC_ATTACK_DAMAGE", "ATTACK_DAMAGE");
-        buf.attrSpeed = attr(player, "GENERIC_ATTACK_SPEED", "ATTACK_SPEED");
-        buf.attrRange = attr(player, "PLAYER_ENTITY_INTERACTION_RANGE", "ENTITY_INTERACTION_RANGE");
-        buf.attrMove = attr(player, "GENERIC_MOVEMENT_SPEED", "MOVEMENT_SPEED");
-        buf.attrJump = attr(player, "GENERIC_JUMP_STRENGTH", "JUMP_STRENGTH");
-        buf.attrScale = attr(player, "GENERIC_SCALE", "SCALE");
-        buf.attrKbRes = attr(player, "GENERIC_KNOCKBACK_RESISTANCE", "KNOCKBACK_RESISTANCE");
-        buf.attrGravity = attr(player, "GENERIC_GRAVITY", "GRAVITY");
+        buf.attrDamage = attr(player, Attribute.ATTACK_DAMAGE);
+        buf.attrSpeed = attr(player, Attribute.ATTACK_SPEED);
+        buf.attrRange = attr(player, Attribute.ENTITY_INTERACTION_RANGE);
+        buf.attrMove = attr(player, Attribute.MOVEMENT_SPEED);
+        buf.attrJump = attr(player, Attribute.JUMP_STRENGTH);
+        buf.attrScale = attr(player, Attribute.SCALE);
+        buf.attrKbRes = attr(player, Attribute.KNOCKBACK_RESISTANCE);
+        buf.attrGravity = attr(player, Attribute.GRAVITY);
         packEffects(player, buf);
         sampleGrim(player, buf);
-        plugin.writer().setWorldName(player.getWorld().getName());
+        plugin.writer().setWorldName(player.getWorld().getKey().asString());
     }
 
     private void sampleGrim(Player player, PlayerRingBuffer buf) {
+        if (plugin.grimHook() == null || !plugin.grimHook().active()) {
+            return;
+        }
         try {
             GrimUser user = GrimAPIProvider.get().getGrimUser(player.getUniqueId());
             if (user == null) {
@@ -135,18 +137,9 @@ public final class StateSampler {
         }
     }
 
-    private static int attr(Player player, String... names) {
-        for (String name : names) {
-            try {
-                Attribute a = Attribute.valueOf(name);
-                var inst = player.getAttribute(a);
-                if (inst != null) {
-                    return (int) Math.round(inst.getValue() * 1000);
-                }
-            } catch (IllegalArgumentException ignored) {
-            }
-        }
-        return 0;
+    private static int attr(Player player, Attribute a) {
+        var inst = player.getAttribute(a);
+        return inst == null ? 0 : (int) Math.round(inst.getValue() * 1000);
     }
 
     private static void packEffects(Player player, PlayerRingBuffer buf) {

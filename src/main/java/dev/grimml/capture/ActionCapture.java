@@ -35,6 +35,12 @@ public final class ActionCapture {
         buf.writeEvent(RecordTypes.SWING, tick, clock.nsOffset(nanos), ord, nanos, hand, 0, 0, 0, 0, 0);
     }
 
+    public void onPunch(PlayerRingBuffer buf, TickClock clock, long nanos) {
+        int tick = clock.tick();
+        int ord = buf.nextOrder(tick);
+        buf.writeEvent(RecordTypes.SWING, tick, clock.nsOffset(nanos), ord, nanos, 0, 0, 0, 0, 0, 0);
+    }
+
     public void onUseItem(PacketReceiveEvent event, PlayerRingBuffer buf, TickClock clock, long nanos) {
         var pkt = new WrapperPlayClientUseItem(event);
         int tick = clock.tick();

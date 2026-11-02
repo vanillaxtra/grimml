@@ -64,8 +64,8 @@ public final class GrimMLPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        saveResource("taxonomy.yml", false);
-        saveResource("grim-weights.yml", false);
+        saveIfMissing("taxonomy.yml");
+        saveIfMissing("grim-weights.yml");
         config.load(getConfig());
         testAccounts = new TestAccounts(getDataFolder().toPath().resolve("test-accounts.txt"));
         testAccounts.load();
@@ -245,6 +245,12 @@ public final class GrimMLPlugin extends JavaPlugin {
             }
             MarkerWriter.write(buf, clock, writer, post, RecordTypes.MARKER_END,
                     open.labelId, open.clientId, open.moduleId, java.util.List.of(open.kv), interrupted);
+        }
+    }
+
+    private void saveIfMissing(String name) {
+        if (!new java.io.File(getDataFolder(), name).exists()) {
+            saveResource(name, false);
         }
     }
 

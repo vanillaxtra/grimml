@@ -1,7 +1,7 @@
 name: grimml
 version: ${project.version}
 main: dev.grimml.GrimMLPlugin
-api-version: '1.21'
+api-version: '1.21.11'
 description: Combat recording for Grim ML detection (recorder only)
 authors: [grimml]
 depend:
