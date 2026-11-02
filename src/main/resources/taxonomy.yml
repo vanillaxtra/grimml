@@ -103,7 +103,8 @@ modules:
     settings:
       wind_charge_delay: int
       silent_aim: [true, false]
-      
+      legit_rotate: [true, false]
+
 
   triggerbot:
     settings:
