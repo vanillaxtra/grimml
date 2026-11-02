@@ -26,6 +26,8 @@ This is where i can keep track of the different clients i have run cheats on and
 | 02/11/26 | Triggerbot | DELAY_MIN_MS:25 DELAY_MAX_MS:50 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100 | 2:49 | m109c3312 | notauthorised |
 |  |  |  |  |  |  |
 | 02/11/26 | Auto W Tap | CHANCE:100 HOLD_LENGTH_MIN:100 HOLD_LENGTH_MAX:200 REACTION_TIME_MIN:10 REACTION_TIME_MAX:30 | 2:46 | m56635106 | notauthorised |
+|  |  |  |  |  |  |
+| 02/11/26 | Wind Charge Aura | REACH:2.95 HUMANIZED:TRUE | 1:59 | m126182c9 | notauthorised | 
 
 
 ## Doomsday
