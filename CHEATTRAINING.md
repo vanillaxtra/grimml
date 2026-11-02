@@ -33,6 +33,8 @@ This is where i can keep track of the different clients i have run cheats on and
 |  |  |  |  |  |  |
 | 02/11/26 | Anchor Macro | ANCHOR_DELAY_MIN:30 ANCHOR_DELAY_MAX:50 SILENT_AIM:FALSE | 1:54 | m8b2b7b6a | notauthorised |
 | 02/11/26 | Anchor Macro | ANCHOR_DELAY_MIN:0 ANCHOR_DELAY_MAX:0 SILENT_AIM:FALSE | 1:15 | md82d7087 | notauthorised |
+|  |  |  |  |  |  |
+| 02/11/26 | Auto Crystal | DAMAGE_TICK_FALSE DELAY_MIN_MS:10 DELAY_MAX_MS:78 HEAD_BOB:TRUE | 0:46 | mc4d1d678 | notauthorised |
 
 
 ## Doomsday
