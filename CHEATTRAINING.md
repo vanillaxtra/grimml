@@ -11,7 +11,9 @@
 |  |  |  |  |  |  |
 | 02/11/26 | Auto Mace | HORS_TARGET_DISTANCE:5.0 MIN_FALL_DISTANCE:10 STUNSLAM:FALSE SILENT_AIM:TRUE SWAP_BACK:FALSE | 2026-11-02_122vv30244253_3kzj68rezian7_83e5404d.gmlml | 3:38 | notauthorised |
 | 02/11/26 | Auto Mace | HORS_TARGET_DISTANCE:5.0 MIN_FALL_DISTANCE:10 STUNSLAM:FALSE SILENT_AIM:TRUE SWAP_BACK:TRUE | 2026-11-02_122vv30244253_3kzj68rezian7_6432e19c.gmlml | 4:08 | notauthorised |
-| 02/11/26 | Auto Spear | SWAP_DELAY_MIN:20 SWAP_DELAY_MAX:70 SWAP_BACK:TRUE |  |  |  |
+|  |  |  |  |  |  |
+| 02/11/26 | Auto Spear Swap | SWAP_DELAY_MIN:20 SWAP_DELAY_MAX:70 SWAP_BACK:TRUE | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_f37313a1.gmlml | 3:10 | notauthorised |
+| 02/11/26 | Auto Spear Swap | SWAP_DELAY_MIN:0 SWAP_DELAY_MAX:0 SWAP_BACK:TRUE | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_dccadfce.gmlml | 1:46 | notauthorised |
 
 ## Doomsday
 | Date | Module | Settings | Duration | ID | By |
