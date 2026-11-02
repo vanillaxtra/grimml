@@ -32,14 +32,19 @@ modules:
       smoothing: float
       fov: int
       speed: float
+      randomness: int
+      sticky: [true, false]
+      only_on_rotate: [true, false]
   killaura:
     expected_grim:
       - Reach
     settings:
       reach: float
-      cps: float
       rotations: [snap, smooth, silent]
       switch_delay_ms: int
+      humanized: [true, false]
+      miss_chance: float
+      
   stun_slam_macro:
     settings:
       swap_delay_ticks: int
