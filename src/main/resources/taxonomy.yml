@@ -64,6 +64,11 @@ modules:
       swap_delay_max: int
       swap_back: [true, false]
 
+  auto_wind_charge_hitter:
+    settings:
+      reach: float
+      humanized: [true, false]
+
   auto_w_tap:
     settings:
       chance: float
