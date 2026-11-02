@@ -89,19 +89,21 @@ modules:
       delay_min_ms: int
       delay_max_ms: int
       head_bob: [true, false]
-      
+
 
   auto_pearl_catch:
     settings:
       wind_charge_delay: int
       moving_delay: int
       legit_rotate: [true, false]
+      smooth_rotate: [true, false]
+      smoothing: float
 
   auto_diagonl_pearl_catch:
     settings:
       wind_charge_delay: int
-      swap_back: [true, false]
-      legit_rotate: [true, false]
+      silent_aim: [true, false]
+      
 
   triggerbot:
     settings:
