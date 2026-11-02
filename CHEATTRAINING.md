@@ -30,6 +30,9 @@ This is where i can keep track of the different clients i have run cheats on and
 | 02/11/26 | Wind Charge Aura | REACH:2.95 HUMANIZED:TRUE | 1:59 | m126182c9 | notauthorised | 
 |  |  |  |  |  |  |
 | 02/11/26 | Auto Mace | STUNSLAM:TRUE CHANCE:100 SILENT_AIM:TRUE SWAP_BACK:TRUE | 7:21 | mc8bdb2be | notauthorised | 
+|  |  |  |  |  |  |
+| 02/11/26 | Anchor Macro | ANCHOR_DELAY_MIN:30 ANCHOR_DELAY_MAX:50 SILENT_AIM:FALSE | 1:54 | m8b2b7b6a | notauthorised |
+| 02/11/26 | Anchor Macro | ANCHOR_DELAY_MIN:0 ANCHOR_DELAY_MAX:0 SILENT_AIM:FALSE | 1:15 | md82d7087 | notauthorised |
 
 
 ## Doomsday
