@@ -1,6 +1,5 @@
 # grimml
-
-![license](https://img.shields.io/badge/license-MIT-blue) ![java](https://img.shields.io/badge/java-21%2B-orange) ![paper](https://img.shields.io/badge/paper-1.21.1%20--%2026.x-lightgrey) ![status](https://img.shields.io/badge/phase-1%20recorder-yellow)
+![license](https://img.shields.io/badge/license-MIT-blue) ![java](https://img.shields.io/badge/java-21%2B-orange) ![paper](https://img.shields.io/badge/paper-1.21.1%20--%2026.x-lightgrey) ![status](https://img.shields.io/badge/phase-1%20recorder-yellow) 
 
 A Paper plugin that records anonymized PvP combat data next to [Grim Anticheat](https://github.com/GrimAnticheat/Grim), to build a dataset for machine-learning cheat detection.
 
