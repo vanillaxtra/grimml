@@ -9,10 +9,10 @@ This is where i can keep track of the different clients i have run cheats on and
 | 02/11/26  | Aim Assist | FOV:360 SPEED:50 SMOOTHING:75 RANDOMNESS:70 ONLY_ON_ROTATE:FALSE | 3:09 | ma2e0fb94 | notauthorised |
 | 02/11/26  | Aim Assist | FOV:360 SPEED:25.08 SMOOTHING:75 RANDOMNESS:70 ONLY_ON_ROTATE:FALSE | 2:18 | m9ec7d620 | notauthorised |
 |  |  |  |  |  |  |
-| 02/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 | 4:31 | 2026-11-01_3a820t8u0df9g_nm94e7kg558b_2e98aa5c.gmlml | notauthorised |
-| 02/11/26 | Kill Aura | HUMANIZED:TRUE REACH:3 MISS_CHANCE:0 | 2:16 | 2026-11-01_122vv30244253_24rgc6ieb4wep_7f759297.gmlml | notauthorised |
+| 02/11/26 | Kill Aura | HUMANIZED:FALSE REACH:3 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 5:25 | m22700b10 | notauthorised |
+| 02/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 3:57 | mf2dd0754 | notauthorised |
 |  |  |  |  |  |  |
-| 02/11/26 | Auto Mace | HORS_TARGET_DISTANCE:5.0 MIN_FALL_DISTANCE:10 STUNSLAM:FALSE SILENT_AIM:TRUE SWAP_BACK:FALSE | 3:38 | 2026-11-02_122vv30244253_3kzj68rezian7_83e5404d.gmlml | notauthorised |
+| 02/11/26 | Auto Mace | HORS_TARGET_DISTANCE:5.0 MIN_FALL_DISTANCE:10 STUNSLAM:FALSE SILENT_AIM:TRUE SWAP_BACK:FALSE | 4:36 | m89ff4396 | notauthorised |
 | 02/11/26 | Auto Mace | HORS_TARGET_DISTANCE:5.0 MIN_FALL_DISTANCE:10 STUNSLAM:FALSE SILENT_AIM:TRUE SWAP_BACK:TRUE | 4:08 | 2026-11-02_122vv30244253_3kzj68rezian7_6432e19c.gmlml | notauthorised |
 |  |  |  |  |  |  |
 | 02/11/26 | Auto Spear Swap | SWAP_DELAY_MIN:20 SWAP_DELAY_MAX:70 SWAP_BACK:TRUE | 3:10 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_f37313a1.gmlml | notauthorised |
