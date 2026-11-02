@@ -10,6 +10,7 @@ public final class CombatSnapshot {
     public int validity;
     public long sessionId;
     public long anonPlayerId;
+    public String markId = "";
     public int entityId;
     public int stateFlags;
     public int pingMs;
@@ -104,6 +105,7 @@ public final class CombatSnapshot {
         frameCount = 0;
         eventCount = 0;
         clientBrand = "";
+        markId = "";
         fightId = 0;
         windowId = 0;
         labelSource = 0;

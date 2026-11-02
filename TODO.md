@@ -25,6 +25,7 @@ Legend: ✅ done in repo · 🔶 partial / needs verify · ⬜ not done · 👤 
 
 - [x] `taxonomy.yml` — clients, modules, settings, `expected_grim`, **`client-names`** (tab-complete for free-text cheat names)
 - [x] `/grimml mark start|end` — time-range segments, console/RCON, `key=value` settings + **`client-name=`**
+- [x] Mark session ids (`m########`) in chat, filenames, `marks.csv`, `/grimml mark list|get`
 - [x] Tab complete: accounts (test-first), labels, clients/modules, settings, `expected=`, `client-name=`
 - [x] MARKER + MARKER_KV records; taxonomy version + hash in GML3 header
 - [x] Session sidecar lines (join/quit, markers, taxonomy, grim checks, test-account, ban suspect, grim-weak)

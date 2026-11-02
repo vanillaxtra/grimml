@@ -3,6 +3,8 @@ package dev.grimml.commands;
 import dev.grimml.GrimMLPlugin;
 import dev.grimml.buffer.PlayerRingBuffer;
 import dev.grimml.format.RecordTypes;
+import dev.grimml.mark.MarkFeedback;
+import dev.grimml.mark.MarkLog;
 import dev.grimml.mark.MarkTracker;
 import dev.grimml.mark.MarkerWriter;
 import dev.grimml.taxonomy.Labels;
@@ -14,12 +16,19 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class MarkCommand implements SubCommand {
 
-    private static final String USAGE = "<red>/grimml mark start <account> <label> [client] [module] [key=value...]\n<red>/grimml mark end <account>";
+    private static final String USAGE = "<red>/grimml mark start <account> <label> [client] [module] [key=value...]\n"
+            + "<red>/grimml mark end <account>\n"
+            + "<red>/grimml mark list\n"
+            + "<red>/grimml mark get <id>";
 
     private final GrimMLPlugin plugin;
 
@@ -29,13 +38,34 @@ public final class MarkCommand implements SubCommand {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        if (args.length < 3) {
+        if (args.length < 2) {
             GrimMLCommand.msg(sender, USAGE);
             return;
         }
-        boolean start = args[1].equalsIgnoreCase("start");
-        boolean end = args[1].equalsIgnoreCase("end");
+        String op = args[1];
+        if (op.equalsIgnoreCase("list")) {
+            if (args.length > 2) {
+                show(sender, args[2]);
+            } else {
+                list(sender);
+            }
+            return;
+        }
+        if (op.equalsIgnoreCase("get")) {
+            if (args.length < 3) {
+                GrimMLCommand.msg(sender, "<red>/grimml mark get <id>");
+                return;
+            }
+            show(sender, args[2]);
+            return;
+        }
+        boolean start = op.equalsIgnoreCase("start");
+        boolean end = op.equalsIgnoreCase("end");
         if (!start && !end) {
+            GrimMLCommand.msg(sender, USAGE);
+            return;
+        }
+        if (args.length < 3) {
             GrimMLCommand.msg(sender, USAGE);
             return;
         }
@@ -51,15 +81,13 @@ public final class MarkCommand implements SubCommand {
         }
         long post = plugin.config().postCombatSeconds() * 1_000_000_000L;
         if (end) {
-            MarkTracker.Open prev = plugin.marks().end(target.getUniqueId());
+            MarkTracker.Open prev = plugin.closeOpen(target.getUniqueId(), buf, false);
             if (prev == null) {
                 GrimMLCommand.msg(sender, "<red>no open segment");
                 return;
             }
-            MarkerWriter.write(buf, plugin.clock(), plugin.writer(), post, RecordTypes.MARKER_END,
-                    prev.labelId, prev.clientId, prev.moduleId, List.of(prev.kv), false);
-            buf.markActive = false;
-            GrimMLCommand.msg(sender, "<green>marked end " + target.getName());
+            GrimMLCommand.msg(sender, "<green>marked end " + target.getName()
+                    + " id=<yellow>" + prev.id + "</yellow> " + clock(System.nanoTime() - prev.startNanos));
             return;
         }
         if (args.length < 4) {
@@ -105,23 +133,35 @@ public final class MarkCommand implements SubCommand {
         int clientId = tax.clientId(client);
         int moduleId = tax.moduleId(module);
         int settings = MarkerWriter.hashKv(kv);
-        MarkTracker.Open prev = plugin.marks().start(target.getUniqueId(), System.nanoTime(),
-                System.currentTimeMillis(), labelId, clientId, moduleId, settings, kv.toArray(String[]::new));
+        String id = MarkTracker.newId();
+        MarkTracker.Open prev = plugin.marks().start(target.getUniqueId(), id, sender.getName(), target.getName(),
+                System.nanoTime(), System.currentTimeMillis(), labelId, clientId, moduleId, settings, kv.toArray(String[]::new));
         if (prev != null) {
-            MarkerWriter.write(buf, plugin.clock(), plugin.writer(), post, RecordTypes.MARKER_END,
-                    prev.labelId, prev.clientId, prev.moduleId, List.of(prev.kv), true);
+            plugin.writeClosedMark(prev, buf, true);
         }
         MarkerWriter.write(buf, plugin.clock(), plugin.writer(), post, RecordTypes.MARKER_START,
-                labelId, clientId, moduleId, kv, false);
+                labelId, clientId, moduleId, kv, false, id);
         buf.markActive = true;
+        buf.markId = id;
+        MarkTracker.Open cur = plugin.marks().peek(target.getUniqueId());
+        plugin.logMark(cur, buf, "start", false);
         GrimMLCommand.msg(sender, "<green>marked start " + target.getName() + " " + Labels.name(labelId)
-                + (module.isEmpty() ? "" : " " + module));
+                + (module.isEmpty() ? "" : " " + module)
+                + " id=<yellow>" + id + "</yellow>");
+        GrimMLCommand.msg(sender, "<gray>files *_" + id + "_*.gmlml");
     }
 
     @Override
     public List<String> suggest(String[] args) {
         if (args.length == 2) {
-            return prefix(List.of("start", "end"), args[1]);
+            return prefix(List.of("start", "end", "list", "get"), args[1]);
+        }
+        if (args.length == 3 && (args[1].equalsIgnoreCase("get") || args[1].equalsIgnoreCase("list"))) {
+            List<String> ids = new ArrayList<>();
+            for (MarkTracker.Open o : plugin.marks().allOpen()) {
+                ids.add(o.id);
+            }
+            return prefix(ids, args[2]);
         }
         if (args.length == 3) {
             return prefix(testAccountNames(), args[2]);
@@ -205,6 +245,109 @@ public final class MarkCommand implements SubCommand {
             }
         }
         return prefix(keys, cur);
+    }
+
+    private void list(CommandSender sender) {
+        var open = plugin.marks().allOpen();
+        if (open.isEmpty()) {
+            GrimMLCommand.msg(sender, "<gray>no open marks");
+        } else {
+            GrimMLCommand.msg(sender, "<gold>open");
+            for (MarkTracker.Open o : open) {
+                GrimMLCommand.msg(sender, line(o, (int) ((System.nanoTime() - o.startNanos) / 1_000_000_000L), true));
+            }
+        }
+        List<MarkLog.Row> recent;
+        try {
+            recent = plugin.markLog() == null ? List.of() : plugin.markLog().latestById(15);
+        } catch (IOException e) {
+            GrimMLCommand.msg(sender, "<red>marks.csv " + e.getMessage());
+            return;
+        }
+        boolean any = false;
+        for (MarkLog.Row r : recent) {
+            if (plugin.marks().byId(r.id) != null) {
+                continue;
+            }
+            if (!any) {
+                GrimMLCommand.msg(sender, "<gold>recent");
+                any = true;
+            }
+            GrimMLCommand.msg(sender, line(r));
+        }
+    }
+
+    private void show(CommandSender sender, String id) {
+        MarkTracker.Open open = plugin.marks().byId(id);
+        List<MarkLog.Row> rows;
+        try {
+            rows = plugin.markLog() == null ? List.of() : plugin.markLog().byId(id);
+        } catch (IOException e) {
+            GrimMLCommand.msg(sender, "<red>marks.csv " + e.getMessage());
+            return;
+        }
+        if (open == null && rows.isEmpty()) {
+            GrimMLCommand.msg(sender, "<red>unknown id " + id);
+            return;
+        }
+        if (open != null) {
+            GrimMLCommand.msg(sender, line(open, (int) ((System.nanoTime() - open.startNanos) / 1_000_000_000L), true));
+            if (open.kv.length > 0) {
+                GrimMLCommand.msg(sender, "<gray>" + String.join(" ", open.kv));
+            }
+        }
+        for (MarkLog.Row r : rows) {
+            GrimMLCommand.msg(sender, line(r));
+            if (!r.settings.isEmpty()) {
+                GrimMLCommand.msg(sender, "<gray>" + r.settings.replace(';', ' '));
+            }
+        }
+        int files = countFiles(open != null ? open.id : id);
+        GrimMLCommand.msg(sender, "<gray>files " + files + " *_" + (open != null ? open.id : id) + "_*.gmlml");
+    }
+
+    private String line(MarkTracker.Open o, int elapsed, boolean live) {
+        String client = MarkFeedback.clientNameOf(o.kv);
+        if (client.isEmpty()) {
+            client = plugin.taxonomy().clientName(o.clientId);
+        }
+        String module = plugin.taxonomy().moduleName(o.moduleId);
+        return "<yellow>" + o.id + "</yellow> <white>" + Labels.name(o.labelId)
+                + (module.isEmpty() ? "" : " " + module) + "</white>"
+                + (client.isEmpty() ? "" : " <gray>" + client + "</gray>")
+                + " <aqua>" + clock(elapsed * 1_000_000_000L) + "</aqua>"
+                + " <gray>" + o.account + " by " + o.operator
+                + (live ? " open" : "") + "</gray>";
+    }
+
+    private static String line(MarkLog.Row r) {
+        return "<yellow>" + r.id + "</yellow> <white>" + r.label
+                + (r.module.isEmpty() ? "" : " " + r.module) + "</white>"
+                + (r.client.isEmpty() ? "" : " <gray>" + r.client + "</gray>")
+                + " <aqua>" + clock(r.elapsedS * 1_000_000_000L) + "</aqua>"
+                + " <gray>" + r.account + " by " + r.operator
+                + " " + r.event + (r.interrupted ? " interrupted" : "") + "</gray>";
+    }
+
+    private int countFiles(String id) {
+        if (plugin.writer() == null || id == null || id.isEmpty()) {
+            return 0;
+        }
+        Path dir = plugin.writer().recordingsDir();
+        int n = 0;
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*" + id + "*")) {
+            for (Path ignored : stream) {
+                n++;
+            }
+        } catch (IOException e) {
+            return 0;
+        }
+        return n;
+    }
+
+    static String clock(long nanos) {
+        long s = Math.max(0L, nanos / 1_000_000_000L);
+        return (s / 60) + String.format(":%02d", s % 60);
     }
 
     private List<String> testAccountNames() {

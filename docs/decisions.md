@@ -1,5 +1,12 @@
 # decisions
 
+## 2026-11-02 - each mark gets a stable id
+
+- `/grimml mark start` assigns `m` + 8 hex (`m83e5404d`). chat, action bar, `marks.csv`, `sessions.idx`, and every `.gmlml` filename for that segment use it
+- marked files are `yyyy-MM-dd_<id>_<window>.gmlml` so glob `*_m83e5404d_*.gmlml` is the whole session; auto-mode unmarked files keep the old anon+session name
+- `plugins/grimml/marks.csv` is the staff ledger (account name, operator name, settings). it is not training input; `.gmlml` stays anon. `/grimml mark list` and `get <id>` read it
+- marker events also write a `mark-id=` KV so decode can join later without a schema bump
+
 ## 2026-11-02 - mark-only writes .gmlml only for the marked player
 
 - `recording-mode: mark-only` used to still snapshot the marked player's target and nearby players as separate files (ROLE_DEFENDER / ROLE_BYSTANDER)

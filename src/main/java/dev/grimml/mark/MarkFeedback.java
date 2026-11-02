@@ -31,8 +31,7 @@ public final class MarkFeedback implements Runnable {
         }
     }
 
-    // extract client-name= value from kv pairs, empty string if absent
-    static String clientNameOf(String[] kv) {
+    public static String clientNameOf(String[] kv) {
         if (kv == null) return "";
         for (String pair : kv) {
             if (pair.regionMatches(true, 0, "client-name=", 0, 12)) {
@@ -66,6 +65,7 @@ public final class MarkFeedback implements Runnable {
         if (!module.isEmpty()) sb.append(" ").append(module);
         if (!clientName.isEmpty()) sb.append(" <gray>(</gray><white>").append(clientName).append("</white><gray>)</gray>");
         sb.append("</white> <gray>•</gray> <aqua>").append(elapsed).append("</aqua>");
+        sb.append(" <gray>•</gray> <white>").append(o.id).append("</white>");
         sb.append(" <gray>|</gray> ").append(pingColor).append("p:").append(ping).append("ms</>");
         sb.append(" <gray>|</gray> ").append(jitterColor).append("j:").append(jitter).append("ms</>");
         sb.append(" <gray>|</gray> ").append(msptColor).append(String.format(Locale.ROOT, "%.0f", mspt)).append("ms</>");

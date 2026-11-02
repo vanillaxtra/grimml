@@ -157,7 +157,7 @@ public final class RecordWriter {
             }
             Path file = null;
             try {
-                file = files.newFilePath(snap.anonPlayerId, snap.sessionId);
+                file = files.newFilePath(snap.anonPlayerId, snap.sessionId, snap.markId);
                 byte[] data = BinaryFormat.encodeWindow(snap);
                 ByteBuffer buf = ByteBuffer.wrap(data);
                 try (FileChannel ch = FileChannel.open(file, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {

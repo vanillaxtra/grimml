@@ -131,6 +131,7 @@ public final class FightAssembler {
         snap.validity = buf.validity;
         snap.sessionId = buf.sessionId;
         snap.anonPlayerId = buf.anonPlayerId;
+        snap.markId = buf.markId == null ? "" : buf.markId;
         snap.entityId = buf.entityId;
         snap.stateFlags = buf.stateFlags
                 | (buf.bedrock ? RecordTypes.FLAG_BEDROCK : 0)

@@ -35,6 +35,7 @@ modules:
       randomness: int
       sticky: [true, false]
       only_on_rotate: [true, false]
+      randomness: int
   killaura:
     expected_grim:
       - Reach
@@ -44,6 +45,8 @@ modules:
       switch_delay_ms: int
       humanized: [true, false]
       miss_chance: float
+      cooldown_range_min: int
+      cooldown_range_max: int
   silent_aim:
     settings:
       continous_tracking: [true, false]
@@ -53,12 +56,21 @@ modules:
       swap_delay_ticks: int
       jitter: float
   auto_breach_swap:
-    settings: []
-  auto_spear:
+    settings: 
+      chance: float
+  auto_lunge:
     settings:
       swap_delay_min: int
       swap_delay_max: int
       swap_back: [true, false]
+
+  auto_w_tap:
+    settings:
+      chance: float
+      hold_length_min: int
+      hold_length_max: int
+      reaction_time_min: int
+      reaction_time_max: int
 
   auto_pearl_catch:
     settings:
@@ -92,7 +104,6 @@ modules:
       jitter: float
   jump_reset:
     settings:
-      offset_ticks: int
       chance: float
   autoclicker:
     settings:

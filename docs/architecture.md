@@ -28,7 +28,7 @@ one folder per function, one file per feature
 - `taxonomy/` - `taxonomy.yml` clients, modules, setting schemas, stable ids, file hash
 - `grim/GrimCheckCatalog.java` - FlagEvent check names persisted to `grim-checks.json`
 - `grim/GrimEvidenceTracker.java` - 1 Hz weak labels; FlagEvent copies primitives into `FlagQueue`
-- `mark/` - open segments, marker kv events, `test-accounts.txt`
+- `mark/` - open segments, marker kv events, `test-accounts.txt`, staff `marks.csv` ledger
 - `commands/` - status, pause, resume, reload, mark, testaccount
 - `roster/` - combat-reason matcher, append-only `roster.csv`, ban label service
 - `hooks/LiteBansHook.java` - combat bans become SUSPECT with a 14-day backfill
@@ -55,8 +55,10 @@ flowchart LR
 | `/grimml pause` | `grimml.admin` | stop flushing |
 | `/grimml resume` | `grimml.admin` | resume flushing |
 | `/grimml reload` | `grimml.admin` | reload config and `taxonomy.yml` |
-| `/grimml mark start <account> <label> [client] [module] [key=value...]` | `grimml.admin` | time-range MARKER; console/RCON; labels `LEGIT_CONFIRMED` or `CHEAT` |
-| `/grimml mark end <account>` | `grimml.admin` | close the open segment |
+| `/grimml mark start <account> <label> [client] [module] [key=value...]` | `grimml.admin` | time-range MARKER; prints id `m########`; console/RCON; labels `LEGIT_CONFIRMED` or `CHEAT` |
+| `/grimml mark end <account>` | `grimml.admin` | close the open segment; repeats id + duration |
+| `/grimml mark list` | `grimml.admin` | open marks plus recent ids from `marks.csv` |
+| `/grimml mark get <id>` | `grimml.admin` | one mark: settings, duration, file count |
 | `/grimml testaccount [account] [on\|off]` | `grimml.admin` | persist test-account uuids; header flag so they never mix with normal players |
 | `/grimml suspects [limit]` | `grimml.admin` | top decaying grim scores, anon ids only |
 | `/grimml review next` | `grimml.admin` | next `GRIM_WEAK` window for staff replay |

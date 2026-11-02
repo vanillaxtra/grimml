@@ -74,6 +74,7 @@ public final class PlayerRingBuffer {
     public volatile boolean markOnly;
     // open /grimml mark segment: writer keeps dumping the ring until end
     public volatile boolean markActive;
+    public volatile String markId = "";
 
     private int orderInTick;
     private int orderTick = Integer.MIN_VALUE;

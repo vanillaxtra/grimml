@@ -28,9 +28,12 @@ import dev.grimml.state.SessionLifecycle;
 import dev.grimml.state.SprintSneakTracker;
 import dev.grimml.state.StateSampler;
 import dev.grimml.format.RecordTypes;
+import dev.grimml.mark.MarkFeedback;
+import dev.grimml.mark.MarkLog;
 import dev.grimml.mark.MarkTracker;
 import dev.grimml.mark.MarkerWriter;
 import dev.grimml.mark.TestAccounts;
+import dev.grimml.taxonomy.Labels;
 import dev.grimml.taxonomy.Taxonomy;
 import dev.grimml.taxonomy.TaxonomyLoader;
 import dev.grimml.writer.RecordWriter;
@@ -58,6 +61,7 @@ public final class GrimMLPlugin extends JavaPlugin {
     private org.bukkit.scheduler.BukkitTask feedbackTask;
     private volatile Taxonomy taxonomy = Taxonomy.empty();
     private final MarkTracker marks = new MarkTracker();
+    private MarkLog markLog;
     private TestAccounts testAccounts;
     private volatile boolean recordingEnabled;
 
@@ -69,6 +73,7 @@ public final class GrimMLPlugin extends JavaPlugin {
         config.load(getConfig());
         testAccounts = new TestAccounts(getDataFolder().toPath().resolve("test-accounts.txt"));
         testAccounts.load();
+        markLog = new MarkLog(getDataFolder().toPath().resolve("marks.csv"));
         reloadTaxonomy();
         reloadWeights();
 
@@ -216,37 +221,67 @@ public final class GrimMLPlugin extends JavaPlugin {
         return marks;
     }
 
+    public MarkLog markLog() {
+        return markLog;
+    }
+
     public TestAccounts testAccounts() {
         return testAccounts;
     }
 
-    public void closeOpen(java.util.UUID uuid, PlayerRingBuffer buf, boolean interrupted) {
+    public MarkTracker.Open closeOpen(java.util.UUID uuid, PlayerRingBuffer buf, boolean interrupted) {
         if (writer == null || buf == null) {
-            return;
+            return null;
         }
         var prev = marks.end(uuid);
         if (prev == null) {
-            return;
+            return null;
         }
-        long post = config.postCombatSeconds() * 1_000_000_000L;
-        MarkerWriter.write(buf, clock, writer, post, RecordTypes.MARKER_END,
-                prev.labelId, prev.clientId, prev.moduleId, java.util.List.of(prev.kv), interrupted);
-        buf.markActive = false;
+        writeClosedMark(prev, buf, interrupted);
+        return prev;
     }
 
     public void closeOpenMarks(boolean interrupted) {
         if (writer == null || registry == null) {
             return;
         }
-        long post = config.postCombatSeconds() * 1_000_000_000L;
         for (var open : marks.drainAll()) {
             var buf = registry.get(open.uuid);
             if (buf == null) {
                 continue;
             }
-            MarkerWriter.write(buf, clock, writer, post, RecordTypes.MARKER_END,
-                    open.labelId, open.clientId, open.moduleId, java.util.List.of(open.kv), interrupted);
-            buf.markActive = false;
+            writeClosedMark(open, buf, interrupted);
+        }
+    }
+
+    public void writeClosedMark(MarkTracker.Open prev, PlayerRingBuffer buf, boolean interrupted) {
+        long post = config.postCombatSeconds() * 1_000_000_000L;
+        MarkerWriter.write(buf, clock, writer, post, RecordTypes.MARKER_END,
+                prev.labelId, prev.clientId, prev.moduleId, java.util.List.of(prev.kv), interrupted, prev.id);
+        buf.markActive = false;
+        buf.markId = "";
+        logMark(prev, buf, interrupted ? "interrupted" : "end", interrupted);
+    }
+
+    public void logMark(MarkTracker.Open o, PlayerRingBuffer buf, String event, boolean interrupted) {
+        if (markLog == null || o == null) {
+            return;
+        }
+        int elapsed = (int) Math.max(0L, (System.nanoTime() - o.startNanos) / 1_000_000_000L);
+        if ("start".equals(event)) {
+            elapsed = 0;
+        }
+        String client = MarkFeedback.clientNameOf(o.kv);
+        if (client.isEmpty()) {
+            client = taxonomy.clientName(o.clientId);
+        }
+        String module = taxonomy.moduleName(o.moduleId);
+        String anon = buf == null ? "" : Long.toUnsignedString(buf.anonPlayerId, 36);
+        try {
+            markLog.append(o.id, event, System.currentTimeMillis(), elapsed,
+                    o.operator, o.account, anon, Labels.name(o.labelId), client, module, interrupted, o.kv);
+        } catch (IOException e) {
+            getLogger().warning("failed to write marks.csv: " + e.getMessage());
         }
     }
 

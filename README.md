@@ -56,8 +56,9 @@ All commands need `grimml.admin` (op by default). Console/RCON supported where n
 | `/grimml status` | enabled/paused, windows written/dropped, bytes, drop summary |
 | `/grimml pause` / `resume` | stop or resume flushing windows |
 | `/grimml reload` | reload config, taxonomy, grim-weights; applies `recording-mode` to online sessions |
-| `/grimml mark start <account> <label> [client] [module] [key=value...]` | open a labeled segment (`LEGIT_CONFIRMED` or `CHEAT`); e.g. `client-name=prestige strength=high` |
-| `/grimml mark end <account>` | close the open segment |
+| `/grimml mark start <account> <label> [client] [module] [key=value...]` | open a labeled segment (`LEGIT_CONFIRMED` or `CHEAT`); prints a stable id (`m83e5404d`) |
+| `/grimml mark end <account>` | close the open segment; repeats id and duration |
+| `/grimml mark list` / `get <id>` | look up open and recent marked sessions |
 | `/grimml testaccount [account] [on\|off]` | persist test-account UUIDs (excluded from normal player mixes in headers) |
 | `/grimml suspects [limit]` | top decaying Grim-evidence scores (anon ids) |
 | `/grimml review next` | next window flagged for staff replay |
@@ -79,11 +80,11 @@ See `config.yml` and [docs/architecture.md](docs/architecture.md) for the full l
 
 ## Output format
 
-Each combat window is one file: `<date>_<anonId>_<session>_<rand>.gmlml` with magic **`GML3`** (schema 3). Older `GML1`/`GML2` files remain identifiable by magic; they are not rewritten.
+Each combat window is one file with magic **`GML3`** (schema 3). Unmarked auto windows: `<date>_<anonId>_<session>_<rand>.gmlml`. Marked sessions: `<date>_<markId>_<rand>.gmlml` (same `m########` id on every file of that mark). Older `GML1`/`GML2` files remain identifiable by magic; they are not rewritten.
 
 - **Header:** fight/window ids, role, trigger, label source, validity, session/anon ids, epoch + nanos, boot id, MSPT, ping, kit/server/map/world, MC/Grim/PacketEvents versions, taxonomy version + hash.
 - **Body:** Deflate-compressed delta-encoded frames plus typed events (including MARKER / MARKER_KV).
-- **Sidecars:** `sessions.idx` (join/quit/mark/grim lines), `grim-labels.csv`, `grim-review.csv`, `grim-checks.json`, `test-accounts.txt`.
+- **Sidecars:** `sessions.idx` (join/quit/mark/grim lines), `marks.csv` (staff mark ledger with ids), `grim-labels.csv`, `grim-review.csv`, `grim-checks.json`, `test-accounts.txt`.
 
 Encoder: `format/BinaryFormat.java`. Round-trip check: `format/BinaryFormatSelfCheck.java`.
 

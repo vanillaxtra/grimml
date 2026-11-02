@@ -13,13 +13,16 @@ public final class MarkerWriter {
     private MarkerWriter() {}
 
     public static void write(PlayerRingBuffer buf, TickClock clock, RecordWriter writer, long postNanos,
-                             int action, int labelId, int clientId, int moduleId, List<String> kv, boolean interrupted) {
+                             int action, int labelId, int clientId, int moduleId, List<String> kv,
+                             boolean interrupted, String markId) {
         long nanos = System.nanoTime();
         long wall = System.currentTimeMillis();
         int tick = clock.tick();
-        int packed = action | (RecordTypes.SOURCE_STAFF << 8) | ((kv.size() & 0xff) << 16);
+        boolean hasId = markId != null && !markId.isEmpty();
+        int kvCount = kv.size() + (hasId ? 1 : 0);
+        int packed = action | (RecordTypes.SOURCE_STAFF << 8) | ((kvCount & 0xff) << 16);
         if (interrupted) {
-            packed = RecordTypes.MARKER_INTERRUPTED | (RecordTypes.SOURCE_STAFF << 8) | ((kv.size() & 0xff) << 16);
+            packed = RecordTypes.MARKER_INTERRUPTED | (RecordTypes.SOURCE_STAFF << 8) | ((kvCount & 0xff) << 16);
         }
         int settings = hashKv(kv);
         buf.writeEvent(RecordTypes.MARKER, tick, clock.nsOffset(nanos), buf.nextOrder(tick), nanos,
@@ -31,10 +34,18 @@ public final class MarkerWriter {
             buf.writeEvent(RecordTypes.MARKER_KV, tick, clock.nsOffset(nanos), buf.nextOrder(tick), nanos,
                     BinaryFormat.hashCheckName(key), BinaryFormat.hashCheckName(val), 0, 0, 0, 0);
         }
+        if (hasId) {
+            buf.writeEvent(RecordTypes.MARKER_KV, tick, clock.nsOffset(nanos), buf.nextOrder(tick), nanos,
+                    BinaryFormat.hashCheckName("mark-id"), BinaryFormat.hashCheckName(markId), 0, 0, 0, 0);
+        }
         buf.markCombat(nanos, postNanos, RecordTypes.TRIGGER_MARKER);
         String act = interrupted ? "interrupted" : (action == RecordTypes.MARKER_START ? "start" : "end");
         StringBuilder line = new StringBuilder(64);
-        line.append("mark ").append(act).append(' ').append(Long.toUnsignedString(buf.anonPlayerId, 36))
+        line.append("mark ").append(act);
+        if (hasId) {
+            line.append(' ').append(markId);
+        }
+        line.append(' ').append(Long.toUnsignedString(buf.anonPlayerId, 36))
                 .append(' ').append(wall).append(' ').append(labelId).append(' ').append(clientId)
                 .append(' ').append(moduleId);
         for (String pair : kv) {

@@ -2,11 +2,15 @@ package dev.grimml.mark;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class MarkTracker {
 
     public static final class Open {
         public final UUID uuid;
+        public final String id;
+        public final String operator;
+        public final String account;
         public final long startNanos;
         public final long startEpochMs;
         public final int labelId;
@@ -15,8 +19,12 @@ public final class MarkTracker {
         public final int settingsHash;
         public final String[] kv;
 
-        public Open(UUID uuid, long startNanos, long startEpochMs, int labelId, int clientId, int moduleId, int settingsHash, String[] kv) {
+        public Open(UUID uuid, String id, String operator, String account, long startNanos, long startEpochMs,
+                    int labelId, int clientId, int moduleId, int settingsHash, String[] kv) {
             this.uuid = uuid;
+            this.id = id;
+            this.operator = operator;
+            this.account = account;
             this.startNanos = startNanos;
             this.startEpochMs = startEpochMs;
             this.labelId = labelId;
@@ -29,8 +37,13 @@ public final class MarkTracker {
 
     private final ConcurrentHashMap<UUID, Open> open = new ConcurrentHashMap<>();
 
-    public Open start(UUID uuid, long nanos, long epochMs, int labelId, int clientId, int moduleId, int settingsHash, String[] kv) {
-        Open next = new Open(uuid, nanos, epochMs, labelId, clientId, moduleId, settingsHash, kv);
+    public static String newId() {
+        return String.format("m%08x", ThreadLocalRandom.current().nextInt());
+    }
+
+    public Open start(UUID uuid, String id, String operator, String account, long nanos, long epochMs,
+                      int labelId, int clientId, int moduleId, int settingsHash, String[] kv) {
+        Open next = new Open(uuid, id, operator, account, nanos, epochMs, labelId, clientId, moduleId, settingsHash, kv);
         return open.put(uuid, next);
     }
 
@@ -40,6 +53,18 @@ public final class MarkTracker {
 
     public Open peek(UUID uuid) {
         return open.get(uuid);
+    }
+
+    public Open byId(String id) {
+        if (id == null) {
+            return null;
+        }
+        for (Open o : open.values()) {
+            if (o.id.equalsIgnoreCase(id)) {
+                return o;
+            }
+        }
+        return null;
     }
 
     public java.util.Collection<Open> allOpen() {
