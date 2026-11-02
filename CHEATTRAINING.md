@@ -9,11 +9,11 @@
 | 02/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 | 4:31 | 2026-11-01_3a820t8u0df9g_nm94e7kg558b_2e98aa5c.gmlml | notauthorised |
 | 02/11/26 | Kill Aura | HUMANIZED:TRUE REACH:3 MISS_CHANCE:0 | 2:16 | 2026-11-01_122vv30244253_24rgc6ieb4wep_7f759297.gmlml | notauthorised |
 |  |  |  |  |  |  |
-| 02/11/26 | Auto Mace | HORS_TARGET_DISTANCE:5.0 MIN_FALL_DISTANCE:10 STUNSLAM:FALSE SILENT_AIM:TRUE SWAP_BACK:FALSE | 2026-11-02_122vv30244253_3kzj68rezian7_83e5404d.gmlml | 3:38 | notauthorised |
-| 02/11/26 | Auto Mace | HORS_TARGET_DISTANCE:5.0 MIN_FALL_DISTANCE:10 STUNSLAM:FALSE SILENT_AIM:TRUE SWAP_BACK:TRUE | 2026-11-02_122vv30244253_3kzj68rezian7_6432e19c.gmlml | 4:08 | notauthorised |
+| 02/11/26 | Auto Mace | HORS_TARGET_DISTANCE:5.0 MIN_FALL_DISTANCE:10 STUNSLAM:FALSE SILENT_AIM:TRUE SWAP_BACK:FALSE | 3:38 | 2026-11-02_122vv30244253_3kzj68rezian7_83e5404d.gmlml | notauthorised |
+| 02/11/26 | Auto Mace | HORS_TARGET_DISTANCE:5.0 MIN_FALL_DISTANCE:10 STUNSLAM:FALSE SILENT_AIM:TRUE SWAP_BACK:TRUE | 4:08 | 2026-11-02_122vv30244253_3kzj68rezian7_6432e19c.gmlml | notauthorised |
 |  |  |  |  |  |  |
-| 02/11/26 | Auto Spear Swap | SWAP_DELAY_MIN:20 SWAP_DELAY_MAX:70 SWAP_BACK:TRUE | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_f37313a1.gmlml | 3:10 | notauthorised |
-| 02/11/26 | Auto Spear Swap | SWAP_DELAY_MIN:0 SWAP_DELAY_MAX:0 SWAP_BACK:TRUE | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_dccadfce.gmlml | 1:46 | notauthorised |
+| 02/11/26 | Auto Spear Swap | SWAP_DELAY_MIN:20 SWAP_DELAY_MAX:70 SWAP_BACK:TRUE | 3:10 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_f37313a1.gmlml | notauthorised |
+| 02/11/26 | Auto Spear Swap | SWAP_DELAY_MIN:0 SWAP_DELAY_MAX:0 SWAP_BACK:TRUE | 1:46 | 2026-11-02_3a820t8u0df9g_luz5xw6jmmkl_dccadfce.gmlml | notauthorised |
 
 ## Doomsday
 | Date | Module | Settings | Duration | ID | By |
