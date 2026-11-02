@@ -44,11 +44,19 @@ modules:
       switch_delay_ms: int
       humanized: [true, false]
       miss_chance: float
-      
-  stun_slam_macro:
+
+  stun_slam:
     settings:
       swap_delay_ticks: int
       jitter: float
+
+  auto_mace:
+    settings:
+      horizontal_target_distance: float
+      min_fall_distance: float
+      stunslam: [true, false]
+      silent_aim: [true, false]
+      swap_back: [true, false]
   auto_totem:
     settings:
       delay_ms: int
