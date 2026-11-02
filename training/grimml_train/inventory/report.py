@@ -33,6 +33,7 @@ def inventory_report(windows: pd.DataFrame, out_path: Path | None = None) -> dic
             "test_account_share": float(windows["is_test_account"].mean()) if "is_test_account" in windows else 0.0,
             "valid_partial_share": float(windows["valid_partial"].mean()) if "valid_partial" in windows else None,
             "valid_lag_share": float(windows["valid_lag"].mean()) if "valid_lag" in windows else None,
+            "valid_teleport_share": float(windows["valid_teleport"].mean()) if "valid_teleport" in windows else None,
         }
     if out_path:
         out_path.parent.mkdir(parents=True, exist_ok=True)
