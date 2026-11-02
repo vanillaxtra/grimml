@@ -64,6 +64,12 @@ modules:
       swap_delay_max: int
       swap_back: [true, false]
 
+  anchor_macro:
+    settings:
+      anchor_delay_min: int
+      anchor_delay_max: int
+      silent_aim: [true, false]
+
   auto_wind_charge_hitter:
     settings:
       reach: float
@@ -76,6 +82,14 @@ modules:
       hold_length_max: int
       reaction_time_min: int
       reaction_time_max: int
+
+  auto_crystal:
+    settings:
+      damage_tick: [true, false]
+      delay_min_ms: int
+      delay_max_ms: int
+      head_bob: [true, false]
+      
 
   auto_pearl_catch:
     settings:
