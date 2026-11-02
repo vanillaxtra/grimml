@@ -13,7 +13,12 @@ def _label_name(label_id) -> str:
     return LABEL_NAMES.get(int(label_id), "UNLABELED")
 
 
-def reconstruct_segments(windows: pd.DataFrame, markers: pd.DataFrame, trim_seconds: float = 0.5) -> pd.DataFrame:
+def reconstruct_segments(
+    windows: pd.DataFrame,
+    markers: pd.DataFrame,
+    trim_seconds: float = 0.5,
+    exclude_interrupted: bool = True,
+) -> pd.DataFrame:
     if windows.empty or markers.empty:
         return pd.DataFrame(
             columns=["anon_player_id", "session_id", "from_ms", "to_ms", "label", "client_id", "module_id", "interrupted"]
@@ -78,6 +83,8 @@ def reconstruct_segments(windows: pd.DataFrame, markers: pd.DataFrame, trim_seco
     segs["to_ms"] = segs["to_ms"] - trim_ms
     segs = segs[segs["to_ms"] > segs["from_ms"]]
     segs = segs[segs["label"] != "UNLABELED"]
+    if exclude_interrupted and "interrupted" in segs.columns:
+        segs = segs[~segs["interrupted"].astype(bool)]
     return segs.reset_index(drop=True)
 
 
@@ -127,11 +134,9 @@ def apply_segments(windows: pd.DataFrame, segs: pd.DataFrame) -> pd.DataFrame:
     end = start + dur_ms.fillna(7000)
     out["_ws"] = start
     out["_we"] = end
-    unlabeled = out["label"].eq("UNLABELED")
     for s in segs.itertuples(index=False):
         m = (
-            unlabeled
-            & (out["anon_player_id"] == s.anon_player_id)
+            (out["anon_player_id"] == s.anon_player_id)
             & (out["session_id"] == s.session_id)
             & (out["_we"] >= s.from_ms)
             & (out["_ws"] <= s.to_ms)
