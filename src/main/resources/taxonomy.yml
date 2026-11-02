@@ -50,6 +50,12 @@ modules:
       swap_delay_ticks: int
       jitter: float
 
+  auto_spear:
+    settings:
+      swap_delay_min: int
+      swap_delay_max: int
+      swap_back: [true, false]
+
   auto_mace:
     settings:
       horizontal_target_distance: float
