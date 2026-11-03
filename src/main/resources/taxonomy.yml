@@ -120,10 +120,17 @@ modules:
       stunslam: [true, false]
       silent_aim: [true, false]
       swap_back: [true, false]
+
+  
   auto_totem:
     settings:
       delay_ms: int
       jitter: float
+  auto_xbow_cart:
+    settings:
+      delay_ticks: int
+      silent_aim: [true, false]
+      silent_aim_fov: int
   jump_reset:
     settings:
       chance: float
