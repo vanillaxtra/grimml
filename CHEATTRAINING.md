@@ -24,6 +24,7 @@ This is where i can keep track of the different clients i have run cheats on and
 |  |  |  |  |  |  |
 | 02/11/26 | Silent Aim | CONTINOUS_TRACKING:FALSE | 2:39 | mb1f6fa34 | notauthorised |
 | 02/11/26 | Silent Aim | CONTINOUS_TRACKING:TRUE | 5:11 | md5e8301b | notauthorised |
+| 03/11/26 | Silent Aim | CONTINOUS_TRACKING:TRUE | 10:53 | m3367bfcd | notauthorised & amariia |
 |  |  |  |  |  |  |
 | 02/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100 | 4:14 | m12b44916 | notauthorised |
 | 02/11/26 | Triggerbot | DELAY_MIN_MS:25 DELAY_MAX_MS:50 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100 | 2:49 | m109c3312 | notauthorised |
@@ -54,6 +55,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:600 BREAK_COOLDOWN_MIN_MS:300 | 4:55 | m94403eea | notauthorised |
 | 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:0 BREAK_COOLDOWN_MIN_MS:0 | 4:32 | mf97e1a20 | notauthorised |
 | 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:16.5 HIT_DELAY_MAX_MS:42 BREAK_COOLDOWN_MAX_MS:570 BREAK_COOLDOWN_MIN_MS:270 | 8:37 | m1dff7271 | notauthorised & amariia |
+| 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:16.5 HIT_DELAY_MAX_MS:42 BREAK_COOLDOWN_MAX_MS:570 BREAK_COOLDOWN_MIN_MS:270 | 10:53 | m3367bfcd | notauthorised & amariia |
 
 
 ## Doomsday
