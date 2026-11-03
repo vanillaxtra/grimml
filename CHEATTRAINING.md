@@ -46,7 +46,9 @@ This is where i can keep track of the different clients i have run cheats on and
 | 02/11/26 | Auto Xbow Cart | DELAY_TICKS:2 SILENT_AIM:TRUE SILENT_AIM_FOV:180 | 2:59 | md923db5a | notauthorised |
 | 03/11/26 | Auto Xbow Cart | DELAY_TICKS:0 SILENT_AIM:TRUE SILENT_AIM_FOV:180 | 3:39 | m292a06ce | notauthorised |
 |  |  |  |  |  |  |
-| 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:1200 BREAK_COOLDOWN_MIN_MS:900 |  |  |  |
+| 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:1200 BREAK_COOLDOWN_MIN_MS:900 | 5:45 | m63659df6 | notauthorised |
+| 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:600 BREAK_COOLDOWN_MIN_MS:300 | 4:55 | m94403eea | notauthorised |
+| 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:0 BREAK_COOLDOWN_MIN_MS:0 | 4:32 | mf97e1a20 | notauthorised |
 
 
 ## Doomsday
