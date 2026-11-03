@@ -121,7 +121,15 @@ modules:
       silent_aim: [true, false]
       swap_back: [true, false]
 
-  
+  auto_shield_break:
+    settings:
+      stun: [true, false]
+      chance: float
+      hit_delay_min_ms: int
+      hit_delay_max_ms: int
+      break_cooldown_min_ms: int
+      break_cooldown_max_ms: int
+
   auto_totem:
     settings:
       delay_ms: int
