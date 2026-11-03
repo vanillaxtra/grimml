@@ -8,8 +8,8 @@ This is where i can keep track of the different clients i have run cheats on and
 | 02/11/26  | Aim Assist | FOV:90 SPEED:50 SMOOTHING:0 RANDOMNESS:70 ONLY_ON_ROTATE:FALSE | 2:25 | me9b0dc92 | notauthorised |
 | 02/11/26  | Aim Assist | FOV:360 SPEED:50 SMOOTHING:75 RANDOMNESS:70 ONLY_ON_ROTATE:FALSE | 3:09 | ma2e0fb94 | notauthorised |
 | 02/11/26  | Aim Assist | FOV:360 SPEED:25.08 SMOOTHING:75 RANDOMNESS:70 ONLY_ON_ROTATE:FALSE | 2:18 | m9ec7d620 | notauthorised |
-| 02/11/26  | Aim Assist | FOV:360 SPEED:10.09 SMOOTHING:75 RANDOMNESS:70 ONLY_ON_ROTATE:FALSE | 4:25 | m0a6016b0 | notauthorised |
-| 02/11/26  | Aim Assist | FOV:360 SPEED:100 SMOOTHING:0 RANDOMNESS:70 ONLY_ON_ROTATE:TRUE | 2:13 | m4108b362 | notauthorised |
+| 03/11/26  | Aim Assist | FOV:360 SPEED:10.09 SMOOTHING:75 RANDOMNESS:70 ONLY_ON_ROTATE:FALSE | 4:25 | m0a6016b0 | notauthorised |
+| 03/11/26  | Aim Assist | FOV:360 SPEED:100 SMOOTHING:0 RANDOMNESS:70 ONLY_ON_ROTATE:TRUE | 2:13 | m4108b362 | notauthorised |
 |  |  |  |  |  |  |
 | 02/11/26 | Kill Aura | HUMANIZED:FALSE REACH:3 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 5:25 | m22700b10 | notauthorised |
 | 02/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 3:57 | mf2dd0754 | notauthorised |
@@ -26,7 +26,7 @@ This is where i can keep track of the different clients i have run cheats on and
 |  |  |  |  |  |  |
 | 02/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100 | 4:14 | m12b44916 | notauthorised |
 | 02/11/26 | Triggerbot | DELAY_MIN_MS:25 DELAY_MAX_MS:50 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100 | 2:49 | m109c3312 | notauthorised |
-| 02/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:94 COOLDOWN_MAX_PERCENT:100 | 4:34 | m70c1ef87 | notauthorised |
+| 03/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:94 COOLDOWN_MAX_PERCENT:100 | 4:34 | m70c1ef87 | notauthorised |
 |  |  |  |  |  |  |
 | 02/11/26 | Auto W Tap | CHANCE:100 HOLD_LENGTH_MIN:100 HOLD_LENGTH_MAX:200 REACTION_TIME_MIN:10 REACTION_TIME_MAX:30 | 2:46 | m56635106 | notauthorised |
 |  |  |  |  |  |  |
