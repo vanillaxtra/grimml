@@ -34,7 +34,7 @@ VALIDITY_COLS = [
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="grimml-train")
-    p.add_argument("--config", type=Path, default=Path("config.example.yaml"))
+    p.add_argument("--config", type=Path, default=Path("config.yaml"))
     sub = p.add_subparsers(dest="cmd", required=True)
     for name in ("ingest", "decode", "label", "inventory", "features", "train", "eval", "export", "pipeline"):
         sub.add_parser(name)
@@ -51,7 +51,7 @@ def main() -> None:
         _cmd_label(cfg)
         return
     if args.cmd == "inventory":
-        print(inventory_report(_labeled(cfg), cfg.out_dir / "inventory.txt"))
+        print(inventory_report(_windows_for_inventory(cfg), cfg.out_dir / "inventory.md"))
         return
     if args.cmd == "features":
         print("features are computed during ingest")
@@ -68,7 +68,7 @@ def main() -> None:
     if args.cmd == "pipeline":
         ingest(cfg)
         _cmd_label(cfg)
-        print(inventory_report(_labeled(cfg), cfg.out_dir / "inventory.txt"))
+        print(inventory_report(_windows_for_inventory(cfg), cfg.out_dir / "inventory.md"))
         _cmd_train(cfg)
         print(json.dumps(_cmd_eval(cfg), indent=2, default=str))
         _cmd_export(cfg)
@@ -80,6 +80,16 @@ def _labeled(cfg):
     if not path.exists():
         raise SystemExit(f"missing {path}; run grimml-train label")
     return pd.read_parquet(path)
+
+
+def _windows_for_inventory(cfg):
+    path = cfg.out_dir / "labeled" / "windows.parquet"
+    if path.exists():
+        return pd.read_parquet(path)
+    w = load_ingest_table(cfg.out_dir, "windows")
+    if w.empty:
+        raise SystemExit("missing ingest/windows; run grimml-train decode")
+    return w
 
 
 def _cmd_label(cfg) -> None:

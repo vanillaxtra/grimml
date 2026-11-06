@@ -1,0 +1,18 @@
+# model matrix columns only. identity/grim/label names are forbidden.
+- yaw_vel_mean
+- yaw_vel_std
+- yaw_vel_abs_mean
+- yaw_jerk_mean
+- yaw_snap_rate
+- gcd_grid
+- pitch_vel_mean
+- pitch_range
+- speed_mean
+- on_ground_frac
+- attack_count
+- cps
+- click_gap_mean_ms
+- click_gap_cv
+- ping_ms
+- jitter_ms
+- frame_count

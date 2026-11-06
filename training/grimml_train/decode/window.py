@@ -1,16 +1,20 @@
 from __future__ import annotations
 
+import re
+import struct
 import zlib
 from io import BytesIO
 from pathlib import Path
 
 from grimml_train.decode import records as R
 from grimml_train.decode.gml_common import (
+    UnknownRecordTypeError,
     read_events_v2,
     read_frames_v2,
     read_gml1_body,
 )
 from grimml_train.decode.varint import (
+    TruncatedFileError,
     read_i32,
     read_i64,
     read_i16,
@@ -20,6 +24,9 @@ from grimml_train.decode.varint import (
     read_u64,
 )
 
+_FILE_DATE = re.compile(r"^(\d{4}-\d{2}-\d{2})_")
+_MARK_ID = re.compile(r"_(m[0-9a-fA-F]{8})_")
+
 
 def schema_of(data: bytes) -> int:
     if len(data) < 4 or data[0:3] != b"GML":
@@ -27,25 +34,55 @@ def schema_of(data: bytes) -> int:
     return data[3] - 48
 
 
+def parse_filename(name: str) -> dict:
+    date = None
+    m = _FILE_DATE.match(name)
+    if m:
+        date = m.group(1)
+    mark = None
+    m2 = _MARK_ID.search(name)
+    if m2:
+        mark = m2.group(1).lower()
+    return {"file_date": date, "mark_id": mark}
+
+
 def decode_file(path: Path) -> dict:
-    raw = path.read_bytes()
-    magic = raw[0:4]
-    if magic[0:3] != b"GML":
+    path = Path(path)
+    try:
+        raw = path.read_bytes()
+    except OSError as e:
+        raise TruncatedFileError(f"unreadable {path}: {e}") from e
+    if len(raw) < 5 or raw[0:3] != b"GML":
         raise ValueError(f"not a gmlml file: {path}")
-    schema = magic[3] - 48
+    schema = raw[3] - 48
     window_key = str(path.resolve())
+    meta = parse_filename(path.name)
     stream = BytesIO(raw)
     stream.read(4)
-    if schema == 1:
-        return _decode_gml1(stream, window_key, path.name)
-    if schema in (2, 3):
-        return _decode_gml23(stream, window_key, schema, path.name)
-    raise ValueError(f"unsupported schema {schema} in {path}")
+    try:
+        if schema == 1:
+            out = _decode_gml1(stream, window_key, path.name)
+        elif schema in (2, 3):
+            out = _decode_gml23(stream, window_key, schema, path.name)
+        else:
+            raise ValueError(f"unsupported schema {schema} in {path}")
+    except UnknownRecordTypeError:
+        raise
+    except (TruncatedFileError, EOFError, zlib.error, struct.error) as e:
+        raise TruncatedFileError(f"truncated {path}: {e}") from e
+    out["window"]["file_date"] = meta["file_date"]
+    out["window"]["mark_id"] = meta["mark_id"]
+    out["window"]["path"] = window_key
+    return out
 
 
 def _inflate(stream: BytesIO) -> BytesIO:
     clen = read_i32(stream)
+    if clen < 0 or clen > 16 * 1024 * 1024:
+        raise TruncatedFileError(f"compressed_len {clen}")
     blob = stream.read(clen)
+    if len(blob) != clen:
+        raise TruncatedFileError(f"compressed need {clen} got {len(blob)}")
     # java DeflaterOutputStream uses zlib wrapper
     return BytesIO(zlib.decompress(blob))
 
@@ -103,6 +140,10 @@ def _decode_gml1(stream: BytesIO, window_key: str, file_name: str) -> dict:
         "pe_version": None,
         "taxonomy_version": None,
         "taxonomy_hash": None,
+        "is_bedrock": bool(state_flags & R.FLAG_BEDROCK),
+        "is_staff": None,
+        "file_date": None,
+        "mark_id": None,
     }
     win.update({name: None for name, _bit in R.VALID_FLAGS})
     return {"window": win, "frames": frames, "events": events, "markers": markers}
@@ -198,6 +239,10 @@ def _decode_gml23(stream: BytesIO, window_key: str, schema: int, file_name: str)
         "pe_version": pe_version,
         "taxonomy_version": tax_ver,
         "taxonomy_hash": tax_hash,
+        "is_bedrock": bool(state_flags & R.FLAG_BEDROCK),
+        "is_staff": bool(state_flags & R.FLAG_STAFF),
+        "file_date": None,
+        "mark_id": None,
     }
     for name, bit in R.VALID_FLAGS:
         win[name] = bool(validity & bit)

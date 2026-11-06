@@ -1,0 +1,18 @@
+seed: 42
+# mixed dump: cheat vs legit is inside MARKER records (GML2/3) or sidecars
+recordings_dir: E:/recordings
+sidecar_dir: E:/recordings
+out_dir: out
+marker_trim_seconds: 3.0
+exclude_grim_features_when_weak_labels: true
+workers: 0
+shard_size: 4000
+keep_unlabeled: true
+keep_frames: false
+skip_bad_files: true
+resume: true
+exclude_interrupted: true
+exclude_flagged_from_train: true
+max_fpr: 0.01
+confound_auc_warn: 0.6
+allow_probable_negatives: false

@@ -11,7 +11,7 @@ class TrainConfig(BaseModel):
     recordings_dir: Path = Path("../plugins/grimml/recordings")
     sidecar_dir: Path = Path("../plugins/grimml")
     out_dir: Path = Path("out")
-    marker_trim_seconds: float = 0.5
+    marker_trim_seconds: float = 3.0
     exclude_interrupted: bool = True
     exclude_flagged_from_train: bool = True
     allow_probable_negatives: bool = False

@@ -13,7 +13,7 @@ Legend: ✅ done · 🔶 partial · ⬜ todo
 - [x] Per-file decode + features; **frames not kept** (`keep_frames: false`)
 - [x] Parquet shards (`shard_size`)
 - [x] Resume via `out/ingest/done.txt`
-- [x] Bad files logged to `errors.log` (`skip_bad_files: true`)
+- [x] Bad files logged to `errors.csv` (`skip_bad_files: true`)
 - [x] Labels recovered from in-file MARKER start/end time ranges (cheat + legit mixed)
 - [x] UNLABELED never treated as legit
 - [ ] 🔶 Optional persist frames for debugging (`keep_frames`)

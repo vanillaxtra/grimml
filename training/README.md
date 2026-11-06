@@ -1,36 +1,35 @@
 # grimml training pipeline
 
-Decode a mixed folder of `.gmlml` combat windows (cheat and legit together), recover labels from **MARKER records inside the files**, train a baseline.
+Decode `.gmlml` combat windows (GML1 / GML2 / GML3), recover labels from in-file MARKER records (GML2/3) plus optional sidecars, build features, train a leakage-safe baseline.
 
-## 80GB unsorted dump
+Format details: [docs/format-notes.md](docs/format-notes.md). Leakage audit: [AUDIT.md](AUDIT.md).
 
-Files are not sorted by class. `/grimml mark` writes CHEAT / LEGIT_CONFIRMED as time-range MARKER events in the recording. Ingest walks one directory tree, processes files in parallel, and never loads the whole dump into RAM. Frames are discarded after per-window features.
+## Run order
+
+`decode` → `inventory` → `label` → `features` (computed during decode) → `train` → `eval` → `export`
 
 ```bash
 cd training
 pip install -e ".[dev]"
 ```
 
-Edit `config.example.yaml`:
-
-```yaml
-recordings_dir: D:/grimml-dump   # the 80GB folder
-out_dir: out
-workers: 0                       # 0 = all CPUs
-shard_size: 4000
-keep_unlabeled: true
-skip_bad_files: true
-resume: true
-```
+`config.yaml` already points at `E:/recordings`.
 
 ```bash
-grimml-train --config config.example.yaml pipeline
+grimml-train --config config.yaml decode
+grimml-train --config config.yaml inventory
+grimml-train --config config.yaml label
+grimml-train --config config.yaml train
+grimml-train --config config.yaml eval
+grimml-train --config config.yaml export
 ```
 
-Or step by step: `ingest` → `label` → `inventory` → `train` → `eval`.
+Or `grimml-train --config config.yaml pipeline`.
 
-Resume: rerun `ingest` after a crash; `out/ingest/done.txt` skips files already written. Corrupt files go to `out/ingest/errors.log`.
+Resume: `out/ingest/done.txt` skips finished files. Failures go to `out/ingest/errors.csv` (`path,reason`). One bad file does not stop the batch.
 
-UNLABELED windows (no mark segment) are never treated as legit. Training uses only `CHEAT` vs `LEGIT_CONFIRMED` from staff markers.
+UNLABELED is never treated as legit. Train uses staff `CHEAT` vs `LEGIT_CONFIRMED` only.
 
-See [TODOtraining.md](TODOtraining.md).
+### Current dump (`E:\recordings`)
+
+Early files are **GML1** (yaw/pitch only, no MARKER, no xyz). Inventory will warn if GML1 dominates. Staff marks for those windows need `cheat_log.csv` / `marks.csv` / other sidecars in `sidecar_dir`. GML3 marked sessions (`*_m########_*.gmlml`) join by marker time range plus `mark_id`.

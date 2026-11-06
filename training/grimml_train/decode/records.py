@@ -28,7 +28,11 @@ MARKER_KV = 26
 KNOWN = frozenset(range(1, 27))
 
 EVENT_NAMES = {
+    ROTATION: "rotation",
     ATTACK: "attack",
+    STATE: "state",
+    GRIM_FLAG: "grim_flag",
+    FRAME: "frame",
     DAMAGE: "damage",
     SWING: "swing",
     USE_ITEM: "use_item",
@@ -39,15 +43,39 @@ EVENT_NAMES = {
     TOTEM: "totem",
     SHIELD: "shield",
     MARKER: "marker",
-    MARKER_KV: "marker_kv",
+    CONSUMABLE: "consumable",
+    TELEPORT: "teleport",
     SETBACK: "setback",
-    GRIM_FLAG: "grim_flag",
+    PROJECTILE: "projectile",
     WINDOW: "inventory",
-    ROTATION: "rotation",
-    STATE: "state",
+    RTT: "rtt",
+    BREAK: "break",
+    BUCKET: "bucket",
+    ELYTRA: "elytra",
+    STATUS: "status",
+    MARKER_KV: "marker_kv",
 }
 
 F_ON_GROUND = 1
+F_HORIZ_COLL = 1 << 1
+F_INPUT_W = 1 << 2
+F_INPUT_A = 1 << 3
+F_INPUT_S = 1 << 4
+F_INPUT_D = 1 << 5
+F_JUMP = 1 << 6
+F_SNEAK = 1 << 7
+F_SPRINT = 1 << 8
+F_INPUT_INFERRED = 1 << 9
+F_CLIENT_TICK_END = 1 << 10
+F_JUMP_EDGE = 1 << 11
+
+FLAG_SPRINT = 1
+FLAG_SNEAK = 1 << 1
+FLAG_VEHICLE = 1 << 2
+FLAG_ELYTRA = 1 << 3
+FLAG_BEDROCK = 1 << 4
+FLAG_STAFF = 1 << 5
+FLAG_TEST_ACCOUNT = 1 << 6
 MARKER_START = 1
 MARKER_END = 0
 MARKER_INTERRUPTED = 2

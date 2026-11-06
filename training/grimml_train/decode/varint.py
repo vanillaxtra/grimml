@@ -4,42 +4,50 @@ import struct
 from io import BytesIO
 
 
+class TruncatedFileError(ValueError):
+    pass
+
+
+def _read(stream: BytesIO, n: int) -> bytes:
+    b = stream.read(n)
+    if len(b) != n:
+        raise TruncatedFileError(f"need {n} bytes got {len(b)}")
+    return b
+
+
 def read_u8(stream: BytesIO) -> int:
-    b = stream.read(1)
-    if not b:
-        raise EOFError("unexpected eof")
-    return b[0]
+    return _read(stream, 1)[0]
 
 
 def read_i32(stream: BytesIO) -> int:
-    return struct.unpack(">i", stream.read(4))[0]
+    return struct.unpack(">i", _read(stream, 4))[0]
 
 
 def read_i64(stream: BytesIO) -> int:
-    return struct.unpack(">q", stream.read(8))[0]
+    return struct.unpack(">q", _read(stream, 8))[0]
 
 
 def read_u64(stream: BytesIO) -> int:
-    return struct.unpack(">Q", stream.read(8))[0]
+    return struct.unpack(">Q", _read(stream, 8))[0]
 
 
 def read_i16(stream: BytesIO) -> int:
-    return struct.unpack(">h", stream.read(2))[0]
+    return struct.unpack(">h", _read(stream, 2))[0]
 
 
 def read_u16(stream: BytesIO) -> int:
-    return struct.unpack(">H", stream.read(2))[0]
+    return struct.unpack(">H", _read(stream, 2))[0]
 
 
 def read_f32(stream: BytesIO) -> float:
-    return struct.unpack(">f", stream.read(4))[0]
+    return struct.unpack(">f", _read(stream, 4))[0]
 
 
 def read_str255(stream: BytesIO) -> str:
     n = read_u8(stream)
     if n == 0:
         return ""
-    return stream.read(n).decode("utf-8", errors="replace")
+    return _read(stream, n).decode("utf-8", errors="replace")
 
 
 def read_varint(stream: BytesIO) -> int:

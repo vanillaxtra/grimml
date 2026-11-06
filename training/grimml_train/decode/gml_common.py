@@ -4,6 +4,7 @@ from io import BytesIO
 
 from grimml_train.decode import records as R
 from grimml_train.decode.varint import (
+    TruncatedFileError,
     read_f32,
     read_i32,
     read_i64,
@@ -19,6 +20,8 @@ class UnknownRecordTypeError(ValueError):
 
 def read_frames_v2(rec: BytesIO, window_key: str, schema_version: int) -> list[dict]:
     frame_count = read_u16(rec)
+    if frame_count > 8192:
+        raise TruncatedFileError(f"frame_count {frame_count} exceeds 8192")
     out: list[dict] = []
     ox = oy = oz = oyaw = opitch = 0
     for i in range(frame_count):
@@ -70,7 +73,14 @@ def read_frames_v2(rec: BytesIO, window_key: str, schema_version: int) -> list[d
                 "z_milli": z,
                 "yaw_centi": yaw,
                 "pitch_centi": pitch,
-                "on_ground": bool(flags & R.F_ON_GROUND) if flags is not None else None,
+                "on_ground": bool(flags & R.F_ON_GROUND),
+                "input_w": bool(flags & R.F_INPUT_W),
+                "input_a": bool(flags & R.F_INPUT_A),
+                "input_s": bool(flags & R.F_INPUT_S),
+                "input_d": bool(flags & R.F_INPUT_D),
+                "jump": bool(flags & R.F_JUMP),
+                "sneak": bool(flags & R.F_SNEAK),
+                "sprint": bool(flags & R.F_SPRINT),
                 "flags": flags,
                 "pose": pose,
                 "held_slot": slot,
@@ -94,6 +104,8 @@ def read_events_v2(rec: BytesIO, window_key: str, schema_version: int) -> tuple[
     events: list[dict] = []
     markers: list[dict] = []
     event_count = read_u16(rec)
+    if event_count > 8192:
+        raise TruncatedFileError(f"event_count {event_count} exceeds 8192")
     for _ in range(event_count):
         etype = read_u8(rec)
         if etype not in R.KNOWN:
@@ -212,6 +224,13 @@ def read_gml1_body(rec: BytesIO, window_key: str) -> tuple[list[dict], list[dict
                 "yaw_centi": int(round(yaw * 100)),
                 "pitch_centi": int(round(pitch * 100)),
                 "on_ground": None,
+                "input_w": None,
+                "input_a": None,
+                "input_s": None,
+                "input_d": None,
+                "jump": None,
+                "sneak": None,
+                "sprint": None,
                 "flags": None,
                 "pose": None,
                 "held_slot": None,

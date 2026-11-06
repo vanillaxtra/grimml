@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from grimml_train.labels.cheat_log import apply_cheat_log, load_cheat_log
 from grimml_train.labels.segments import apply_segments, reconstruct_segments
 from grimml_train.util import anon_id_base36
 
@@ -69,6 +70,10 @@ def join_labels(
     grim_review = _read_csv(sidecar_dir / "grim-review.csv")
     roster = _read_csv(sidecar_dir / "roster.csv")
     grim_labels = _read_csv(sidecar_dir / "grim-labels.csv")
+    cheat_log = load_cheat_log(sidecar_dir / "cheat_log.csv")
+    if cheat_log.empty:
+        cheat_log = load_cheat_log(sidecar_dir / "marks.csv")
+    out = apply_cheat_log(out, cheat_log)
 
     if not grim_review.empty and "status" in grim_review.columns:
         for _, row in grim_review.iterrows():

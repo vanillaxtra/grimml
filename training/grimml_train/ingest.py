@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 import os
 from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
@@ -8,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 
 from grimml_train.config import TrainConfig
-from grimml_train.decode.window import decode_file
+from grimml_train.decode.reader import decode_file
 from grimml_train.features.extract import features_from_decoded
 
 
@@ -23,28 +24,41 @@ def iter_gmlml(root: Path):
                 yield Path(dirpath) / name
 
 
-def _process_path(path_str: str) -> dict:
+def _process_path(args: tuple[str, bool]) -> dict:
+    path_str, keep_frames = args
     path = Path(path_str)
     try:
         decoded = decode_file(path)
     except Exception as e:
-        return {"error": f"{path}: {e}", "path": path_str}
+        return {"error": f"{type(e).__name__}: {e}", "path": path_str}
     feat = features_from_decoded(decoded)
     win = decoded["window"]
     if "label_source" in win:
         win["header_label_source"] = win.pop("label_source")
     win.update(feat)
     win["path"] = path_str
-    return {"window": win, "markers": decoded.get("markers") or [], "path": path_str, "error": None}
+    return {
+        "window": win,
+        "markers": decoded.get("markers") or [],
+        "frames": (decoded.get("frames") or []) if keep_frames else [],
+        "events": (decoded.get("events") or []) if keep_frames else [],
+        "path": path_str,
+        "error": None,
+    }
 
 
 def ingest(cfg: TrainConfig) -> dict:
     out = cfg.out_dir / "ingest"
     win_dir = out / "windows"
     mk_dir = out / "markers"
+    fr_dir = out / "frames"
+    ev_dir = out / "events"
     win_dir.mkdir(parents=True, exist_ok=True)
     mk_dir.mkdir(parents=True, exist_ok=True)
-    err_path = out / "errors.log"
+    if cfg.keep_frames:
+        fr_dir.mkdir(parents=True, exist_ok=True)
+        ev_dir.mkdir(parents=True, exist_ok=True)
+    err_path = out / "errors.csv"
     done_path = out / "done.txt"
 
     done: set[str] = set()
@@ -58,35 +72,45 @@ def ingest(cfg: TrainConfig) -> dict:
     shard_n = len(list(win_dir.glob("part-*.parquet")))
     buf_w: list[dict] = []
     buf_m: list[dict] = []
+    buf_f: list[dict] = []
+    buf_e: list[dict] = []
     n_ok = 0
     n_err = 0
     n_bytes = 0
 
+    if not err_path.exists():
+        err_path.write_text("path,reason\n", encoding="utf-8")
+
     def flush():
-        nonlocal shard_n, buf_w, buf_m
+        nonlocal shard_n, buf_w, buf_m, buf_f, buf_e
         if not buf_w:
             return
         shard_n += 1
         pd.DataFrame(buf_w).to_parquet(win_dir / f"part-{shard_n:05d}.parquet", index=False)
         if buf_m:
             pd.DataFrame(buf_m).to_parquet(mk_dir / f"part-{shard_n:05d}.parquet", index=False)
+        if cfg.keep_frames and buf_f:
+            pd.DataFrame(buf_f).to_parquet(fr_dir / f"part-{shard_n:05d}.parquet", index=False)
+        if cfg.keep_frames and buf_e:
+            pd.DataFrame(buf_e).to_parquet(ev_dir / f"part-{shard_n:05d}.parquet", index=False)
         with done_path.open("a", encoding="utf-8") as f:
             for row in buf_w:
                 f.write(row["path"] + "\n")
-        buf_w = []
-        buf_m = []
+        buf_w, buf_m, buf_f, buf_e = [], [], [], []
 
     def handle(r: dict):
-        nonlocal n_ok, n_err, n_bytes, buf_w, buf_m
+        nonlocal n_ok, n_err, n_bytes, buf_w, buf_m, buf_f, buf_e
         if r.get("error"):
             n_err += 1
-            with err_path.open("a", encoding="utf-8") as f:
-                f.write(r["error"] + "\n")
+            with err_path.open("a", encoding="utf-8", newline="") as f:
+                csv.writer(f).writerow([r["path"], r["error"]])
             if not cfg.skip_bad_files:
                 raise RuntimeError(r["error"])
             return
         buf_w.append(r["window"])
         buf_m.extend(r["markers"])
+        buf_f.extend(r.get("frames") or [])
+        buf_e.extend(r.get("events") or [])
         n_ok += 1
         try:
             n_bytes += Path(r["path"]).stat().st_size
@@ -95,24 +119,25 @@ def ingest(cfg: TrainConfig) -> dict:
         if len(buf_w) >= cfg.shard_size:
             flush()
 
-    if pending and workers <= 1:
-        for i, p in enumerate(pending, 1):
-            handle(_process_path(p))
+    jobs = [(p, cfg.keep_frames) for p in pending]
+    if jobs and workers <= 1:
+        for i, job in enumerate(jobs, 1):
+            handle(_process_path(job))
             if i % 200 == 0:
-                print(f"ingest {i}/{len(pending)} ok={n_ok} err={n_err}", flush=True)
+                print(f"ingest {i}/{len(jobs)} ok={n_ok} err={n_err}", flush=True)
         flush()
-    elif pending:
-        it = iter(pending)
+    elif jobs:
+        it = iter(jobs)
         with ProcessPoolExecutor(max_workers=workers) as pool:
             futs = set()
 
             def fill():
                 while len(futs) < inflight_cap:
                     try:
-                        p = next(it)
+                        job = next(it)
                     except StopIteration:
                         return
-                    futs.add(pool.submit(_process_path, p))
+                    futs.add(pool.submit(_process_path, job))
 
             fill()
             seen = 0
@@ -122,7 +147,7 @@ def ingest(cfg: TrainConfig) -> dict:
                     handle(fut.result())
                     seen += 1
                     if seen % 200 == 0:
-                        print(f"ingest {seen}/{len(pending)} ok={n_ok} err={n_err}", flush=True)
+                        print(f"ingest {seen}/{len(jobs)} ok={n_ok} err={n_err}", flush=True)
                 fill()
         flush()
 
@@ -135,6 +160,7 @@ def ingest(cfg: TrainConfig) -> dict:
         "bytes": n_bytes,
         "workers": workers,
         "already_done": len(done),
+        "errors_csv": str(err_path),
     }
     (out / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(summary, flush=True)

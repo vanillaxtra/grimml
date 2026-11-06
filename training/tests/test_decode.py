@@ -2,7 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from grimml_train.decode.window import decode_file, schema_of
+from grimml_train.decode.varint import TruncatedFileError
+from grimml_train.decode.window import decode_file, parse_filename, schema_of
 from tests.fixtures.encode_samples import encode_gml1_minimal, encode_gml2_minimal, encode_gml3_selfcheck
 
 
@@ -46,3 +47,27 @@ def test_decode_gml1_gml2(tmp_path: Path):
 
 def test_unknown_record_raises(tmp_path: Path):
     pytest.skip("covered by test_audit_decoder.test_unknown_record_type_raises")
+
+
+def test_truncated_file(tmp_path: Path):
+    p = tmp_path / "short.gmlml"
+    p.write_bytes(b"GML3\x03\x00\x01")
+    with pytest.raises(TruncatedFileError):
+        decode_file(p)
+
+
+def test_parse_filename():
+    a = parse_filename("2026-11-02_m83e5404d_a3ac2e82.gmlml")
+    assert a["file_date"] == "2026-11-02"
+    assert a["mark_id"] == "m83e5404d"
+    b = parse_filename("2026-10-29_107bblr5q9esn_2s7poz5g3ocvu_192778eb.gmlml")
+    assert b["file_date"] == "2026-10-29"
+    assert b["mark_id"] is None
+
+
+def test_gml3_roundtrip_file_date(tmp_path: Path):
+    path = tmp_path / "2026-11-02_m83e5404d_deadbeef.gmlml"
+    path.write_bytes(encode_gml3_selfcheck())
+    w = decode_file(path)["window"]
+    assert w["file_date"] == "2026-11-02"
+    assert w["mark_id"] == "m83e5404d"
