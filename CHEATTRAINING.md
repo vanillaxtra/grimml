@@ -87,6 +87,8 @@ This is where i can keep track of the different clients i have run cheats on and
 | 07/11/26 | Auto Mace | STUN_SLAM:TRUE SILENT_AIM:FALSE | 8:16 | m004031bb | notauthorised |
 |  |  |  |  |  |  |
 | 07/11/26 | Auto Wind Charge Hitter | HUMANIZED:TRUE REACH:3 | 5:04 | mf7bb67e8 | notauthorised |
+|  |  |  |  |  |  |
+| 07/11/26 | Auto Lunge | SWITCH_DELAY_MAX:0 SWITCH_DELAY_MIN:0 SWAP_BACK_TRUE | 3:49 | m9c80fe11 | notauthorised |
 
 
 ## Liquid Bounce
