@@ -72,6 +72,8 @@ This is where i can keep track of the different clients i have run cheats on and
 | Date | Module | Settings | Duration | ID | By |
 | -------- | ------- | ------- | ------- | ------- | ------- |
 | 07/11/26 | Auto Stun Slam | MACE_DELAY_MIN_TICKS:1 MACE_DELAY_MAX_TICKS:1 | 5:16 | m5045e1ea | notauthorised |
+| -------- | ------- | ------- | ------- | ------- | ------- |
+| 07/11/26 | Killaura | COOLDOWN_MIN_PERCENT:90 COOLDOWN_MAX_PERCENT:90 | 9:00 | mc516ec9d | notauthorised |
 
 ## Liquid Bounce
 | Date | Module | Settings | Duration | ID | By |
