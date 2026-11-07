@@ -68,10 +68,10 @@ This is where i can keep track of the different clients i have run cheats on and
 | -------- | ------- | ------- | ------- | ------- | ------- |
 |  |  |  |  |  |  |
 
-## Wurst
+## Grim
 | Date | Module | Settings | Duration | ID | By |
 | -------- | ------- | ------- | ------- | ------- | ------- |
-|  |  |  |  |  |  |
+| 07/11/26 | Auto Stun Slam | MACE_DELAY_MIN_TICKS:1 MACE_DELAY_MAX_TICKS:1 | 5:16 | m5045e1ea | notauthorised |
 
 ## Liquid Bounce
 | Date | Module | Settings | Duration | ID | By |
