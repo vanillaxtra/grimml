@@ -81,6 +81,12 @@ This is where i can keep track of the different clients i have run cheats on and
 | 07/11/26 | Auto Shield Break | STUN:TRUE | 7:52 | mf3dc7f00 | notauthorised |
 |  |  |  |  |  |  |
 | 07/11/26 | Killaura | ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 | 7:52 | mf3dc7f00 | notauthorised |
+|  |  |  |  |  |  |
+| 07/11/26 | Aim Assist | SPEED:50 | 8:37 | m365353b1 | notauthorised |
+|  |  |  |  |  |  |
+| 07/11/26 | Auto Mace | STUN_SLAM:TRUE SILENT_AIM:FALSE | 8:16 | m004031bb | notauthorised |
+|  |  |  |  |  |  |
+| 07/11/26 | Auto Wind Charge Hitter | HUMANIZED:TRUE REACH:3 | 5:04 | mf7bb67e8 | notauthorised |
 
 
 ## Liquid Bounce
