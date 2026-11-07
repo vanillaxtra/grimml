@@ -80,7 +80,8 @@ This is where i can keep track of the different clients i have run cheats on and
 | 07/11/26 | Auto Shield Break | STUN:TRUE | 4:43 | ma635ec0c | notauthorised |
 | 07/11/26 | Auto Shield Break | STUN:TRUE | 7:52 | mf3dc7f00 | notauthorised |
 |  |  |  |  |  |  |
-| 07/11/26 | Killaura | ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 | 7:52 | mf3dc7f00 | notauthorised |
+| 07/11/26 | Killaura | ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:TRUE | 7:52 | mf3dc7f00 | notauthorised |
+| 07/11/26 | Killaura | ROTATIONS:SNAP REACH:3 MISS_CHANCE:0 STUN:TRUE | 5:35 | m13d96247 | notauthorised |
 |  |  |  |  |  |  |
 | 07/11/26 | Aim Assist | SPEED:50 | 8:37 | m365353b1 | notauthorised |
 |  |  |  |  |  |  |
@@ -89,6 +90,9 @@ This is where i can keep track of the different clients i have run cheats on and
 | 07/11/26 | Auto Wind Charge Hitter | HUMANIZED:TRUE REACH:3 | 5:04 | mf7bb67e8 | notauthorised |
 |  |  |  |  |  |  |
 | 07/11/26 | Auto Lunge | SWITCH_DELAY_MAX:0 SWITCH_DELAY_MIN:0 SWAP_BACK_TRUE | 3:49 | m9c80fe11 | notauthorised |
+|  |  |  |  |  |  |
+| 07/11/26 | Auto Xbow Cart | DELAY_TICKS:0 SILENT_AIM:TRUE PLACE_PROTECTP:FALSE | 3:43 | m0bca2310 | notauthorised |
+| 07/11/26 | Auto Xbow Cart | DELAY_TICKS:0 SILENT_AIM:TRUE PLACE_PROTECTP:TRUE | 3:16 | mc9a8d071 | notauthorised |
 
 
 ## Liquid Bounce
