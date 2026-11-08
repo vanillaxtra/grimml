@@ -52,6 +52,15 @@ public final class SessionRegistry {
         entities.removeUuid(uuid);
     }
 
+    public UUID uuidOfAnon(long anon) {
+        for (Map.Entry<UUID, PlayerRingBuffer> e : buffers.entrySet()) {
+            if (e.getValue().anonPlayerId == anon) {
+                return e.getKey();
+            }
+        }
+        return null;
+    }
+
     public Iterable<PlayerRingBuffer> allBuffers() {
         return buffers.values();
     }

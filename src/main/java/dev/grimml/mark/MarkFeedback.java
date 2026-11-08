@@ -23,12 +23,22 @@ public final class MarkFeedback implements Runnable {
     @Override
     public void run() {
         for (MarkTracker.Open o : plugin.marks().allOpen()) {
-            Player p = Bukkit.getPlayer(o.uuid);
-            if (p == null || !p.isOnline()) continue;
             PlayerRingBuffer buf = plugin.registry().get(o.uuid);
             if (buf == null) continue;
-            p.sendActionBar(MM.deserialize(bar(o, buf)));
+            Player p = Bukkit.getPlayer(o.uuid);
+            String text = bar(o, buf);
+            if (p != null && p.isOnline()) {
+                send(p, text);
+            }
+            Player op = Bukkit.getPlayerExact(o.operator);
+            if (op != null && op.isOnline() && (p == null || !op.getUniqueId().equals(p.getUniqueId()))) {
+                send(op, "<gray>" + o.account + "</gray> " + text);
+            }
         }
+    }
+
+    private void send(Player p, String mini) {
+        plugin.tasks().forEntity(p, () -> p.sendActionBar(MM.deserialize(mini)));
     }
 
     public static String clientNameOf(String[] kv) {

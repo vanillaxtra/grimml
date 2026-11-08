@@ -1,5 +1,5 @@
 # Schema version - bump when keys change; missing keys use defaults.
-config-version: 4
+config-version: 5
 
 # Master kill switch. false = no packet hooks write, writer drains then idles.
 enabled: true
@@ -34,6 +34,16 @@ max-disk-mb: 20480
 
 # Relative to plugin data folder.
 recordings-dir: recordings
+
+# Folder layout inside recordings-dir: hourly = <day>/<hour>/, daily = <day>/, none = flat.
+rotation: hourly
+
+# Move finished day folders (older than after-days) out of recordings-dir on the disk thread.
+# dir is absolute or relative to the plugin data folder. Needs rotation hourly or daily.
+offload:
+  enabled: false
+  dir: ""
+  after-days: 1
 
 # Header tags written into every window so servers stay separable offline.
 server-id: default
@@ -93,3 +103,22 @@ grim-evidence:
   queue-capacity: 1024
   labels-file: grim-labels.csv
   review-file: grim-review.csv
+
+# One block snapshot per map-id + world (first combat there) for offline line-of-sight.
+# radius = blocks around the fight, height = blocks above and below. /grimml mapsave forces one.
+map-snapshot:
+  enabled: true
+  radius: 48
+  height: 24
+  dir: maps
+
+# Alert-only model scoring (phase 4). Never punishes. Needs model.onnx + model_meta.json
+# from grimml-train export in plugins/grimml/<model-dir>/. Alerts go to grimml.alerts.
+inference:
+  enabled: false
+  model-dir: model
+  queue-capacity: 256
+  decay: 0.9
+  alert-score: 1.5
+  alert-cooldown-seconds: 60
+  min-frames: 20

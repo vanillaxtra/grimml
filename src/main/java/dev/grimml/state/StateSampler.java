@@ -10,6 +10,7 @@ import dev.grimml.config.PluginConfig;
 import dev.grimml.format.RecordTypes;
 import dev.grimml.geyser.GeyserHook;
 import dev.grimml.safety.MsptGuard;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
@@ -27,7 +28,7 @@ public final class StateSampler {
     private final GeyserHook geyser;
     private final MsptGuard mspt;
     private final TickClock clock;
-    private int tickTaskId = -1;
+    private ScheduledTask tickTask;
     private int cursor;
 
     public StateSampler(GrimMLPlugin plugin, SessionRegistry registry, PluginConfig config, GeyserHook geyser,
@@ -41,13 +42,13 @@ public final class StateSampler {
     }
 
     public void start() {
-        tickTaskId = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 1L, 1L).getTaskId();
+        tickTask = plugin.tasks().repeatGlobal(this::tick, 1L, 1L);
     }
 
     public void stop() {
-        if (tickTaskId != -1) {
-            Bukkit.getScheduler().cancelTask(tickTaskId);
-            tickTaskId = -1;
+        if (tickTask != null) {
+            tickTask.cancel();
+            tickTask = null;
         }
     }
 
@@ -67,7 +68,7 @@ public final class StateSampler {
         int take = Math.min(config.staggerPerTick(), n);
         for (int i = 0; i < take; i++) {
             Player player = online[(cursor + i) % n];
-            samplePlayer(player);
+            plugin.tasks().forEntity(player, () -> samplePlayer(player));
         }
         cursor = (cursor + take) % n;
         mspt.check();
@@ -121,6 +122,9 @@ public final class StateSampler {
         packEffects(player, buf);
         sampleGrim(player, buf);
         plugin.writer().setWorldName(player.getWorld().getName());
+        if (plugin.maps() != null && buf.isCombatActive(System.nanoTime())) {
+            plugin.maps().maybeCapture(player.getLocation());
+        }
     }
 
     private void sampleGrim(Player player, PlayerRingBuffer buf) {

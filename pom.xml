@@ -10,7 +10,7 @@
     <packaging>jar</packaging>
 
     <name>grimml</name>
-    <description>Combat recording for Grim ML detection (Phase 1: recorder only)</description>
+    <description>Combat recording, labeling and alert-only scoring for Grim ML detection</description>
 
     <properties>
         <!-- Java 21 bytecode: loads on 1.21.1 (Java 21) and 26.x (Java 25) servers -->
@@ -134,6 +134,49 @@
                             <goal>java</goal>
                         </goals>
                         <configuration>
+                            <skip>${skipTests}</skip>
+                            <!-- writes all-types.gmlml + all-types.json for training/tests/test_java_parity.py -->
+                            <arguments>
+                                <argument>${project.build.directory}/selfcheck</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>lgbm-parity-self-check</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>dev.grimml.inference.LgbmModelSelfCheck</mainClass>
+                            <skip>${skipTests}</skip>
+                            <arguments>
+                                <argument>${project.basedir}/training/tests/fixtures/lgbm_parity</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>map-file-self-check</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>dev.grimml.maps.MapFileSelfCheck</mainClass>
+                            <skip>${skipTests}</skip>
+                            <arguments>
+                                <argument>${project.build.directory}/selfcheck</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>offloader-self-check</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>dev.grimml.storage.OffloaderSelfCheck</mainClass>
                             <skip>${skipTests}</skip>
                         </configuration>
                     </execution>

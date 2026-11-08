@@ -1,6 +1,7 @@
 package dev.grimml.fight;
 
 import dev.grimml.buffer.CombatSnapshot;
+import dev.grimml.buffer.InventoryMirror;
 import dev.grimml.buffer.PlayerRingBuffer;
 import dev.grimml.buffer.SessionRegistry;
 import dev.grimml.clock.TickClock;
@@ -128,7 +129,10 @@ public final class FightAssembler {
         snap.role = role;
         snap.trigger = buf.triggerReason;
         snap.labelSource = buf.labelSource;
-        snap.validity = buf.validity;
+        snap.validity |= buf.validityBetween(windowStart, now);
+        if (snap.tornCount > 0) {
+            writer.drops().torn(snap.tornCount);
+        }
         snap.sessionId = buf.sessionId;
         snap.anonPlayerId = buf.anonPlayerId;
         snap.markId = buf.markId == null ? "" : buf.markId;
@@ -184,6 +188,11 @@ public final class FightAssembler {
         if (clock.lastDurationMs() > 60) {
             snap.validity |= RecordTypes.VALID_LAG;
         }
+        var inv = buf.inv;
+        snap.appendEvent(RecordTypes.ENCHANT, clock.tick(), now,
+                ((long) inv.enchAt(InventoryMirror.HEAD) << 32) | (inv.enchAt(InventoryMirror.CHEST) & 0xFFFFFFFFL),
+                inv.enchAt(InventoryMirror.LEGS), inv.enchAt(InventoryMirror.FEET), inv.heldEnch(), inv.offEnch(),
+                inv.heldId(), buf.pingMs);
         writer.offerAssembled(snap);
     }
 }

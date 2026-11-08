@@ -303,7 +303,7 @@ public final class MarkCommand implements SubCommand {
             }
         }
         int files = countFiles(open != null ? open.id : id);
-        GrimMLCommand.msg(sender, "<gray>files " + files + " *_" + (open != null ? open.id : id) + "_*.gmlml");
+        GrimMLCommand.msg(sender, "<gray>files (today and yesterday) " + files + " *_" + (open != null ? open.id : id) + "_*.gmlml");
     }
 
     private String line(MarkTracker.Open o, int elapsed, boolean live) {
@@ -334,6 +334,26 @@ public final class MarkCommand implements SubCommand {
             return 0;
         }
         Path dir = plugin.writer().recordingsDir();
+        java.time.LocalDate today = java.time.LocalDate.now();
+        int n = countIn(dir, id);
+        for (java.time.LocalDate day : List.of(today, today.minusDays(1))) {
+            Path dayDir = dir.resolve(day.toString());
+            if (!Files.isDirectory(dayDir)) {
+                continue;
+            }
+            n += countIn(dayDir, id);
+            try (DirectoryStream<Path> hours = Files.newDirectoryStream(dayDir, Files::isDirectory)) {
+                for (Path hour : hours) {
+                    n += countIn(hour, id);
+                }
+            } catch (IOException ignored) {
+            }
+        }
+        return n;
+    }
+
+    // root plus today and yesterday only so the command never walks the whole dump on the main thread
+    private static int countIn(Path dir, String id) {
         int n = 0;
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*" + id + "*")) {
             for (Path ignored : stream) {

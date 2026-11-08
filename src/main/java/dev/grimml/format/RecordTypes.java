@@ -27,8 +27,41 @@ public final class RecordTypes {
     public static final byte ELYTRA = 24;
     public static final byte STATUS = 25;
     public static final byte MARKER_KV = 26;
+    public static final byte ENCHANT = 27;
+    public static final byte COMBAT_DETAIL = 28;
+    public static final byte RETOTEM = 29;
+    public static final byte JUMP_RESET = 30;
 
-    public static final int TYPE_COUNT = 27;
+    public static final int TYPE_COUNT = 31;
+
+    public static final int DETAIL_MACE_SMASH = 1;
+    public static final int DETAIL_SPEAR_CHARGE = 2;
+    public static final int DETAIL_SPEAR_HIT = 3;
+    public static final int DETAIL_WIND_CHARGE = 4;
+    public static final int DETAIL_SPEAR_STAB = 5;
+
+    public static final int PROJECTILE_LAUNCH = 1;
+    public static final int PROJECTILE_HIT = 2;
+
+    public static final int RETOTEM_UNKNOWN = 0;
+    public static final int RETOTEM_CLICK = 1;
+    public static final int RETOTEM_SWAP_KEY = 2;
+    public static final int RETOTEM_FAILED = 3;
+
+    public static final int JUMP_RESET_NONE = 127;
+    public static final int JUMP_RESET_BEFORE = 5;
+    public static final int JUMP_RESET_AFTER = 10;
+
+    private static final String[] NAMES = {
+            "none", "rotation", "attack", "state", "grim_flag", "frame", "damage", "swing", "use_item",
+            "hotbar_swap", "inventory_click", "block_place", "knockback", "totem", "shield", "marker",
+            "consumable", "teleport", "setback", "projectile", "inventory", "rtt", "break", "bucket",
+            "elytra", "status", "marker_kv", "enchant", "combat_detail", "retotem", "jump_reset"
+    };
+
+    public static String name(int type) {
+        return type >= 0 && type < NAMES.length ? NAMES[type] : "type_" + type;
+    }
 
     public static final int FLAG_SPRINT = 1;
     public static final int FLAG_SNEAK = 1 << 1;
@@ -75,6 +108,7 @@ public final class RecordTypes {
     public static final byte TRIGGER_PLACE = 11;
     public static final byte TRIGGER_WIND = 12;
     public static final byte TRIGGER_MARKER = 13;
+    public static final byte TRIGGER_PROJECTILE = 14;
 
     public static final byte LABEL_UNLABELED = 0;
     public static final byte LABEL_STAFF_MARKER = 1;

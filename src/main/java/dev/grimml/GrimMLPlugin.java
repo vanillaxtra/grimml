@@ -17,13 +17,19 @@ import dev.grimml.grim.GrimFlagHook;
 import dev.grimml.grim.GrimWeights;
 import dev.grimml.grim.GrimWeightsLoader;
 import dev.grimml.hooks.LiteBansBridge;
+import dev.grimml.inference.AlertNotifier;
+import dev.grimml.inference.InferenceService;
+import dev.grimml.inference.ViolationBuffer;
 import dev.grimml.listeners.DamageListener;
+import dev.grimml.listeners.ProjectileListener;
 import dev.grimml.listeners.ValidityListener;
 import dev.grimml.listeners.VanillaBanListener;
+import dev.grimml.maps.MapSnapshotter;
 import dev.grimml.roster.BanLabelService;
 import dev.grimml.roster.RosterStore;
 import dev.grimml.safety.DiskCapGuard;
 import dev.grimml.safety.MsptGuard;
+import dev.grimml.scheduler.Tasks;
 import dev.grimml.state.SessionLifecycle;
 import dev.grimml.state.SprintSneakTracker;
 import dev.grimml.state.StateSampler;
@@ -38,6 +44,7 @@ import dev.grimml.taxonomy.Taxonomy;
 import dev.grimml.taxonomy.TaxonomyLoader;
 import dev.grimml.writer.RecordWriter;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -57,8 +64,11 @@ public final class GrimMLPlugin extends JavaPlugin {
     private GrimEvidenceTracker evidence;
     private volatile GrimWeights grimWeights = GrimWeights.empty();
     private GeyserHook geyserHook;
-    private org.bukkit.scheduler.BukkitTask grimFlushTask;
-    private org.bukkit.scheduler.BukkitTask feedbackTask;
+    private ScheduledTask grimFlushTask;
+    private ScheduledTask feedbackTask;
+    private final Tasks tasks = new Tasks(this);
+    private MapSnapshotter maps;
+    private volatile InferenceService inference;
     private volatile Taxonomy taxonomy = Taxonomy.empty();
     private final MarkTracker marks = new MarkTracker();
     private MarkLog markLog;
@@ -100,12 +110,15 @@ public final class GrimMLPlugin extends JavaPlugin {
         geyserHook = new GeyserHook();
         geyserHook.init();
 
+        maps = new MapSnapshotter(this, getDataFolder().toPath().resolve(config.mapSnapshotDir()));
+
         packetListener = new PacketListener(this, clock);
         PacketEvents.getAPI().getEventManager().registerListener(packetListener);
 
         getServer().getPluginManager().registerEvents(new SessionLifecycle(this, registry, geyserHook), this);
         getServer().getPluginManager().registerEvents(new SprintSneakTracker(registry), this);
         getServer().getPluginManager().registerEvents(new DamageListener(this, clock), this);
+        getServer().getPluginManager().registerEvents(new ProjectileListener(this, clock), this);
         getServer().getPluginManager().registerEvents(new ValidityListener(this), this);
         stateSampler = new StateSampler(this, registry, config, geyserHook, new MsptGuard(this, config), clock);
         stateSampler.start();
@@ -124,7 +137,9 @@ public final class GrimMLPlugin extends JavaPlugin {
         if (Bukkit.getPluginManager().isPluginEnabled("GrimAC")) {
             grimHook.enable();
         }
-        grimFlushTask = getServer().getScheduler().runTaskTimerAsynchronously(this, grimChecks::flush, 100L, 100L);
+        grimFlushTask = tasks.repeatAsync(grimChecks::flush, 5000L, 5000L);
+
+        reloadInference();
 
         BanLabelService bans = new BanLabelService(this, new RosterStore(getDataFolder().toPath().resolve(config.rosterFile())));
         getServer().getPluginManager().registerEvents(new VanillaBanListener(bans), this);
@@ -135,7 +150,7 @@ public final class GrimMLPlugin extends JavaPlugin {
                 event -> event.registrar().register("grimml", "grimml recorder admin", cmd));
 
         // 4-tick interval (~200 ms) is fast enough to feel live without saturating the scheduler
-        feedbackTask = getServer().getScheduler().runTaskTimer(this, new dev.grimml.mark.MarkFeedback(this), 4L, 4L);
+        feedbackTask = tasks.repeatGlobal(new MarkFeedback(this), 4L, 4L);
 
         getLogger().info("grimml recorder enabled schema 3");
     }
@@ -152,6 +167,10 @@ public final class GrimMLPlugin extends JavaPlugin {
         }
         if (evidence != null) {
             evidence.stop();
+        }
+        if (inference != null) {
+            inference.stop();
+            inference = null;
         }
         if (feedbackTask != null) {
             feedbackTask.cancel();
@@ -171,6 +190,35 @@ public final class GrimMLPlugin extends JavaPlugin {
         if (registry != null) {
             registry.clear();
         }
+    }
+
+    public Tasks tasks() {
+        return tasks;
+    }
+
+    public MapSnapshotter maps() {
+        return maps;
+    }
+
+    public InferenceService inference() {
+        return inference;
+    }
+
+    // new service on every reload so decay and alert settings apply; old one is stopped
+    public void reloadInference() {
+        InferenceService old = inference;
+        inference = null;
+        if (old != null) {
+            old.stop();
+        }
+        if (!config.inferenceEnabled()) {
+            return;
+        }
+        InferenceService next = new InferenceService(config.inferenceQueueCapacity(),
+                new ViolationBuffer(config.inferenceDecay(), config.inferenceAlertScore(), config.inferenceAlertCooldownSeconds()),
+                new AlertNotifier(this), config.inferenceMinFrames(), getLogger());
+        next.load(getDataFolder().toPath().resolve(config.inferenceModelDir()));
+        inference = next;
     }
 
     public PluginConfig config() {

@@ -16,6 +16,10 @@ public final class TickClock {
     private volatile int lastDurationMs;
     private volatile double mspt;
     private volatile double tps;
+    private int ownTick;
+    private double intervalEma;
+    // folia has no global tick time or tps so mspt stays 0 and the mspt guard never trips there
+    private boolean serverStats = !dev.grimml.scheduler.Tasks.FOLIA;
 
     public void onTick() {
         long now = System.nanoTime();
@@ -25,9 +29,22 @@ public final class TickClock {
             lastDurationMs = dur > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) dur;
         }
         tickStartNanos = now;
-        tick = Bukkit.getCurrentTick();
-        mspt = Bukkit.getAverageTickTime();
-        tps = Bukkit.getTPS()[0];
+        ownTick++;
+        if (!serverStats) {
+            tick = ownTick;
+            int dur = lastDurationMs;
+            intervalEma = intervalEma == 0.0 ? 50.0 : intervalEma * 0.95 + Math.max(dur, 1) * 0.05;
+            tps = Math.min(20.0, 1000.0 / Math.max(50.0, intervalEma));
+            return;
+        }
+        try {
+            tick = Bukkit.getCurrentTick();
+            mspt = Bukkit.getAverageTickTime();
+            tps = Bukkit.getTPS()[0];
+        } catch (UnsupportedOperationException e) {
+            serverStats = false;
+            tick = ownTick;
+        }
     }
 
     public int tick() {

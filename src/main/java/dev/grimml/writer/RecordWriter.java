@@ -102,14 +102,14 @@ public final class RecordWriter {
             return;
         }
         if (!queue.offer(snap)) {
-            drops.window();
+            drops.window(snap);
             pool.giveBack(snap);
         }
     }
 
     public void offerSidecar(byte[] line) {
         if (!sidecarQueue.offer(line)) {
-            drops.type(0);
+            drops.sidecar();
         }
     }
 
@@ -167,6 +167,10 @@ public final class RecordWriter {
                 }
                 writtenWindows.incrementAndGet();
                 writtenBytes.addAndGet(data.length);
+                var inference = plugin.inference();
+                if (inference != null) {
+                    inference.offer(snap);
+                }
             } catch (IOException e) {
                 plugin.getLogger().warning("failed to write recording: " + e.getMessage());
                 if (file != null) {

@@ -2,7 +2,8 @@ name: grimml
 version: ${project.version}
 main: dev.grimml.GrimMLPlugin
 api-version: '1.21'
-description: Combat recording for Grim ML detection (recorder only)
+folia-supported: true
+description: Combat recording for Grim ML detection (recorder, labeling, alert-only scoring)
 authors: [grimml]
 depend:
   - packetevents
@@ -15,4 +16,7 @@ softdepend:
 permissions:
   grimml.admin:
     description: Control the combat recorder
+    default: op
+  grimml.alerts:
+    description: Receive alert-only model alerts
     default: op

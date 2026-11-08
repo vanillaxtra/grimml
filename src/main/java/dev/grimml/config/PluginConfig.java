@@ -30,11 +30,26 @@ public final class PluginConfig {
     private int banBackfillDays;
     private String rosterFile;
     private CombatReasonMatcher combatReasons = new CombatReasonMatcher(List.of());
-    private boolean markOnly;
+    private volatile boolean markOnly;
     private boolean grimEvidenceEnabled;
     private int grimEvidenceQueueCap;
     private String grimLabelsFile;
     private String grimReviewFile;
+    private String rotation;
+    private boolean offloadEnabled;
+    private String offloadDir;
+    private int offloadAfterDays;
+    private boolean mapSnapshotEnabled;
+    private int mapSnapshotRadius;
+    private int mapSnapshotHeight;
+    private String mapSnapshotDir;
+    private boolean inferenceEnabled;
+    private String inferenceModelDir;
+    private int inferenceQueueCapacity;
+    private double inferenceDecay;
+    private double inferenceAlertScore;
+    private int inferenceAlertCooldownSeconds;
+    private int inferenceMinFrames;
 
     private static final List<String> DEFAULT_COMBAT_REASONS = List.of(
             "killaura", "kill aura", "aura", "aimassist", "aim assist", "aimbot",
@@ -73,7 +88,40 @@ public final class PluginConfig {
         grimEvidenceQueueCap = Math.max(32, cfg.getInt("grim-evidence.queue-capacity", 1024));
         grimLabelsFile = cfg.getString("grim-evidence.labels-file", "grim-labels.csv");
         grimReviewFile = cfg.getString("grim-evidence.review-file", "grim-review.csv");
+        String rot = cfg.getString("rotation", "hourly").toLowerCase(java.util.Locale.ROOT);
+        rotation = rot.equals("daily") || rot.equals("none") ? rot : "hourly";
+        offloadEnabled = cfg.getBoolean("offload.enabled", false);
+        offloadDir = cfg.getString("offload.dir", "");
+        offloadAfterDays = Math.max(1, cfg.getInt("offload.after-days", 1));
+        mapSnapshotEnabled = cfg.getBoolean("map-snapshot.enabled", true);
+        mapSnapshotRadius = Math.max(8, Math.min(256, cfg.getInt("map-snapshot.radius", 48)));
+        mapSnapshotHeight = Math.max(4, Math.min(192, cfg.getInt("map-snapshot.height", 24)));
+        mapSnapshotDir = cfg.getString("map-snapshot.dir", "maps");
+        inferenceEnabled = cfg.getBoolean("inference.enabled", false);
+        inferenceModelDir = cfg.getString("inference.model-dir", "model");
+        inferenceQueueCapacity = Math.max(8, cfg.getInt("inference.queue-capacity", 256));
+        inferenceDecay = Math.max(0.0, Math.min(1.0, cfg.getDouble("inference.decay", 0.9)));
+        inferenceAlertScore = Math.max(0.1, cfg.getDouble("inference.alert-score", 1.5));
+        inferenceAlertCooldownSeconds = Math.max(0, cfg.getInt("inference.alert-cooldown-seconds", 60));
+        inferenceMinFrames = Math.max(1, cfg.getInt("inference.min-frames", 20));
     }
+
+    public void setMarkOnly(boolean markOnly) { this.markOnly = markOnly; }
+    public String rotation() { return rotation; }
+    public boolean offloadEnabled() { return offloadEnabled; }
+    public String offloadDir() { return offloadDir; }
+    public int offloadAfterDays() { return offloadAfterDays; }
+    public boolean mapSnapshotEnabled() { return mapSnapshotEnabled; }
+    public int mapSnapshotRadius() { return mapSnapshotRadius; }
+    public int mapSnapshotHeight() { return mapSnapshotHeight; }
+    public String mapSnapshotDir() { return mapSnapshotDir; }
+    public boolean inferenceEnabled() { return inferenceEnabled; }
+    public String inferenceModelDir() { return inferenceModelDir; }
+    public int inferenceQueueCapacity() { return inferenceQueueCapacity; }
+    public double inferenceDecay() { return inferenceDecay; }
+    public double inferenceAlertScore() { return inferenceAlertScore; }
+    public int inferenceAlertCooldownSeconds() { return inferenceAlertCooldownSeconds; }
+    public int inferenceMinFrames() { return inferenceMinFrames; }
 
     public boolean enabled() { return enabled; }
     public String anonymizeSalt() { return anonymizeSalt; }

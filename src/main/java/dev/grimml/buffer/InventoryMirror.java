@@ -8,6 +8,10 @@ public final class InventoryMirror {
     public static final int SLOTS = 46;
     public static final int HOTBAR0 = 36;
     public static final int OFFHAND = 45;
+    public static final int HEAD = 5;
+    public static final int CHEST = 6;
+    public static final int LEGS = 7;
+    public static final int FEET = 8;
 
     private final int[] ids = new int[SLOTS];
     private final byte[] cats = new byte[SLOTS];
@@ -76,6 +80,19 @@ public final class InventoryMirror {
 
     public byte offCat() {
         return catAt(OFFHAND);
+    }
+
+    public int offEnch() {
+        return enchAt(OFFHAND);
+    }
+
+    public void swapHands() {
+        int h = HOTBAR0 + held;
+        int id = ids[h];
+        byte cat = cats[h];
+        int ench = enchants[h];
+        setSlot(h, ids[OFFHAND], cats[OFFHAND], enchants[OFFHAND]);
+        setSlot(OFFHAND, id, cat, ench);
     }
 
     public int offId() {

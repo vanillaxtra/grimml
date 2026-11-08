@@ -53,6 +53,7 @@ public final class DamageListener implements Listener {
                 abuf.writeEvent(RecordTypes.DAMAGE, tick, clock.nsOffset(nanos), ord, nanos,
                         vbuf.anonPlayerId, raw, fin, packFlags(crit, blocked, event), weapon, fall);
                 abuf.markCombat(nanos, plugin.config().postCombatSeconds() * 1_000_000_000L, RecordTypes.TRIGGER_DAMAGE);
+                writeWeaponDetail(abuf, vbuf, tick, nanos, ord, weapon, fall, fin);
             }
         }
         int ord = vbuf.nextOrder(tick);
@@ -95,6 +96,22 @@ public final class DamageListener implements Listener {
         buf.writeEvent(RecordTypes.DAMAGE, tick, clock.nsOffset(nanos), ord, nanos,
                 0L, (int) Math.round(event.getDamage() * 100), (int) Math.round(event.getFinalDamage() * 100),
                 event.getCause().ordinal(), 0, 0);
+    }
+
+    private void writeWeaponDetail(PlayerRingBuffer abuf, PlayerRingBuffer vbuf, int tick, long nanos, int ord,
+                                   int weapon, int fall, int fin) {
+        if (weapon == ItemCategories.MACE) {
+            long sinceWind = abuf.lastWindNanos == 0L ? -1L : (nanos - abuf.lastWindNanos) / 1_000_000L;
+            abuf.writeEvent(RecordTypes.COMBAT_DETAIL, tick, clock.nsOffset(nanos), ord, nanos,
+                    vbuf.anonPlayerId, RecordTypes.DETAIL_MACE_SMASH, fall, fin, abuf.inv.heldEnch(),
+                    (int) Math.min(Integer.MAX_VALUE, sinceWind));
+        } else if (weapon == ItemCategories.SPEAR) {
+            long held = abuf.useCat == ItemCategories.SPEAR && abuf.useStartNanos != 0L
+                    ? (nanos - abuf.useStartNanos) / 1_000_000L : -1L;
+            abuf.writeEvent(RecordTypes.COMBAT_DETAIL, tick, clock.nsOffset(nanos), ord, nanos,
+                    vbuf.anonPlayerId, RecordTypes.DETAIL_SPEAR_HIT, (int) Math.min(Integer.MAX_VALUE, held),
+                    fin, abuf.horizSpeedMilli, abuf.inv.heldEnch());
+        }
     }
 
     private static int packFlags(boolean crit, boolean blocked, EntityDamageByEntityEvent event) {

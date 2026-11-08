@@ -6,28 +6,47 @@ import dev.grimml.config.PluginConfig;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 public final class RecordingFiles {
 
+    private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter HOUR = DateTimeFormatter.ofPattern("HH");
+
     private final Path recordingsDir;
-    private final String datePrefix;
+    private final String rotation;
+    private Path lastDir;
 
     public RecordingFiles(GrimMLPlugin plugin, PluginConfig config) throws IOException {
         this.recordingsDir = plugin.getDataFolder().toPath().resolve(config.recordingsDir()).toAbsolutePath();
+        this.rotation = config.rotation();
         Files.createDirectories(recordingsDir);
-        this.datePrefix = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
     }
 
     public Path dir() {
         return recordingsDir;
     }
 
-    public Path newFilePath(long anonPlayerId, long sessionId, String markId) {
-        return recordingsDir.resolve(fileName(datePrefix, markId, anonPlayerId, sessionId,
-                UUID.randomUUID().toString().substring(0, 8)));
+    // writer thread only
+    public Path newFilePath(long anonPlayerId, long sessionId, String markId) throws IOException {
+        LocalDateTime now = LocalDateTime.now();
+        String day = DAY.format(now);
+        Path dir = recordingsDir.resolve(subDir(rotation, day, HOUR.format(now)));
+        if (!dir.equals(lastDir)) {
+            Files.createDirectories(dir);
+            lastDir = dir;
+        }
+        return dir.resolve(fileName(day, markId, anonPlayerId, sessionId, UUID.randomUUID().toString().substring(0, 8)));
+    }
+
+    public static String subDir(String rotation, String day, String hour) {
+        return switch (rotation) {
+            case "hourly" -> day + "/" + hour;
+            case "daily" -> day;
+            default -> "";
+        };
     }
 
     public static String fileName(String datePrefix, String markId, long anonPlayerId, long sessionId, String rand) {

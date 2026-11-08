@@ -3,7 +3,6 @@ package dev.grimml.safety;
 import dev.grimml.GrimMLPlugin;
 import dev.grimml.config.PluginConfig;
 import dev.grimml.writer.RecordWriter;
-import org.bukkit.Bukkit;
 
 public final class MsptGuard {
 
@@ -26,7 +25,7 @@ public final class MsptGuard {
         }
         lastTickCheck = now;
         RecordWriter writer = plugin.writer();
-        double mspt = Bukkit.getAverageTickTime();
+        double mspt = plugin.clock().mspt();
         if (mspt > config.msptPauseThreshold()) {
             if (!writer.isPaused()) {
                 writer.setPaused(true);

@@ -1,6 +1,7 @@
 package dev.grimml.capture;
 
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
+import com.github.retrooper.packetevents.protocol.player.DiggingAction;
 import com.github.retrooper.packetevents.protocol.player.HumanoidArm;
 import com.github.retrooper.packetevents.protocol.player.InteractionHand;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAnimation;
@@ -48,7 +49,18 @@ public final class ActionCapture {
             buf.markCombat(nanos, plugin.config().postCombatSeconds() * 1_000_000_000L, RecordTypes.TRIGGER_SHIELD);
         }
         if (cat == ItemCategories.WIND_CHARGE) {
+            long sinceAttack = buf.lastAttackNanos == 0L ? -1L : (nanos - buf.lastAttackNanos) / 1_000_000L;
+            int onGround = buf.fallMilli == 0 ? 1 : 0;
+            buf.writeEvent(RecordTypes.COMBAT_DETAIL, tick, clock.nsOffset(nanos), ord, nanos,
+                    buf.lastTargetAnonId, RecordTypes.DETAIL_WIND_CHARGE, buf.fallMilli,
+                    (int) Math.min(Integer.MAX_VALUE, sinceAttack), onGround, buf.pitchCenti);
+            buf.lastWindNanos = nanos;
             buf.markCombat(nanos, plugin.config().postCombatSeconds() * 1_000_000_000L, RecordTypes.TRIGGER_WIND);
+        }
+        buf.useStartNanos = nanos;
+        buf.useCat = cat;
+        if (cat == ItemCategories.SPEAR) {
+            buf.markCombat(nanos, plugin.config().postCombatSeconds() * 1_000_000_000L, RecordTypes.TRIGGER_SPEAR);
         }
         if (hand == 0) {
             buf.liveFlags |= RecordTypes.FLAG_USING_MAIN;
@@ -68,12 +80,30 @@ public final class ActionCapture {
         int relY = pos.getY() - buf.yMilli / 1000;
         int relZ = pos.getZ() - buf.zMilli / 1000;
         buf.writeEvent(RecordTypes.BREAK, tick, clock.nsOffset(nanos), ord, nanos, code, relX, relY, relZ, pkt.getBlockFaceId(), 0);
-        if (action != null && action.name().contains("RELEASE")) {
+        if (action == DiggingAction.RELEASE_USE_ITEM) {
             buf.liveFlags &= ~(RecordTypes.FLAG_USING_MAIN | RecordTypes.FLAG_USING_OFF | RecordTypes.FLAG_BLOCKING);
             buf.writeEvent(RecordTypes.USE_ITEM, tick, clock.nsOffset(nanos), ord, nanos, 0, 0, 0, 0, 0, 0);
+            if (buf.useCat == ItemCategories.SPEAR && buf.useStartNanos != 0L) {
+                buf.writeEvent(RecordTypes.COMBAT_DETAIL, tick, clock.nsOffset(nanos), ord, nanos,
+                        buf.lastTargetAnonId, RecordTypes.DETAIL_SPEAR_CHARGE,
+                        (int) Math.min(Integer.MAX_VALUE, (nanos - buf.useStartNanos) / 1_000_000L),
+                        buf.horizSpeedMilli, buf.inv.heldEnch(), buf.liveFlags & RecordTypes.FLAG_SPRINT);
+            }
+            buf.useStartNanos = 0L;
+            buf.useCat = 0;
         }
-        if (action != null && action.name().contains("SWAP")) {
+        if (action == DiggingAction.STAB) {
+            buf.writeEvent(RecordTypes.COMBAT_DETAIL, tick, clock.nsOffset(nanos), ord, nanos,
+                    buf.lastTargetAnonId, RecordTypes.DETAIL_SPEAR_STAB, buf.horizSpeedMilli, buf.fallMilli,
+                    buf.inv.heldEnch(), buf.liveFlags & RecordTypes.FLAG_SPRINT);
+            buf.markCombat(nanos, plugin.config().postCombatSeconds() * 1_000_000_000L, RecordTypes.TRIGGER_SPEAR);
+        }
+        if (action == DiggingAction.SWAP_ITEM_WITH_OFFHAND) {
+            buf.inv.swapHands();
             buf.writeEvent(RecordTypes.HELD_SLOT, tick, clock.nsOffset(nanos), ord, nanos, 40, 40, buf.inv.heldCat(), buf.inv.offCat(), 1, 0);
+            if (buf.inv.offCat() == ItemCategories.TOTEM) {
+                buf.emitRetotem(RecordTypes.RETOTEM_SWAP_KEY, nanos);
+            }
         }
         if (action != null && action.name().contains("DROP")) {
             buf.writeEvent(RecordTypes.CONSUMABLE, tick, clock.nsOffset(nanos), ord, nanos, 1, buf.inv.heldCat(), buf.inv.heldId(), 0, 0, 0);

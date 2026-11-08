@@ -31,6 +31,7 @@ public final class ItemCategories {
         }
         if (key.endsWith("_sword")) return SWORD;
         if (key.endsWith("_axe")) return AXE;
+        if (key.endsWith("_spear")) return SPEAR;
         if (key.endsWith("_slab") || key.endsWith("_stairs") || key.endsWith("_log")
                 || key.endsWith("_planks") || key.endsWith("_wool") || key.endsWith("_concrete")
                 || key.endsWith("_terracotta") || key.endsWith("_block") || key.endsWith("_wood")) {

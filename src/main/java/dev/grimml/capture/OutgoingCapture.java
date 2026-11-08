@@ -29,6 +29,7 @@ public final class OutgoingCapture {
         buf.writeEvent(RecordTypes.KNOCKBACK, tick, clock.nsOffset(nanos), ord, nanos,
                 (int) Math.round(v.x * 8000), (int) Math.round(v.y * 8000), (int) Math.round(v.z * 8000),
                 buf.lastAckTx, buf.liveFlags, 0);
+        buf.pendingKbTick = tick;
         if (buf.jumpHeld()) {
             buf.markCombat(nanos, plugin.config().postCombatSeconds() * 1_000_000_000L, RecordTypes.TRIGGER_KNOCKBACK_JUMP);
         }
@@ -48,6 +49,7 @@ public final class OutgoingCapture {
         int fromOff = buf.inv.offCat() == dev.grimml.item.ItemCategories.TOTEM ? 1 : 0;
         buf.writeEvent(RecordTypes.TOTEM, tick, clock.nsOffset(nanos), ord, nanos,
                 buf.healthMilli, fromOff, buf.lastAckTx, buf.inv.totemCount(), buf.inv.hotbarHasTotem() ? 1 : 0, 0);
+        buf.totemPopped(nanos);
         buf.markCombat(nanos, plugin.config().postCombatSeconds() * 1_000_000_000L, RecordTypes.TRIGGER_TOTEM);
     }
 

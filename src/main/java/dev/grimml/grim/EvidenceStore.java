@@ -23,6 +23,31 @@ public final class EvidenceStore {
     public EvidenceStore(Path labels, Path review) {
         this.labels = labels;
         this.review = review;
+        nextReview.set(maxReviewId(readLines(review)) + 1);
+    }
+
+    // ids continue across restarts so mark <id> never hits an older row
+    static long maxReviewId(List<String> lines) {
+        long max = 0L;
+        for (int i = 1; i < lines.size(); i++) {
+            String line = lines.get(i);
+            int comma = line.indexOf(',');
+            if (comma <= 0) {
+                continue;
+            }
+            try {
+                max = Math.max(max, Long.parseLong(line.substring(0, comma)));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return max;
+    }
+
+    public long writeModelAlert(long anon, long session, long from, long to, double proba) {
+        long id = nextReview.getAndIncrement();
+        append(review, REVIEW_HEADER, id + "," + Long.toUnsignedString(anon, 36) + "," + Long.toUnsignedString(session, 36)
+                + "," + from + "," + to + ",MODEL_ALERT," + fmt(proba) + ",pending\n");
+        return id;
     }
 
     public long writeWindow(long anon, long session, long from, long to, double confidence, double score, String checks) {

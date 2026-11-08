@@ -101,9 +101,33 @@ public final class CombatSnapshot {
         ePing = new short[eventCap];
     }
 
+    public int tornCount;
+
+    public boolean appendEvent(byte type, int tick, long nanos, long a, int b, int c, int d, int e, int f, int ping) {
+        if (eventCount >= eType.length) {
+            return false;
+        }
+        int k = eventCount++;
+        eType[k] = type;
+        eTick[k] = tick;
+        eNsOff[k] = 0;
+        eOrder[k] = 0;
+        eNanos[k] = nanos;
+        eA[k] = a;
+        eB[k] = b;
+        eC[k] = c;
+        eD[k] = d;
+        eE[k] = e;
+        eF[k] = f;
+        ePing[k] = (short) Math.min(Math.max(ping, 0), Short.MAX_VALUE);
+        return true;
+    }
+
     public void reset() {
         frameCount = 0;
         eventCount = 0;
+        tornCount = 0;
+        validity = 0;
         clientBrand = "";
         markId = "";
         fightId = 0;
@@ -183,6 +207,7 @@ public final class CombatSnapshot {
             eF[k] = eventTmp.f;
             ePing[k] = eventTmp.ping;
         }
+        tornCount = torn;
         if (torn > 0) {
             validity |= dev.grimml.format.RecordTypes.VALID_PARTIAL;
         }

@@ -21,5 +21,9 @@ public final class StatusCommand implements SubCommand {
                 + " dropped windows: " + w.droppedWindows()
                 + " written bytes: " + w.writtenBytes()
                 + " " + w.drops().summary());
+        GrimMLCommand.msg(sender, "<gray>dropped records by type: " + w.drops().byTypeSummary());
+        var inference = plugin.inference();
+        GrimMLCommand.msg(sender, "<gray>inference: " + (inference == null ? "disabled" : inference.stats())
+                + String.format(java.util.Locale.ROOT, " mspt %.1f", plugin.clock().mspt()));
     }
 }

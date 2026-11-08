@@ -20,6 +20,7 @@ public final class ReloadCommand implements SubCommand {
         if (plugin.registry() != null) {
             plugin.registry().propagateMarkOnly(plugin.config().markOnly());
         }
-        GrimMLCommand.msg(sender, "<green>config taxonomy and grim-weights reloaded");
+        plugin.reloadInference();
+        GrimMLCommand.msg(sender, "<green>config taxonomy grim-weights and model reloaded");
     }
 }
