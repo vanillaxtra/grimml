@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from grimml_train.labels.cheat_log import apply_cheat_log, load_cheat_log
+from grimml_train.labels.kv_decode import attach_kv_names
 from grimml_train.labels.segments import apply_segments, reconstruct_segments
 from grimml_train.util import anon_id_base36
 
@@ -36,6 +37,8 @@ def join_labels(
     trim_seconds: float = 0.5,
     markers: pd.DataFrame | None = None,
     exclude_interrupted: bool = True,
+    min_overlap: float = 0.0,
+    taxonomy_path: Path | None = None,
 ) -> pd.DataFrame:
     if windows.empty:
         return windows
@@ -54,7 +57,8 @@ def join_labels(
     # cheat/legit from trimmed marker segments only (no untrimmed local bypass)
     if markers is not None and not markers.empty:
         segs = reconstruct_segments(out, markers, trim_seconds, exclude_interrupted=exclude_interrupted)
-        out = apply_segments(out, segs)
+        out = apply_segments(out, segs, min_overlap=min_overlap)
+        out = attach_kv_names(out, markers, taxonomy_path, Path(sidecar_dir) / "marks.csv")
         staff = out["label_source"] == "staff-marker"
         out.loc[staff, "label_priority"] = PRIORITY["staff-marker"]
 
@@ -104,7 +108,7 @@ def join_labels(
 
     out["confirmed_label"] = out["label"].isin(POSITIVES | {"LEGIT_CONFIRMED"})
     out.loc[out["label"] == "UNLABELED", "confirmed_label"] = False
-    out.drop(columns=["_anon36"], inplace=True, errors="ignore")
+    out = out.drop(columns=["_anon36"], errors="ignore")
     return out
 
 

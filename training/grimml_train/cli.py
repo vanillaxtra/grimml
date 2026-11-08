@@ -8,9 +8,15 @@ import numpy as np
 import pandas as pd
 
 from grimml_train.config import load_config
+from grimml_train.eval.drift import drift_report
 from grimml_train.eval.report import confound_probe, evaluate
 from grimml_train.export.onnx_export import export_bundle
 from grimml_train.features.extract import FEATURE_COLUMNS
+from grimml_train.features.target import TARGET_FEATURE_COLUMNS, compute_targets
+from grimml_train.maps.gmm import load_maps
+from grimml_train.split.cv import grouped_cv
+from grimml_train.train.dual import family_model, multitask_model
+from grimml_train.train.families import AIM_COLUMNS, MACRO_COLUMNS, add_family, module_names
 from grimml_train.ingest import ingest, load_ingest_table
 from grimml_train.inventory.report import inventory_report
 from grimml_train.labels.join import join_labels
@@ -36,7 +42,7 @@ def main() -> None:
     p = argparse.ArgumentParser(prog="grimml-train")
     p.add_argument("--config", type=Path, default=Path("config.yaml"))
     sub = p.add_subparsers(dest="cmd", required=True)
-    for name in ("ingest", "decode", "label", "inventory", "features", "train", "eval", "export", "pipeline"):
+    for name in ("ingest", "decode", "targets", "label", "inventory", "features", "train", "eval", "export", "drift", "pipeline"):
         sub.add_parser(name)
     args = p.parse_args()
     cfg = load_config(args.config)
@@ -47,8 +53,14 @@ def main() -> None:
         ingest(cfg)
         write_run_meta(cfg, {"stage": "ingest"})
         return
+    if args.cmd == "targets":
+        _cmd_targets(cfg)
+        return
     if args.cmd == "label":
         _cmd_label(cfg)
+        return
+    if args.cmd == "drift":
+        print(json.dumps(_cmd_drift(cfg), indent=2, default=str))
         return
     if args.cmd == "inventory":
         print(inventory_report(_windows_for_inventory(cfg), cfg.out_dir / "inventory.md"))
@@ -67,6 +79,7 @@ def main() -> None:
         return
     if args.cmd == "pipeline":
         ingest(cfg)
+        _cmd_targets(cfg)
         _cmd_label(cfg)
         print(inventory_report(_windows_for_inventory(cfg), cfg.out_dir / "inventory.md"))
         _cmd_train(cfg)
@@ -103,7 +116,13 @@ def _cmd_label(cfg) -> None:
         cfg.marker_trim_seconds,
         markers,
         exclude_interrupted=cfg.exclude_interrupted,
+        min_overlap=cfg.marker_min_overlap,
+        taxonomy_path=cfg.taxonomy_path or (cfg.sidecar_dir / "taxonomy.yml"),
     )
+    targets_path = cfg.out_dir / "ingest" / "targets.parquet"
+    if targets_path.exists():
+        labeled = labeled.drop(columns=[c for c in TARGET_FEATURE_COLUMNS if c in labeled.columns])
+        labeled = labeled.merge(pd.read_parquet(targets_path), on="window_key", how="left")
     if not cfg.keep_unlabeled:
         labeled = labeled[labeled["label"] != "UNLABELED"]
     dest = cfg.out_dir / "labeled"
@@ -164,8 +183,45 @@ def _cmd_eval(cfg) -> dict:
         looo.append({"held_out": name, "n_test": len(te)})
     rep["leave_one_client_out"] = loco
     rep["leave_one_operator_out"] = looo
+    rep["grouped_cv"] = grouped_cv(
+        w,
+        cfg.cv_folds,
+        cfg.seed,
+        lambda tr: train_fold(tr, cfg.seed),
+        lambda m, val, te: evaluate(m[0], m[1], m[2], te, threshold_on_val(m[0], m[1], val, m[2], cfg.max_fpr)),
+    )
+    fam = add_family(w, module_names(_taxonomy(cfg)))
+    rep["dual"] = {f: family_model(fam, f, cfg.seed) for f in ("aim", "macro")}
+    rep["multitask"] = multitask_model(fam, cfg.seed, sorted(set(AIM_COLUMNS) | set(MACRO_COLUMNS)))
     (cfg.out_dir / "eval.json").write_text(json.dumps(rep, indent=2, default=str), encoding="utf-8")
     write_run_meta(cfg, {"stage": "eval"})
+    return rep
+
+
+def _taxonomy(cfg) -> Path:
+    return cfg.taxonomy_path or (cfg.sidecar_dir / "taxonomy.yml")
+
+
+def _cmd_targets(cfg) -> None:
+    tracks = load_ingest_table(cfg.out_dir, "tracks")
+    attacks = load_ingest_table(cfg.out_dir, "attacks")
+    maps = load_maps(cfg.maps_dir or (cfg.sidecar_dir / "maps"))
+    t = compute_targets(tracks, attacks, maps)
+    dest = cfg.out_dir / "ingest" / "targets.parquet"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    t.to_parquet(dest, index=False)
+    print(f"targets {len(t)} windows from {len(attacks)} attacks, {len(maps)} maps -> {dest}")
+    write_run_meta(cfg, {"stage": "targets"})
+
+
+def _cmd_drift(cfg) -> dict:
+    if cfg.drift_reference is None or not Path(cfg.drift_reference).exists():
+        raise SystemExit("set drift_reference to an older windows parquet (e.g. a copy of out/labeled/windows.parquet)")
+    ref = pd.read_parquet(cfg.drift_reference)
+    cur = _windows_for_inventory(cfg)
+    rep = drift_report(ref, cur, FEATURE_COLUMNS)
+    (cfg.out_dir / "drift.json").write_text(json.dumps(rep, indent=2, default=str), encoding="utf-8")
+    write_run_meta(cfg, {"stage": "drift", "flagged": rep["flagged"]})
     return rep
 
 

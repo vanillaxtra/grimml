@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import warnings
+
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
@@ -30,8 +32,12 @@ def _xy(df: pd.DataFrame, cols: list[str] | None = None) -> tuple[np.ndarray, np
 
 def fit_scaler(x_train: np.ndarray) -> StandardScaler:
     scaler = StandardScaler()
-    mean = np.nanmean(x_train, axis=0)
-    std = np.nanstd(x_train, axis=0)
+    # all-NaN columns (feature absent in this data) are expected; they get mean 0 scale 1 below
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        mean = np.nanmean(x_train, axis=0)
+        std = np.nanstd(x_train, axis=0)
+    std = np.where(np.isfinite(std), std, 1.0)
     std = np.where(std == 0, 1.0, std)
     scaler.mean_ = np.where(np.isfinite(mean), mean, 0.0)
     scaler.scale_ = std

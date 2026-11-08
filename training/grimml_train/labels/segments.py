@@ -118,7 +118,10 @@ def apply_local_markers(windows: pd.DataFrame, markers: pd.DataFrame) -> pd.Data
     return out
 
 
-def apply_segments(windows: pd.DataFrame, segs: pd.DataFrame) -> pd.DataFrame:
+def apply_segments(windows: pd.DataFrame, segs: pd.DataFrame, min_overlap: float = 0.0) -> pd.DataFrame:
+    """Label windows that overlap a trimmed segment. min_overlap is the share of the window that must
+    sit inside the segment (0 = any overlap, 1 = fully inside) so edge windows that straddle a mark
+    start or end are not labeled."""
     out = windows.copy()
     if "label" not in out.columns:
         out["label"] = "UNLABELED"
@@ -134,17 +137,19 @@ def apply_segments(windows: pd.DataFrame, segs: pd.DataFrame) -> pd.DataFrame:
     end = start + dur_ms.fillna(7000)
     out["_ws"] = start
     out["_we"] = end
+    span = (out["_we"] - out["_ws"]).clip(lower=1.0)
     for s in segs.itertuples(index=False):
+        inside = (out["_we"].clip(upper=s.to_ms) - out["_ws"].clip(lower=s.from_ms)).clip(lower=0.0)
         m = (
             (out["anon_player_id"] == s.anon_player_id)
             & (out["session_id"] == s.session_id)
             & (out["_we"] >= s.from_ms)
             & (out["_ws"] <= s.to_ms)
+            & (inside / span >= min_overlap)
         )
         out.loc[m, "label"] = s.label
         out.loc[m, "label_source"] = "staff-marker"
         out.loc[m, "mark_client_id"] = s.client_id
         out.loc[m, "mark_module_id"] = s.module_id
         out.loc[m, "mark_interrupted"] = s.interrupted
-    out.drop(columns=["_ws", "_we"], inplace=True, errors="ignore")
-    return out
+    return out.drop(columns=["_ws", "_we"], errors="ignore")

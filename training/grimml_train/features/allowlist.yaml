@@ -16,3 +16,7 @@
 - ping_ms
 - jitter_ms
 - frame_count
+- retotem_ms_min
+- jump_reset_rate
+- hotbar_swap_count
+- swap_attack_gap_ms_min

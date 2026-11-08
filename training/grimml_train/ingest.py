@@ -11,6 +11,7 @@ import pandas as pd
 from grimml_train.config import TrainConfig
 from grimml_train.decode.reader import decode_file
 from grimml_train.features.extract import features_from_decoded
+from grimml_train.features.target import geometry_rows
 
 
 def iter_gmlml(root: Path):
@@ -37,11 +38,14 @@ def _process_path(args: tuple[str, bool]) -> dict:
         win["header_label_source"] = win.pop("label_source")
     win.update(feat)
     win["path"] = path_str
+    tracks, attacks = geometry_rows(decoded)
     return {
         "window": win,
         "markers": decoded.get("markers") or [],
         "frames": (decoded.get("frames") or []) if keep_frames else [],
         "events": (decoded.get("events") or []) if keep_frames else [],
+        "tracks": tracks,
+        "attacks": attacks,
         "path": path_str,
         "error": None,
     }
@@ -53,8 +57,10 @@ def ingest(cfg: TrainConfig) -> dict:
     mk_dir = out / "markers"
     fr_dir = out / "frames"
     ev_dir = out / "events"
-    win_dir.mkdir(parents=True, exist_ok=True)
-    mk_dir.mkdir(parents=True, exist_ok=True)
+    tr_dir = out / "tracks"
+    at_dir = out / "attacks"
+    for d in (win_dir, mk_dir, tr_dir, at_dir):
+        d.mkdir(parents=True, exist_ok=True)
     if cfg.keep_frames:
         fr_dir.mkdir(parents=True, exist_ok=True)
         ev_dir.mkdir(parents=True, exist_ok=True)
@@ -74,6 +80,8 @@ def ingest(cfg: TrainConfig) -> dict:
     buf_m: list[dict] = []
     buf_f: list[dict] = []
     buf_e: list[dict] = []
+    buf_t: list[dict] = []
+    buf_a: list[dict] = []
     n_ok = 0
     n_err = 0
     n_bytes = 0
@@ -82,13 +90,18 @@ def ingest(cfg: TrainConfig) -> dict:
         err_path.write_text("path,reason\n", encoding="utf-8")
 
     def flush():
-        nonlocal shard_n, buf_w, buf_m, buf_f, buf_e
+        nonlocal shard_n, buf_w, buf_m, buf_f, buf_e, buf_t, buf_a
         if not buf_w:
             return
         shard_n += 1
         pd.DataFrame(buf_w).to_parquet(win_dir / f"part-{shard_n:05d}.parquet", index=False)
         if buf_m:
             pd.DataFrame(buf_m).to_parquet(mk_dir / f"part-{shard_n:05d}.parquet", index=False)
+        if buf_t:
+            pd.DataFrame(buf_t).to_parquet(tr_dir / f"part-{shard_n:05d}.parquet", index=False)
+        if buf_a:
+            pd.DataFrame(buf_a).to_parquet(at_dir / f"part-{shard_n:05d}.parquet", index=False)
+        buf_t, buf_a = [], []
         if cfg.keep_frames and buf_f:
             pd.DataFrame(buf_f).to_parquet(fr_dir / f"part-{shard_n:05d}.parquet", index=False)
         if cfg.keep_frames and buf_e:
@@ -111,6 +124,8 @@ def ingest(cfg: TrainConfig) -> dict:
         buf_m.extend(r["markers"])
         buf_f.extend(r.get("frames") or [])
         buf_e.extend(r.get("events") or [])
+        buf_t.extend(r.get("tracks") or [])
+        buf_a.extend(r.get("attacks") or [])
         n_ok += 1
         try:
             n_bytes += Path(r["path"]).stat().st_size

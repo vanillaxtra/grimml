@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from grimml_train.decode.records import RETOTEM_FAILED
 from grimml_train.features.forbidden import GRIM_FEATURE_PREFIXES, assert_no_forbidden_features
 
 NAN = float("nan")
@@ -27,7 +28,14 @@ FEATURE_COLUMNS = [
     "ping_ms",
     "jitter_ms",
     "frame_count",
+    "retotem_ms_min",
+    "jump_reset_rate",
+    "hotbar_swap_count",
+    "swap_attack_gap_ms_min",
 ]
+
+# java mirror: src/main/java/dev/grimml/inference/FeatureExtractor.java (same order, checked by test_java_parity)
+JAVA_FEATURE_COLUMNS = list(FEATURE_COLUMNS)
 
 
 def _arr(vals) -> np.ndarray:
@@ -122,7 +130,32 @@ def features_from_decoded(decoded: dict) -> dict:
             span = float((nanos.max() - nanos.min()) / 1e9)
             if span > 0:
                 row["cps"] = float((nanos.size - 1) / span)
+    row.update(_macro_features(events, attacks))
     return row
+
+
+def _macro_features(events: list[dict], attacks: list[dict]) -> dict:
+    retotem = [
+        e.get("a") / 1e6
+        for e in events
+        if e.get("event_type") == "retotem" and e.get("b") != RETOTEM_FAILED and e.get("a") is not None
+    ]
+    jr = [e.get("b") for e in events if e.get("event_type") == "jump_reset" and e.get("b") is not None]
+    swaps = sorted(e.get("nanos") for e in events if e.get("event_type") == "hotbar_swap" and e.get("nanos") is not None)
+    gaps = []
+    for a in attacks:
+        n = a.get("nanos")
+        if n is None:
+            continue
+        prior = [s for s in swaps if s <= n]
+        if prior:
+            gaps.append((n - prior[-1]) / 1e6)
+    return {
+        "retotem_ms_min": float(min(retotem)) if retotem else NAN,
+        "jump_reset_rate": float(np.mean([0 <= b <= 2 for b in jr])) if jr else NAN,
+        "hotbar_swap_count": len(swaps),
+        "swap_attack_gap_ms_min": float(min(gaps)) if gaps else NAN,
+    }
 
 
 def extract_window_features(

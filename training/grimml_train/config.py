@@ -12,6 +12,11 @@ class TrainConfig(BaseModel):
     sidecar_dir: Path = Path("../plugins/grimml")
     out_dir: Path = Path("out")
     marker_trim_seconds: float = 3.0
+    marker_min_overlap: float = 0.9
+    taxonomy_path: Path | None = None
+    maps_dir: Path | None = None
+    cv_folds: int = 5
+    drift_reference: Path | None = None
     exclude_interrupted: bool = True
     exclude_flagged_from_train: bool = True
     allow_probable_negatives: bool = False

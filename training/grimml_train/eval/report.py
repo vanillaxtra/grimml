@@ -112,7 +112,35 @@ def evaluate(
         "player_agg": player_aggregate(proba, players),
         "confound_top10": warn_confound_importance(clf, cols),
     }
-    for col in ("mark_module_id", "mark_client_id", "client_brand", "ping_ms"):
-        if col not in test.columns:
-            continue
+    rep["breakdowns"] = breakdowns(test, proba, pred)
     return rep
+
+
+PING_BUCKETS = [0, 50, 100, 200, 10_000]
+
+
+def breakdowns(test: pd.DataFrame, proba: np.ndarray, pred: np.ndarray) -> dict:
+    """Per-group window metrics on the evaluated rows (same order as _xy keeps them)."""
+    work = test[test["label"].isin(["CHEAT", "LEGIT_CONFIRMED"])].copy() if "label" in test.columns else test.copy()
+    if len(work) != len(pred):
+        return {}
+    work["_y"] = (work["label"] == "CHEAT").astype(int).to_numpy() if "label" in work.columns else 0
+    work["_p"] = pred
+    work["_proba"] = proba
+    if "is_bedrock" in work.columns:
+        work["bedrock"] = work["is_bedrock"].fillna(False).astype(bool).map({True: "bedrock", False: "java"})
+    if "ping_ms" in work.columns:
+        work["ping_bucket"] = pd.cut(pd.to_numeric(work["ping_ms"], errors="coerce"), PING_BUCKETS, right=False,
+                                     labels=["<50", "50-100", "100-200", "200+"]).astype(str)
+    out = {}
+    for col in ("bedrock", "ping_bucket", "client_brand", "mark_module_id", "mark_client_id", "mark_client_name"):
+        if col not in work.columns:
+            continue
+        groups = {}
+        for key, g in work.groupby(work[col].astype(str)):
+            m = eval_binary(g["_y"].to_numpy(), g["_p"].to_numpy())
+            m["n"] = int(len(g))
+            m["fp_rate"] = float(m["fp"] / max(1, m["fp"] + m["tn"]))
+            groups[key] = m
+        out[col] = groups
+    return out

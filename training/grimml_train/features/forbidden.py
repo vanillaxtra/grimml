@@ -23,6 +23,9 @@ FORBIDDEN_FEATURE_NAMES = frozenset(
         "label_id",
         "mark_client_id",
         "mark_module_id",
+        "mark_client_name",
+        "mark_kv",
+        "mark_id",
         "operator",
         "window_key",
     }

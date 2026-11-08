@@ -16,3 +16,12 @@ exclude_flagged_from_train: true
 max_fpr: 0.01
 confound_auc_warn: 0.6
 allow_probable_negatives: false
+# share of a window that must sit inside a trimmed mark segment to get its label
+marker_min_overlap: 0.9
+# taxonomy.yml for MARKER_KV names and module families (default: sidecar_dir/taxonomy.yml)
+taxonomy_path: null
+# plugin map snapshots for LOS (default: sidecar_dir/maps)
+maps_dir: null
+cv_folds: 5
+# older windows parquet for grimml-train drift
+drift_reference: null
