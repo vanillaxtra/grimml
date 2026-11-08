@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # self-checks run in the test phase and write target/selfcheck for the python parity tests
+      - name: Build plugin and run self-checks
+        run: mvn -B clean package
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: training/pyproject.toml
+
+      - name: Install training pipeline
+        run: pip install -e "training[dev]"
+
+      - name: Training tests (decoder and features against the java sample)
+        working-directory: training
+        env:
+          GRIMML_REQUIRE_JAVA_SAMPLE: '1'
+        run: pytest -q
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grimml-jar
+          path: target/grimml-*.jar
