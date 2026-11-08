@@ -2,7 +2,7 @@ package dev.grimml.buffer;
 
 import dev.grimml.item.ItemCategories;
 
-// player window slots 0-45 updated from set-slot packets no bukkit
+// hikaru would have premoved this
 public final class InventoryMirror {
 
     public static final int SLOTS = 46;

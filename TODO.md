@@ -1,6 +1,6 @@
 # grimml: what's done and what's left
 
-**Status basis:** repo on `main` as of 2026-11-02 (GML3 schema 3, config v4). Older README still says "Phase 1 only" — the plugin has moved well past that in code; training/inference repos are separate.
+**Status basis:** branch `rev` as of 2026-11-08 (GML3 schema 3, record types up to 30, config v5). Code items are done; what is left is process (👤), synth calibration that needs real data, and punishments, which stay off until the FP rate holds on real traffic.
 
 Legend: ✅ done in repo · 🔶 partial / needs verify · ⬜ not done · 👤 ops (you on servers/process, not code)
 
@@ -64,14 +64,14 @@ Repo: `C:\Users\Admin\Documents\grimml-synth\` (Python 3.11, pytest passing).
 
 ---
 
-## 🔶 Recorder GML3 (was "v2 P0/P1/P2" in old list)
+## ✅ Recorder GML3 (was "v2 P0/P1/P2" in old list)
 
-Most capture work is **implemented in code**; what’s left is verification, map assets, perf on live servers, and a full **GML1/GML2 decode path** for training (magic detection exists; full multi-version decoder belongs in `grimml-train`).
+All capture items are implemented. What's left is checking the new records (retotem, jump reset, STAB, map snapshots) on a live server.
 
 ### P0 — aim/reach/killaura training blockers
 
 - [x] Schema **GML3** (GML1/GML2 identifiable by magic; not rewritten on disk)
-- [ ] 🔶 Old **GML1 files fully decode** in a supported decoder (plugin self-check is GML3-only; train pipeline not started)
+- [x] Old **GML1 files fully decode** in `training/grimml_train/decode/` (pytest fixtures for GML1/2/3)
 - [x] Per-tick x/y/z in FRAME records (+ optional relative mode)
 - [x] Fight windows: fight id, attacker + target + nearby bystanders, roles
 - [x] Target **anon id** on attack/damage (entity id also stored where needed)
@@ -84,7 +84,7 @@ Most capture work is **implemented in code**; what’s left is verification, map
 - [x] MSPT/tick duration in window header
 - [x] Validity flags: partial, lag, death, respawn, teleport, setback, world, gamemode, vanish
 - [x] Header: server id, kit, map id, world, boot id, epoch ms, MC/Grim/PE versions, handedness, staff/test/vanish flags, taxonomy hash
-- [ ] ⬜ **Map files** saved per map id (for offline LOS) — only `map-id` string in header today
+- [x] **Map files** per map id + world: `maps/<map-id>__<world>.gmlmap` (GMM1) at first combat or `/grimml mapsave`; `training/grimml_train/maps` reads it and does LOS
 - [x] Session index sidecar + grim check name table via `grim-checks.json` + sidecar lines
 
 ### P1 — macros and timing
@@ -94,32 +94,32 @@ Most capture work is **implemented in code**; what’s left is verification, map
 - [x] Swing, use-item, held-slot swap events
 - [x] Shield / totem / knockback records (combat triggers for mace/knockback jump)
 - [x] Potion + attributes on staggered main-thread sampler (scale, range, etc.)
-- [ ] 🔶 Armor/hotbar **enchants in binary** — tracked in `InventoryMirror`, not clearly exported per window
+- [x] Armor/held/offhand **enchants in binary** — ENCHANT record (27) per window, packed levels from set-slot / window-items
 - [x] Block place (+ bucket context where implemented)
 - [x] Staggered main-thread reads (`StateSampler`)
 
 ### P2 — advanced
 
 - [x] Inventory click + window open/close events (basic)
-- [ ] 🔶 Mace/spear **rich** records (smash, charge/lunge detail, wind-charge timing) — triggers exist, not full P2 spec
-- [ ] 🔶 Retotem latency / click-failure detail
-- [ ] 🔶 Jump-reset **window** (−5..+10 ticks around KB) — knockback trigger only
-- [ ] ⬜ PROJECTILE record type defined but **not emitted** yet
+- [x] Mace/spear **rich** records — COMBAT_DETAIL (28): mace smash (fall, damage, enchants, ms since wind charge), spear charge hold / STAB / hit, wind charge timing
+- [x] Retotem latency / click-failure detail — RETOTEM (29): pop to offhand totem ns, method (click / swap key / failed after 5 s), clicks and extra clicks, inventory opened
+- [x] Jump-reset **window** — JUMP_RESET (30): first jump offset and jump/ground/sprint/W bits for −5..+10 ticks around each knockback
+- [x] PROJECTILE (19) emitted on launch (kind, velocity) and on player hit (target anon, hit offset, distance)
 - [x] Grim setback events; prediction offset 🔎 Grim API
 - [x] Bystander snapshots in fight assembler
 - [x] Elytra/glide events (partial)
 
 ---
 
-## 🔶 Storage, format, performance
+## ✅ Storage, format, performance
 
 - [x] Delta positions/rotations + **Deflate** on record blob (not zstd)
-- [ ] 🔶 Per-record-type drop counters — internal `DropCounters.byType`, **`/grimml status` only summarizes windows + torn frames**
-- [ ] 🔶 Hourly rotation — **date prefix** on filenames only; no hourly split / daily offload automation
+- [x] Per-record-type drop counters — records inside windows dropped on a full queue, by type, in `/grimml status` (ring overwrites are normal and no longer mark windows partial)
+- [x] Hourly rotation (`rotation: hourly` → `<day>/<hour>/`) + daily offload (`offload.*`, moves finished days on the disk thread; disk cap auto-resumes)
 - [x] 👤 Perf check on live servers — **you reported drops ~0 and MSPT fine** (formal 80-bot script not recorded in repo)
-- [ ] 🔶 Round-trip tests for every record type (GML3 self-check covers one path, not exhaustive)
-- [ ] ⬜ Folia (still non-goal; Bukkit scheduler)
-- [ ] ⬜ Published **release builds** (Maven package only; README says build yourself)
+- [x] Round-trip tests for every record type — `BinaryFormatSelfCheck` checks every header/frame/event field; pytest decodes the same Java file
+- [x] Folia — Paper region/global/async/entity schedulers, `folia-supported: true` (not yet run on a live Folia server)
+- [x] Published **release builds** — push a `v*` tag, `.github/workflows/release.yml` attaches the jar; `ci.yml` runs the self-checks + pytest on every push
 
 ---
 
@@ -148,32 +148,32 @@ Most capture work is **implemented in code**; what’s left is verification, map
 
 ---
 
-## 🔶 Training pipeline (`training/`)
+## ✅ Training pipeline (`training/`)
 
 See **`training/TODOtraining.md`** for detail.
 
 - [x] `.gmlml` decoder → parquet (GML1/GML2/GML3) in `training/grimml_train/decode/`
-- [x] Label joiner (sidecars + priority rules) — marker time-range trim 🔶
+- [x] Label joiner (sidecars + priority rules) — marker time-range trim + `marker_min_overlap` share inside the segment
 - [x] Inventory report (basic)
 - [x] Feature extraction + grouped splits + LightGBM baseline (minimal)
-- [ ] Eval breakdowns, multi-task, grouped CV, full ONNX parity
+- [x] Eval breakdowns (bedrock, ping bucket, client, module), multi-task (legit/aim/macro/other), grouped CV, dual aim vs macro models, ONNX parity on every row
 
 ---
 
-## ⬜ Alert-only inference (Phase 4)
+## 🔶 Alert-only inference (Phase 4)
 
-- [ ] ONNX Runtime async scoring
-- [ ] Staff alerts + violation buffer + review loop feeding labels
-- [ ] 3–4 weeks alert-only tuning
-- [ ] Latency / MSPT monitoring
+- [x] Async scoring on `grimml-inference` (LightGBM text model walked in Java, exact parity with Python; ONNX Runtime skipped on purpose, see decisions 2026-11-08)
+- [x] Staff alerts (`grimml.alerts`) + decayed violation buffer + `MODEL_ALERT` review rows that `/grimml review mark` turns into labels
+- [ ] 👤 3–4 weeks alert-only tuning (set `inference.enabled: true` with an exported model)
+- [x] Latency / MSPT monitoring — scoring latency last/avg/max, queue, drops in `/grimml status`; recorder MSPT pause also stops scoring
 
 ---
 
 ## ⬜ Punishments & ongoing
 
-- [ ] Punishments only after FP rate acceptable (multi-detection, Grim combo, kick/setback before ban)
-- [ ] Monthly retrain, drift monitoring
-- [ ] Keep docs + privacy re-audit (no chat, IPs, raw UUIDs, survival coords if relative mode off)
+- [ ] 👤 Punishments only after FP rate acceptable — deliberately not built (multi-detection, Grim combo, kick/setback before ban)
+- [ ] 👤 Monthly retrain (schedule) · [x] drift monitoring: `grimml-train drift` (PSI per feature vs `drift_reference`)
+- [x] Docs + privacy re-audit — `docs/privacy-audit.md` (2026-11-08); map snapshots off in relative mode
 
 ---
 
@@ -183,14 +183,14 @@ See **`training/TODOtraining.md`** for detail.
 |---|---|---|
 | **M1: Recorder live** | ✅ **you:** deployed all servers, perf OK | Formal bot benchmark + map files still optional |
 | **M2: Labels working** | 🔶 pilot cheat marks in progress | Roster + legit marks + full operator schedule still open |
-| **M3: First model** | 🔶 `training/` scaffold | Beats baseline on held-out operator **and** client |
-| **M4: Alert-only** | ⬜ | Staff reviewing live alerts |
+| **M3: First model** | 🔶 pipeline complete, needs labeled data | Beats baseline on held-out operator **and** client |
+| **M4: Alert-only** | 🔶 code done (`inference.enabled`) | Staff reviewing live alerts |
 | **M5: Punishments** | ⬜ | FP rate holds on real traffic |
 
 ---
 
 ## Nice-to-haves (from sessions, not on old list)
 
-- [ ] `/grimml mode markonly on|off` at runtime (today: config + `/grimml reload`)
-- [ ] Action bar visible to **staff operator** when mark target ≠ operator
-- [ ] README badge/phase text updated to match GML3 + labeling features
+- [x] `/grimml mode markonly on|off` at runtime (until reload/restart)
+- [x] Action bar also shown to the **staff operator** when mark target ≠ operator
+- [x] README badge/phase text updated

@@ -1,5 +1,5 @@
 # grimml
-![license](https://img.shields.io/badge/license-MIT-blue) ![java](https://img.shields.io/badge/java-21%2B-orange) ![paper](https://img.shields.io/badge/paper-1.21.1%20--%2026.x-lightgrey) ![status](https://img.shields.io/badge/phase-recorder%20%2B%20labeling-green)
+![license](https://img.shields.io/badge/license-MIT-blue) ![java](https://img.shields.io/badge/java-21%2B-orange) ![paper](https://img.shields.io/badge/paper%20%2F%20folia-1.21.1%20--%2026.x-lightgrey) ![status](https://img.shields.io/badge/phase-recorder%20%2B%20labeling%20%2B%20alert--only-green)
 
 A Paper plugin that records anonymized PvP combat data next to [Grim Anticheat](https://github.com/GrimAnticheat/Grim), to build a dataset for machine-learning cheat detection.
 
@@ -7,7 +7,7 @@ A Paper plugin that records anonymized PvP combat data next to [Grim Anticheat](
 
 Rule-based anticheats like Grim are good at catching movement and protocol cheats. Combat cheats such as aim assist and subtle killaura are harder to pin down with fixed rules. A model trained on real fights could catch them, but that first needs clean, labelled combat data. grimml collects that data on a live server without hurting performance.
 
-**In scope today:** GML3 combat recorder, staff **mark** segments, weak Grim-evidence sidecars, ban backfill labels. **Out of scope:** no ML inference, no staff alerts, no punishments (see [TODO.md](TODO.md) for training/inference repos).
+**In scope today:** GML3 combat recorder, staff **mark** segments, weak Grim-evidence sidecars, ban backfill labels, map snapshots, the `training/` pipeline and **alert-only** model scoring (off by default). **Out of scope:** punishments. A model never kicks or bans; it only alerts staff (see [TODO.md](TODO.md)).
 
 ## Features
 
@@ -19,6 +19,10 @@ Rule-based anticheats like Grim are good at catching movement and protocol cheat
 - **Ban hooks:** LiteBans (when installed) and vanilla kick fallback → SUSPECT backfill; grimml loads without LiteBans present.
 - **Anonymized:** SHA-256 salted player ids, random session ids; sidecars use anon ids only.
 - **Performance:** seqlock rings, single async writer, drop-newest under load, MSPT and disk-cap auto-pause.
+- **Storage:** hourly folders (`<day>/<hour>/`) and optional offload of finished days to another disk.
+- **Map snapshots:** one block snapshot per map at first combat (`maps/*.gmlmap`) for offline line-of-sight.
+- **Alert-only scoring:** finished windows are scored on a background thread with the exported LightGBM model. A decayed per-player score sends a staff alert (`grimml.alerts`) and a review row, never a punishment.
+- **Paper and Folia:** region schedulers on both.
 
 Sibling repo **grimml-synth** (Python) generates synthetic pretraining windows. The **training/** folder in this repo holds the decode → train pipeline (`TODOtraining.md`).
 
@@ -33,7 +37,7 @@ Sibling repo **grimml-synth** (Python) generates synthetic pretraining windows. 
 
 ## Installation
 
-There are no release builds yet, so build it yourself (needs JDK 21+ and Maven):
+Download the jar from [Releases](https://github.com/vanillaxtra/grimml/releases) (a `v*` tag builds one), or build it yourself (needs JDK 21+ and Maven):
 
 ```bash
 git clone https://github.com/vanillaxtra/grimml
@@ -55,14 +59,16 @@ All commands need `grimml.admin` (op by default). Console/RCON supported where n
 |---|---|
 | `/grimml status` | enabled/paused, windows written/dropped, bytes, drop summary |
 | `/grimml pause` / `resume` | stop or resume flushing windows |
-| `/grimml reload` | reload config, taxonomy, grim-weights; applies `recording-mode` to online sessions |
+| `/grimml reload` | reload config, taxonomy, grim-weights, model; applies `recording-mode` to online sessions |
+| `/grimml mode markonly on\|off` | switch recording-mode at runtime (until reload/restart) |
 | `/grimml mark start <account> <label> [client] [module] [key=value...]` | open a labeled segment (`LEGIT_CONFIRMED` or `CHEAT`); prints a stable id (`m83e5404d`) |
 | `/grimml mark end <account>` | close the open segment; repeats id and duration |
 | `/grimml mark list` / `get <id>` | look up open and recent marked sessions |
 | `/grimml testaccount [account] [on\|off]` | persist test-account UUIDs (excluded from normal player mixes in headers) |
 | `/grimml suspects [limit]` | top decaying Grim-evidence scores (anon ids) |
 | `/grimml review next` | next window flagged for staff replay |
-| `/grimml review mark <id> confirmed\|legit\|unsure` | update review sidecar |
+| `/grimml review mark <id> confirmed\|legit\|unsure` | update review sidecar (grim and model alerts) |
+| `/grimml mapsave` | force a map snapshot around you |
 
 ## Configuration (high level)
 
@@ -75,18 +81,22 @@ All commands need `grimml.admin` (op by default). Console/RCON supported where n
 | `ring-capacity` / `event-ring-capacity` | `160` / `128` | per-player buffers |
 | `grim-evidence.enabled` | `true` | weak auto-labeling kill switch |
 | `ban-labels.enabled` | `true` | combat ban → SUSPECT backfill |
+| `rotation` | `hourly` | `hourly` / `daily` / `none` folder layout |
+| `offload.enabled` / `dir` / `after-days` | `false` / `"` / `1` | move finished days elsewhere |
+| `map-snapshot.enabled` | `true` | map snapshot at first combat (never in relative mode) |
+| `inference.enabled` | `false` | alert-only scoring with `plugins/grimml/model/` (`grimml-train export`) |
 
 See `config.yml` and [docs/architecture.md](docs/architecture.md) for the full list.
 
 ## Output format
 
-Each combat window is one file with magic **`GML3`** (schema 3). Unmarked auto windows: `<date>_<anonId>_<session>_<rand>.gmlml`. Marked sessions: `<date>_<markId>_<rand>.gmlml` (same `m########` id on every file of that mark). Older `GML1`/`GML2` files remain identifiable by magic; they are not rewritten.
+Each combat window is one file with magic **`GML3`** (schema 3), stored under `recordings/<day>/<hour>/`. Unmarked auto windows: `<date>_<anonId>_<session>_<rand>.gmlml`. Marked sessions: `<date>_<markId>_<rand>.gmlml` (same `m########` id on every file of that mark). Older `GML1`/`GML2` files remain identifiable by magic; they are not rewritten.
 
 - **Header:** fight/window ids, role, trigger, label source, validity, session/anon ids, epoch + nanos, boot id, MSPT, ping, kit/server/map/world, MC/Grim/PacketEvents versions, taxonomy version + hash.
-- **Body:** Deflate-compressed delta-encoded frames plus typed events (including MARKER / MARKER_KV).
+- **Body:** Deflate-compressed delta-encoded frames plus typed events (including MARKER / MARKER_KV, PROJECTILE, ENCHANT, COMBAT_DETAIL, RETOTEM, JUMP_RESET).
 - **Sidecars:** `sessions.idx` (join/quit/mark/grim lines), `marks.csv` (staff mark ledger with ids), `grim-labels.csv`, `grim-review.csv`, `grim-checks.json`, `test-accounts.txt`.
 
-Encoder: `format/BinaryFormat.java`. Round-trip check: `format/BinaryFormatSelfCheck.java`.
+Encoder: `format/BinaryFormat.java`. Round-trip check of every record type: `format/BinaryFormatSelfCheck.java` (the Python decoder is tested against the same file in CI).
 
 ## How it works
 
@@ -103,9 +113,9 @@ More detail: [docs/architecture.md](docs/architecture.md), [docs/decisions.md](d
 
 ## Non-goals (this repo)
 
-- No trained model, ONNX inference, alerts, or punishments.
-- No Folia-aware schedulers yet (Paper single-region scheduler).
-- Full training/inference automation lives under **`training/`** (see `training/TODOtraining.md`); alert-only server plugin is still out of scope.
+- No punishments. Alerts only, and only once a model is exported and `inference.enabled` is set.
+- No trained model ships with the plugin; train one with `training/`.
+- Training lives under **`training/`** (see `training/TODOtraining.md`). Privacy notes: [docs/privacy-audit.md](docs/privacy-audit.md).
 
 Open bugs and quirks: [docs/known-issues.md](docs/known-issues.md).
 

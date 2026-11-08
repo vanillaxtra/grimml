@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 
 import java.util.Locale;
 
-// runs on main thread every 4 ticks; sends action bar to each marked player
+// i love hikariiiiiiii
 public final class MarkFeedback implements Runnable {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();

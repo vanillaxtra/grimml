@@ -1,5 +1,30 @@
 # decisions
 
+## 2026-11-08 - alert-only scoring uses the lightgbm text model, not onnx runtime
+
+- the plugin scores `model.txt` with a ~150 line tree walker (`inference/LgbmModel`) on `grimml-inference`; `model.onnx` is still exported and parity-checked for other runtimes
+- onnx runtime java is ~60 MB of natives pulled through `libraries:` on every server; a failed download stops the plugin from loading, which would take the recorder down with it
+- parity: `LgbmModelSelfCheck` scores `training/tests/fixtures/lgbm_parity` (lightgbm reference probabilities, exact match), `test_java_parity` checks java and python features on the same GML3 sample
+- alerts never punish. a decayed per-player sum (same rule as `player_aggregate`) over `inference.alert-score` sends a staff chat alert and writes a `MODEL_ALERT` review row; `/grimml review mark` turns it into a replay-confirmed label
+
+## 2026-11-08 - validity is per window, not sticky per session
+
+- `PlayerRingBuffer.validity` only ever gained bits, and every ring wrap set `VALID_PARTIAL`, so after ~6 s of play every window was partial/lag/teleport and `exclude_flagged_from_train` dropped it
+- each validity bit now stores the nanos it was last set; a window gets the bits set inside `[start, end]` plus partial when slots were torn
+- ring overwrites are normal and no longer count as drops. per-type drops are the records inside windows dropped on a full writer queue (`/grimml status`)
+
+## 2026-11-08 - new records without a schema bump
+
+- ENCHANT 27 (armor/held/offhand packed enchant levels, one per window), COMBAT_DETAIL 28 (mace smash, spear charge/stab/hit, wind charge), RETOTEM 29 (pop to offhand totem latency, clicks, method), JUMP_RESET 30 (jump edge bits -5..+10 ticks around knockback)
+- PROJECTILE 19 is now emitted (launch + player hit)
+- all use the existing generic event layout, so GML3 readers only need the new type ids; `KNOWN` in `records.py` was extended in the same change
+
+## 2026-11-08 - storage, maps, folia
+
+- `rotation: hourly` writes `<day>/<hour>/` under recordings; `offload` moves days older than `after-days` to another dir from the disk thread (per-file move so a cross-disk or interrupted move resumes)
+- map snapshots: one `maps/<map-id>__<world>.gmlmap` per map at first combat (radius 48, ±24 y), never in `position-mode: relative`
+- Paper's region schedulers are used on Paper too, so one code path covers Folia; per-player state reads go through the entity scheduler only on Folia
+
 ## 2026-11-02 - each mark gets a stable id
 
 - `/grimml mark start` assigns `m` + 8 hex (`m83e5404d`). chat, action bar, `marks.csv`, `sessions.idx`, and every `.gmlml` filename for that segment use it

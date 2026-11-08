@@ -1,17 +1,21 @@
 # known issues
 
-- [ ] `MsptGuard` clears any pause, including a disk-cap pause and `/grimml pause`, once MSPT drops below 80% of the threshold
+- [ ] `MsptGuard` clears any pause, including `/grimml pause`, once MSPT drops below 80% of the threshold (the disk cap now tracks its own pause and resumes under 90% of the cap)
 - [ ] GML1/GML2 files are not decoded by the Java encoder (magic only); Python `grimml-train` decodes all three schemas (see `training/docs/format-notes.md`)
 - [ ] `AimModulo360` / `Reach` in `taxonomy.yml` `expected_grim` and `grim-weights.yml` are guesses until a live FlagEvent confirms names
 - [ ] grim-auto labels must stay out of eval; sample 100 `GRIM_WEAK` windows for staff review before trusting the thresholds
 - [ ] grimml-synth lives in `Documents/grimml-synth`; calibrate PARAM_SPACE from real test-account sessions before trusting it
-- [ ] Spear jab vs charge is recorded as a normal damage/attack pair; PacketEvents does not expose a dedicated spear packet (VERIFY)
+- [x] Spear jab vs charge: `DiggingAction.STAB` and the use-item hold time are now `COMBAT_DETAIL` records (2026-11-08); VERIFY on a 1.21.11+ client that STAB arrives for every jab
 - [ ] Own-inventory open has no client packet on some versions; we infer from the first click
 - [ ] Grim prediction offset is not in GrimAPI 1.3.2.1 so setback records have position only
-- [ ] Enchant levels on the inventory mirror are not filled from PacketEvents yet (category and name hash are)
-- [ ] No Folia-aware schedulers yet; current code uses Bukkit scheduler and works on Paper
+- [x] Enchant levels on the inventory mirror are filled from set-slot / window-items (2026-11-08); 1.21.5+ click packets only carry hashed stacks, so a client-side move keeps the slot's previous enchant when the item id matches and 0 otherwise
+- [x] Folia: Paper region/global/async/entity schedulers on both platforms, `folia-supported: true` (2026-11-08). on Folia there is no global MSPT, so `mspt` reads 0 and the MSPT guard never pauses there
 - [ ] Bedrock detection uses reflection; review after Via/Floodgate API changes
-- [ ] Phase 2 offline labeling pipeline is not built yet (roster.csv is the join key for SUSPECT bans)
+- [x] Phase 2 offline labeling pipeline: `training/` (ingest, label join, eval, export)
 - [ ] Ban-reason keywords are substring matches so staff should keep LiteBans reasons specific (`killaura`, not `cheating`)
 - [ ] Grim 2.3.74 `PacketHidePlayerInfo` throws `IndexOutOfBoundsException` on 1.21.11 `PlayerInfoUpdate` (shaded PacketEvents vs Leaf/TAB/AntiPopup). that is Grim, not grimml
 - [ ] Grim 2.3.74 warns that the string `FlagEvent` handler is deprecated; compile-time GrimAPI 1.3.2.1 only has that signature
+- [ ] Retotem latency relies on the click packet's changed-slot list (client prediction); a server that rejects the click still logs a retotem. `RETOTEM_FAILED` after 5 s without a totem in offhand
+- [ ] Jump reset on clients without `PlayerInput` (pre 1.21.2) infers the jump from ground to air with rising y, which also fires on step-ups
+- [ ] Map snapshot line of sight treats a fixed list of plants, carpets, signs, rails, torches and fluids as passable and every other block as a full cube; not collision-shape exact
+- [ ] Map snapshots read loaded chunks only; unloaded chunks are `grimml:unloaded` and LOS through them is unknown (None)

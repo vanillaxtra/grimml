@@ -12,7 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 
-// copies damage primitives only no logic on the handler
+// i love larping chess
 public final class DamageListener implements Listener {
 
     private final GrimMLPlugin plugin;

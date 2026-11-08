@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 // single async writer thread drains snapshots to compressed files
-// bounded queue drops newest samples if writer falls behind
+// blundered my queen again but the writer never blunders
 public final class RecordWriter {
 
     private final GrimMLPlugin plugin;
