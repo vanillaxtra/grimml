@@ -57,17 +57,6 @@ This is where i can keep track of the different clients i have run cheats on and
 | 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:16.5 HIT_DELAY_MAX_MS:42 BREAK_COOLDOWN_MAX_MS:570 BREAK_COOLDOWN_MIN_MS:270 | 8:37 | m1dff7271 | notauthorised & amariia |
 | 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:16.5 HIT_DELAY_MAX_MS:42 BREAK_COOLDOWN_MAX_MS:570 BREAK_COOLDOWN_MIN_MS:270 | 10:53 | m3367bfcd | notauthorised & amariia |
 
-
-## Doomsday
-| Date | Module | Settings | Duration | ID | By |
-| -------- | ------- | ------- | ------- | ------- | ------- |
-|  |  |  |  |  |  |
-
-## Meteor
-| Date | Module | Settings | Duration | ID | By |
-| -------- | ------- | ------- | ------- | ------- | ------- |
-|  |  |  |  |  |  |
-
 ## Grim
 | Date | Module | Settings | Duration | ID | By |
 | -------- | ------- | ------- | ------- | ------- | ------- |
@@ -93,6 +82,18 @@ This is where i can keep track of the different clients i have run cheats on and
 |  |  |  |  |  |  |
 | 07/11/26 | Auto Xbow Cart | DELAY_TICKS:0 SILENT_AIM:TRUE PLACE_PROTECTP:FALSE | 3:43 | m0bca2310 | notauthorised |
 | 07/11/26 | Auto Xbow Cart | DELAY_TICKS:0 SILENT_AIM:TRUE PLACE_PROTECTP:TRUE | 3:16 | mc9a8d071 | notauthorised |
+
+
+## Doomsday Free
+| Date | Module | Settings | Duration | ID | By |
+| -------- | ------- | ------- | ------- | ------- | ------- |
+|  |  |  |  |  |  |
+
+## Meteor
+| Date | Module | Settings | Duration | ID | By |
+| -------- | ------- | ------- | ------- | ------- | ------- |
+|  |  |  |  |  |  |
+
 
 
 ## Liquid Bounce
