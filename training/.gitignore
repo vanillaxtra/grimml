@@ -6,3 +6,6 @@ dist/
 build/
 out/
 *.parquet
+
+prestige temp test/
+out_quick/

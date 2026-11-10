@@ -13,20 +13,20 @@ cd training
 pip install -e ".[dev]"
 ```
 
-`config.yaml` already points at `E:/recordings`.
+`config.yaml` points at `E:/recordings` and writes processed parquet to `E:/recordings_processed`.
 
 ```bash
-grimml-train --config config.yaml decode
+grimml-train --config config.yaml ingest --dry-run
+grimml-train --config config.yaml ingest --max-files 20000
+grimml-train --config config.yaml ingest
+grimml-train --config config.yaml label --bulk
 grimml-train --config config.yaml inventory
-grimml-train --config config.yaml label
-grimml-train --config config.yaml train
-grimml-train --config config.yaml eval
-grimml-train --config config.yaml export
+grimml-train --config config.yaml sample
 ```
 
 Or `grimml-train --config config.yaml pipeline`.
 
-Resume: `out/ingest/done.txt` skips finished files. Failures go to `out/ingest/errors.csv` (`path,reason`). One bad file does not stop the batch.
+Resume: `E:/recordings_processed/ingest/done.txt` skips finished files. Failures go to `errors.csv` (`path,category,reason`). One bad file does not stop the batch. Ctrl+C is safe; rerun `ingest` to continue.
 
 UNLABELED is never treated as legit. Train uses staff `CHEAT` vs `LEGIT_CONFIRMED` only.
 

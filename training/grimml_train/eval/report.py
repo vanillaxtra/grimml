@@ -37,16 +37,21 @@ def player_aggregate(proba: np.ndarray, players: np.ndarray, n_alert: int = 3, d
     return {"players": len(scores), "flagged": len(flagged)}
 
 
-def bootstrap_by_player(y_true, y_pred, players, fn, n=200, seed=42) -> tuple[float, float, float]:
+def bootstrap_by_player(y_true, y_pred, players, fn, n=200, seed=42, hours=None) -> tuple[float, float, float]:
     rng = np.random.default_rng(seed)
     uniq = np.unique(players)
     stats = []
     for _ in range(n):
+        if len(uniq) == 0:
+            break
         samp = rng.choice(uniq, size=len(uniq), replace=True)
         mask = np.isin(players, samp)
         if mask.sum() == 0:
             continue
-        stats.append(fn(y_true[mask], y_pred[mask]))
+        if hours is not None:
+            stats.append(fn(y_true[mask], y_pred[mask], hours[mask]))
+        else:
+            stats.append(fn(y_true[mask], y_pred[mask]))
     if not stats:
         return float("nan"), float("nan"), float("nan")
     a = np.array(stats, dtype=float)
@@ -99,12 +104,25 @@ def evaluate(
     hours = window_hours(test)
     players = test["anon_player_id"].astype(str).to_numpy() if "anon_player_id" in test.columns else np.arange(len(test))
     fp1000 = fp_per_1000_player_hours(y, pred, hours)
-    mean_fp, lo, hi = bootstrap_by_player(
-        y, pred, players, lambda yt, yp: fp_per_1000_player_hours(yt, yp, hours[: len(yt)] * 0 + hours.mean())
-    )
+    mean_fp, lo, hi = bootstrap_by_player(y, pred, players, fp_per_1000_player_hours, hours=hours)
+    banner = None
+    if "label_source" in test.columns and (test["label_source"] == "operator_asserted_bulk").any():
+        banner = "legit pool is operator-asserted (source=operator_asserted_bulk), not individually verified"
+        print(banner, flush=True)
+    hours_sum = float(hours.sum())
+    if banner:
+        print(
+            f"hold-out accounts={int(pd.Series(players).nunique())} windows={int(len(test))} player-hours={hours_sum:.2f}",
+            flush=True,
+        )
     rep = {
         "fp_per_1000_player_hours": fp1000,
+        "fp_per_1000_bootstrap_mean": mean_fp,
         "fp_per_1000_ci": [lo, hi],
+        "provenance": banner,
+        "holdout_accounts": int(pd.Series(players).nunique()),
+        "holdout_windows": int(len(test)),
+        "holdout_player_hours": hours_sum,
         "window_metrics": eval_binary(y, pred),
         "n_windows": int(len(test)),
         "n_players": int(pd.Series(players).nunique()),

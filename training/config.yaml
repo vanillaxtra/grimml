@@ -1,18 +1,27 @@
 seed: 42
-# mixed dump: cheat vs legit is inside MARKER records (GML2/3) or sidecars
 recordings_dir: E:/recordings
 sidecar_dir: E:/recordings
-out_dir: out
+out_dir: E:/recordings_processed
+cheat_dir: null
 marker_trim_seconds: 3.0
 exclude_grim_features_when_weak_labels: true
 workers: 0
-shard_size: 4000
+shard_size: 50000
 keep_unlabeled: true
 keep_frames: false
 skip_bad_files: true
 resume: true
+skip_recent_minutes: 10
 exclude_interrupted: true
 exclude_flagged_from_train: true
 max_fpr: 0.01
 confound_auc_warn: 0.6
 allow_probable_negatives: false
+per_account_cap: 500
+sample_target: 400000
+bulk_labels:
+  - path: E:/recordings
+    label: LEGIT_CONFIRMED
+    source: operator_asserted_bulk
+    asserted_by: operator
+    note: "operator states all windows in this folder are legit players"

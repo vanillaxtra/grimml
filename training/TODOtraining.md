@@ -6,14 +6,17 @@ Leakage/eval audit: [AUDIT.md](AUDIT.md) (2026-11-02). All checklist FAILs have 
 
 Legend: ✅ done · 🔶 partial · ⬜ todo
 
-## ingest (80GB mixed dump)
+## ingest (E:/recordings → E:/recordings_processed)
 
 - [x] Recurse one folder of unsorted `.gmlml` files
 - [x] ProcessPool workers, bounded inflight queue (does not load 80GB)
 - [x] Per-file decode + features; **frames not kept** (`keep_frames: false`)
 - [x] Parquet shards (`shard_size`)
-- [x] Resume via `out/ingest/done.txt`
+- [x] Resume via `done.txt` under `out_dir` (`E:/recordings_processed`)
 - [x] Bad files logged to `errors.csv` (`skip_bad_files: true`)
+- [x] `ingest --dry-run`, `--max-files`, `--shard-range`, skip files newer than `skip_recent_minutes`
+- [x] Bulk operator-asserted LEGIT_CONFIRMED (`label --bulk` / `--undo`), below grim-weak, never on cheat_dir
+- [x] `sample` live legit manifests + 20% account hold-out file
 - [x] Labels recovered from in-file MARKER start/end time ranges (cheat + legit mixed)
 - [x] UNLABELED never treated as legit
 - [ ] 🔶 Optional persist frames for debugging (`keep_frames`)
@@ -29,7 +32,7 @@ Legend: ✅ done · 🔶 partial · ⬜ todo
 
 - [x] Reconstruct mark segments from MARKER events across files in the same session
 - [x] Trim seconds on segment ends
-- [x] Priority: replay-confirmed > staff-marker > ban-backfill > grim-weak > unlabeled
+- [x] Priority: replay-confirmed > staff-marker > ban-backfill > grim-weak > operator_asserted_bulk > unlabeled
 - [x] Sidecars optional (dump can be labels-only-in-file)
 - [ ] 🔶 Decode MARKER_KV hashes to `client-name=` strings via taxonomy
 

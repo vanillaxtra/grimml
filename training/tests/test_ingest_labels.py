@@ -106,7 +106,7 @@ def test_ingest_mixed_dump(tmp_path: Path):
     (dump / "one.gmlml").write_bytes(encode_gml3_selfcheck())
     (dump / "two.gmlml").write_bytes(encode_gml1_minimal())
     out = tmp_path / "out"
-    cfg = TrainConfig(recordings_dir=dump, sidecar_dir=dump, out_dir=out, workers=1, shard_size=10, resume=False)
+    cfg = TrainConfig(recordings_dir=dump, sidecar_dir=dump, out_dir=out, workers=1, shard_size=10, resume=False, skip_recent_minutes=0)
     summary = ingest(cfg)
     assert summary["ok"] == 2
     from grimml_train.ingest import load_ingest_table

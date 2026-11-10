@@ -3,14 +3,23 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+
+class BulkLabel(BaseModel):
+    path: Path
+    label: str = "LEGIT_CONFIRMED"
+    source: str = "operator_asserted_bulk"
+    asserted_by: str = "operator"
+    note: str = ""
 
 
 class TrainConfig(BaseModel):
     seed: int = 42
     recordings_dir: Path = Path("../plugins/grimml/recordings")
     sidecar_dir: Path = Path("../plugins/grimml")
-    out_dir: Path = Path("out")
+    out_dir: Path = Path("E:/recordings_processed")
+    cheat_dir: Path | None = None
     marker_trim_seconds: float = 3.0
     exclude_interrupted: bool = True
     exclude_flagged_from_train: bool = True
@@ -20,13 +29,17 @@ class TrainConfig(BaseModel):
     test_client_holdout: str | None = None
     synthetic_source_tag: str = "synthetic"
     workers: int = 0
-    shard_size: int = 4000
+    shard_size: int = 50_000
     keep_unlabeled: bool = True
     keep_frames: bool = False
     skip_bad_files: bool = True
     resume: bool = True
+    skip_recent_minutes: int = 10
     max_fpr: float = 0.01
     confound_auc_warn: float = 0.6
+    per_account_cap: int = 500
+    sample_target: int = 400_000
+    bulk_labels: list[BulkLabel] = Field(default_factory=list)
 
 
 def load_config(path: Path) -> TrainConfig:

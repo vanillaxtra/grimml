@@ -20,6 +20,7 @@ client-names:
   - inertia
   - nova
   - doomsday
+  - grim
   
 
 modules:
@@ -47,14 +48,15 @@ modules:
       miss_chance: float
       cooldown_range_min: int
       cooldown_range_max: int
+      break_shield: [true, false]
   silent_aim:
     settings:
       continous_tracking: [true, false]
 
-  stun_slam:
+  auto_stun_slam:
     settings:
-      swap_delay_ticks: int
-      jitter: float
+      mace_delay_min_ticks: int
+      mace_delay_max_ticks: int
   auto_breach_swap:
     settings: 
       chance: float
@@ -139,6 +141,7 @@ modules:
       delay_ticks: int
       silent_aim: [true, false]
       silent_aim_fov: int
+      place_protect: [true, false]
   jump_reset:
     settings:
       chance: float

@@ -1,5 +1,12 @@
 # decisions
 
+## 2026-11-07 - processed parquet lives on E:/recordings_processed
+
+- grimml-train `out_dir` is `E:/recordings_processed`, never mixed into `E:/recordings`
+- first production ingest copies `training/out/ingest/done.txt` + windows/markers so those files are not re-decoded
+- bulk `LEGIT_CONFIRMED` is `source=operator_asserted_bulk`, priority 1 (below grim-weak); `label --bulk --undo` deletes those rows; cheat_dir is never bulk-labeled
+- live hold-out is `splits/live_holdout_accounts.txt` (20% of non-operator accounts, seeded, written once unless `--regenerate`)
+
 ## 2026-11-02 - each mark gets a stable id
 
 - `/grimml mark start` assigns `m` + 8 hex (`m83e5404d`). chat, action bar, `marks.csv`, `sessions.idx`, and every `.gmlml` filename for that segment use it

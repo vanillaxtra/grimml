@@ -15,6 +15,7 @@ PRIORITY = {
     "grim-auto-window": 2,
     "grim-auto-player": 2,
     "grim-weak": 2,
+    "operator_asserted_bulk": 1,
     "unlabeled": 0,
 }
 
