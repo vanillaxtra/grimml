@@ -87,6 +87,7 @@ This is where i can keep track of the different clients i have run cheats on and
 ## Doomsday Free
 | Date | Module | Settings | Duration | ID | By |
 | -------- | ------- | ------- | ------- | ------- | ------- |
+| 10/11/26 | Triggerbot | COOLDOWN_MAX_PERCENT:100 COOLDOWN_MIN_PERCENT:90 DELAY_MAX_MS:0 DELAY_MIN_MS:0 MISS_CHANCE:0 | 4:43 | m3f63358f | notauthorised |
 |  |  |  |  |  |  |
 
 ## Meteor
