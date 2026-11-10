@@ -101,3 +101,8 @@ This is where i can keep track of the different clients i have run cheats on and
 | Date | Module | Settings | Duration | ID | By |
 | -------- | ------- | ------- | ------- | ------- | ------- |
 |  |  |  |  |  |  |
+
+## Legit
+| Date | Module | Settings | Duration | ID | By |
+| -------- | ------- | ------- | ------- | ------- | ------- |
+| 06/11/26 | LEGIT_CONFIRMED |  | 22:22 | med3d6926 | notauthorised |
