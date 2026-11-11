@@ -110,6 +110,6 @@ For this I have also put this on many different servers as to collect legit play
 | 11/11/26 | DiamondSMP critting, webbing, full boxing and comboing | 7:16 | m3ab6bfb8 | notauthorised |
 | 11/11/26 | Trying to spear swap as fast as possible | 4:51 | m6013e9ff | notauthorised |
 | 11/11/26 | Placing blocks & interacting with items butterfly right click and butterfly left click attacking | 2:40 | m24d6d071 | notauthorised |
-| 11/11/26 | Dueling | 17:30 | me9366054 | revsies |
-| 11/11/26 | Dueling | 17:36 | ma9691d79 | notauthorised |
+| 11/11/26 | Dueling DiamondSMP kit | 17:30 | me9366054 | revsies |
+| 11/11/26 | Dueling DiamondSMP kit | 17:36 | ma9691d79 | notauthorised |
 
