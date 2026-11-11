@@ -103,6 +103,8 @@ This is where i can keep track of the different clients i have run cheats on and
 |  |  |  |  |  |  |
 
 ## Legit
-| Date | Module | Settings | Duration | ID | By |
-| -------- | ------- | ------- | ------- | ------- | ------- |
-| 06/11/26 | LEGIT_CONFIRMED |  | 22:22 | med3d6926 | notauthorised |
+| Date | What were you doing? | Duration | ID | By |
+| -------- | ------- | ------- | ------- | ------- |
+| 06/11/26 | DiamondSMP critting, webbing and comboing | 22:22 | med3d6926 | notauthorised |
+| 11/11/26 | DiamondSMP critting, webbing, full boxing and comboing | 7:16 | m3ab6bfb8 | notauthorised |
+
