@@ -112,4 +112,6 @@ For this I have also put this on many different servers as to collect legit play
 | 11/11/26 | Placing blocks & interacting with items butterfly right click and butterfly left click attacking | 2:40 | m24d6d071 | notauthorised |
 | 11/11/26 | Dueling DiamondSMP kit | 17:30 | me9366054 | revsies |
 | 11/11/26 | Dueling DiamondSMP kit | 17:36 | ma9691d79 | notauthorised |
+| 11/11/26 | Dueling Spearmace kit | 5:42 | m69a17c52 | revsies |
+| 11/11/26 | Dueling Spearmace kit | 5:40 | mc27105be | notauthorised |
 
