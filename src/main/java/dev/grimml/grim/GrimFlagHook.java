@@ -55,7 +55,7 @@ public final class GrimFlagHook {
                     plugin.writer().enqueueSessionLine("grim " + Integer.toHexString(checkHash) + " " + name);
                     if (flags != null) {
                         flags.offer(buf.anonPlayerId, buf.sessionId, checkHash, tick, nanos,
-                                buf.pingMs, buf.jitterMs, buf.validity, cancelled ? 1 : 0,
+                                buf.pingMs, buf.jitterMs, buf.validityIn(nanos - 5_000_000_000L, nanos), cancelled ? 1 : 0,
                                 buf.sessionStartNanos, buf.lastTeleportNanos, buf.lastWorldNanos,
                                 buf.lastRespawnNanos, buf.lastSetbackNanos);
                     }

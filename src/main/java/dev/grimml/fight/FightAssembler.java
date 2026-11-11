@@ -128,7 +128,7 @@ public final class FightAssembler {
         snap.role = role;
         snap.trigger = buf.triggerReason;
         snap.labelSource = buf.labelSource;
-        snap.validity = buf.validity;
+        snap.validity = buf.validityIn(windowStart, now);
         snap.sessionId = buf.sessionId;
         snap.anonPlayerId = buf.anonPlayerId;
         snap.markId = buf.markId == null ? "" : buf.markId;

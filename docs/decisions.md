@@ -108,3 +108,4 @@
 - writer uses a bounded queue and drops newest snapshots if it falls behind; never stalls the packet path
 - auto-pause on high MSPT and disk cap are advisory; manual `/grimml pause` also available
 - comments are single-line, lowercase, no punctuation, only what the code cannot say
+- window validity bits are per window, not per player lifetime: `PlayerRingBuffer.validityIn(start, end)` returns only events whose timestamp falls in the window (2026-11-10); older files have sticky bits and are told apart by the window `epoch_ms`

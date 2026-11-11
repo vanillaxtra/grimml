@@ -25,8 +25,11 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import random
+import re
 import sys
 import time
+import zlib
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
@@ -104,6 +107,12 @@ LEGIT = "LEGIT_CONFIRMED"
 CHEAT = "CHEAT"
 SHORTCUT_COLS = ["win_len_ms", "frame_count", "event_count", "attack_count", "ping_ms", "jitter_ms"]
 CORE_DROP = {"ping_ms", "jitter_ms", "frame_count", "attack_count"}
+# Recorder builds before the per-window validity fix (2026-11-10) OR'd the event bits for the player's whole
+# session, so valid_death/respawn/teleport/gamemode were set on almost every window after the first such event.
+# Those bits mean nothing in old files. Set this to the wall-clock UTC epoch ms when the fixed plugin went live;
+# windows recorded at/after it get the hard-invalid filter, earlier windows ignore it. None = no fixed build
+# deployed yet, so every file is treated as old. See docs/known-issues.md ("sticky validity bits").
+VALIDITY_FIXED_FROM_MS: int | None = None
 HARD_INVALID = [
     "valid_death", "valid_respawn", "valid_teleport", "valid_setback",
     "valid_world", "valid_gamemode", "valid_vanish",
@@ -144,10 +153,52 @@ def find_files(folder: Path) -> list[Path]:
     return sorted(Path(folder).rglob("*.gmlml"))
 
 
-def decode_folder(folder: Path, workers: int) -> tuple[pd.DataFrame, list[tuple[str, str]]]:
+MARK_RE = re.compile(r"_(m[0-9a-fA-F]{8})_")
+BULK_ID = "bulk"  # pseudo mark id for sampled bulk legit windows
+
+
+def load_processed_bulk(win_dir: Path, holdout_file: str) -> tuple[pd.DataFrame, str]:
+    """Windows an earlier `grimml-train ingest` already decoded (features included). Live hold-out accounts are dropped."""
+    parts = sorted(win_dir.glob("*.parquet"))
+    if not parts:
+        raise SystemExit(f"no parquet files in {win_dir}")
+    b = pd.concat((pd.read_parquet(p) for p in parts), ignore_index=True)
+    hp = Path(holdout_file)
+    if hp.exists():
+        hold = {x.strip() for x in hp.read_text(encoding="utf8").splitlines() if x.strip()}
+        b = b[~b["anon_player_id"].astype(str).isin(hold)]
+    return b.reset_index(drop=True), f"{len(parts)} parquet parts"
+
+
+def sample_bulk(root: Path, n: int, seed: int, listing_cache: Path) -> list[Path]:
+    """Random sample of n unmarked files from the bulk dump. The directory listing (slow on millions of files)
+    is cached once; only the sampled files are ever decoded."""
+    if listing_cache.exists():
+        files = listing_cache.read_text(encoding="utf8").splitlines()
+    else:
+        files, stack, t0 = [], [str(root)], time.time()
+        print("listing the bulk folder once (slow on millions of files; cached afterwards) ...", flush=True)
+        while stack:
+            with os.scandir(stack.pop()) as it:
+                for e in it:
+                    if e.is_dir(follow_symlinks=False):
+                        stack.append(e.path)
+                    elif e.name.endswith(".gmlml"):
+                        files.append(e.path)
+                        if len(files) % 100_000 == 0:
+                            print(f"  listed {len(files):,} files, {time.time() - t0:.0f}s", flush=True)
+        listing_cache.parent.mkdir(parents=True, exist_ok=True)
+        listing_cache.write_text("\n".join(files), encoding="utf8")
+    files = [f for f in files if not MARK_RE.search(os.path.basename(f))]
+    random.Random(seed).shuffle(files)
+    return [Path(f) for f in files[:n]]
+
+
+def decode_folder(folder: Path, workers: int, paths: list[Path] | None = None) -> tuple[pd.DataFrame, list[tuple[str, str]]]:
     from grimml_train.ingest import _process_path  # same decode + features as `grimml-train ingest`
 
-    paths = find_files(folder)
+    if paths is None:
+        paths = find_files(folder)
     jobs = [(str(p), False, str(Path(folder).resolve())) for p in paths]
     if workers <= 0:
         workers = max(1, min(8, (os.cpu_count() or 2) - 1))
@@ -203,23 +254,38 @@ def label_windows(w: pd.DataFrame, ids: pd.DataFrame, args) -> pd.DataFrame:
     we = epoch + w["win_len_ms"].fillna(7000.0)
     outside = has_epoch & w["id_start_ms"].notna() & ((ws < w["id_start_ms"] + trim) | (we > w["id_end_ms"] - trim))
     mark(outside, "outside the trimmed segment")
-    if args.drop_hard_invalid:
+    # hard-invalid filter: only on windows recorded by a fixed plugin build (see VALIDITY_FIXED_FROM_MS)
+    mode = getattr(args, "hard_invalid", "auto")
+    fixed_from = getattr(args, "validity_fixed_from_ms", VALIDITY_FIXED_FROM_MS)
+    if mode == "drop":
+        trust = pd.Series(True, index=w.index)
+    elif mode == "keep" or fixed_from is None:
+        trust = pd.Series(False, index=w.index)
+    else:
+        trust = has_epoch & (epoch >= fixed_from)
+    w["validity_trusted"] = trust
+    if trust.any():
         bad = pd.Series(False, index=w.index)
         for c in HARD_INVALID:
             if c in w.columns:
                 bad |= w[c].fillna(False).astype(bool)
-        mark(bad, "hard validity flag (death/teleport/setback/...)")
+        mark(bad & trust, "hard validity flag (death/teleport/setback/...)")
     w["reason"] = reason
     w["use"] = reason == ""
     return w
 
 
-def assign_blocks(d: pd.DataFrame, chunk_min: float, gap_s: float) -> tuple[pd.DataFrame, int]:
+def assign_blocks(d: pd.DataFrame, chunk_min: float, gap_s: float, bulk_groups: int = 8) -> tuple[pd.DataFrame, int]:
     """Cheat block = mark id (one segment). Legit block = a time chunk of the legit recording."""
     d = d.copy()
     d["block"] = d["mark_id"]
     keep = pd.Series(True, index=d.index)
     for mid, g in d[d["label"] == LEGIT].groupby("mark_id"):
+        if mid == BULK_ID:
+            # bulk legit: block = a group of whole players (never split one player across train/test)
+            grp = g["anon_player_id"].astype(str).map(lambda a: zlib.crc32(a.encode()) % bulk_groups)
+            d.loc[g.index, "block"] = [f"bulk:{i}" for i in grp]
+            continue
         t = g["ts_ms"]
         span = float(t.max() - t.min())
         n = max(1, int(round(span / (chunk_min * 60_000)))) if span > 0 else 1
@@ -470,11 +536,34 @@ def parse_args(argv=None):
     p.add_argument("--legit-ids", default="", help="comma list of legit mark ids to use (default: all non-excluded)")
     p.add_argument("--include-interrupted-legit", action="store_true")
     p.add_argument("--roles", default="1,2", help="window roles to keep (1 attacker, 2 defender, 3 bystander); '' = all")
-    p.add_argument("--keep-hard-invalid", dest="drop_hard_invalid", action="store_false")
+    p.add_argument("--keep-hard-invalid", dest="hard_invalid", action="store_const", const="keep",
+                   help="never apply the hard-validity filter (override)")
+    p.add_argument("--drop-hard-invalid", dest="hard_invalid", action="store_const", const="drop",
+                   help="always apply the hard-validity filter, even to files from the old recorder (override)")
+    p.add_argument("--validity-fixed-from", default="",
+                   help="UTC time (ISO, e.g. 2026-11-12T18:00:00Z, or epoch ms) the fixed recorder went live; "
+                        "default = VALIDITY_FIXED_FROM_MS in this file")
+    p.set_defaults(hard_invalid="auto")
+    p.add_argument("--bulk-dir", default="", help="also sample legit windows from this bulk dump (e.g. E:/recordings); only the sampled files are decoded")
+    p.add_argument("--bulk-processed", default="",
+                   help="FAST: reuse windows already decoded by `grimml-train ingest` (e.g. E:/recordings_processed/ingest/windows); "
+                        "no directory scan, no decoding. Hold-out accounts are excluded.")
+    p.add_argument("--bulk-holdout", default="E:/recordings_processed/splits/live_holdout_accounts.txt",
+                   help="accounts never used for training/eval here (live hold-out)")
+    p.add_argument("--bulk-files", type=int, default=6000, help="how many random unmarked files to decode from --bulk-dir")
+    p.add_argument("--bulk-per-player", type=int, default=30, help="max windows kept per player from the bulk sample")
+    p.add_argument("--bulk-groups", type=int, default=8, help="bulk players are split into this many held-out groups")
     p.add_argument("--workers", type=int, default=0)
     p.add_argument("--seed", type=int, default=7)
     a = p.parse_args(argv)
     a.roles = [int(x) for x in a.roles.split(",") if x.strip()] if a.roles else []
+    v = a.validity_fixed_from.strip()
+    if not v:
+        a.validity_fixed_from_ms = VALIDITY_FIXED_FROM_MS
+    elif v.isdigit():
+        a.validity_fixed_from_ms = int(v)
+    else:
+        a.validity_fixed_from_ms = int(pd.to_datetime(v, utc=True).timestamp() * 1000)
     return a
 
 
@@ -494,14 +583,59 @@ def main(argv=None) -> int:
     print(f"decoded {len(raw)} windows ({len(errs)} unreadable files) in {time.time() - t0:.0f}s")
     if raw.empty:
         return 1
-    w = label_windows(raw, ids, args)
     notes: list[str] = []
+    use_bulk = bool(args.bulk_dir or args.bulk_processed)
+    if use_bulk:
+        t1 = time.time()
+        if args.bulk_processed:
+            braw, bsrc = load_processed_bulk(Path(args.bulk_processed), args.bulk_holdout)
+            print(f"bulk legit: loaded {len(braw)} already-processed windows from {bsrc} in {time.time() - t1:.0f}s", flush=True)
+        else:
+            bpaths = sample_bulk(Path(args.bulk_dir), args.bulk_files, args.seed, Path(args.out) / "bulk_listing.txt")
+            print(f"bulk legit: decoding {len(bpaths)} sampled files ...", flush=True)
+            braw, berrs = decode_folder(Path(args.bulk_dir), args.workers, bpaths)
+            bsrc = f"{len(bpaths)} sampled files"
+            print(f"bulk legit: decoded {len(braw)} windows ({len(berrs)} unreadable) in {time.time() - t1:.0f}s", flush=True)
+        braw["mark_id"] = BULK_ID
+        raw = pd.concat([raw, braw], ignore_index=True)
+        ids = pd.concat([ids, pd.DataFrame([{
+            "mark_id": BULK_ID, "label": LEGIT, "client": "", "module": "LEGIT", "settings": "",
+            "start_ms": np.nan, "end_ms": np.nan, "interrupted": False, "multi_module": False,
+            "note": "sampled bulk legit (operator-asserted, lowest label priority)", "secs": np.nan, "exclude_reason": "",
+        }])], ignore_index=True)
+    w = label_windows(raw, ids, args)
+    if use_bulk:
+        isb = w["mark_id"] == BULK_ID
+        schemas = set(w.loc[(w["label"] == CHEAT) & ~isb, "schema_version"].dropna().unique())
+        ok_schema = _num(w, "schema_version").isin(schemas)
+        bad_fmt = isb & (w["reason"] == "") & ~ok_schema
+        w.loc[bad_fmt, "reason"] = "bulk: older file format than the cheat files"
+        w.loc[isb & (w["reason"] == "") & _num(w, "role").isna(), "reason"] = "bulk: role unknown"
+        w["use"] = w["reason"] == ""
+        # cap windows per player so a few busy accounts cannot dominate the legit class
+        cand = w[isb & w["use"]].sample(frac=1.0, random_state=args.seed)
+        over = cand.groupby("anon_player_id").cumcount() >= args.bulk_per_player
+        w.loc[over[over].index, "reason"] = "bulk: per-player cap"
+        w["use"] = w["reason"] == ""
+        nb = w[isb & w["use"]]
+        notes.append(
+            f"bulk legit: {len(nb)} windows from {nb['anon_player_id'].nunique()} players from {bsrc} "
+            f"(cap {args.bulk_per_player}/player, {args.bulk_groups} player-groups held out together). "
+            "Bulk labels are operator-asserted, not verified. Bulk comes from other servers/recorder builds than the cheat test server, "
+            "so look at the shortcut-only line: a high value means environment, not cheating."
+        )
     if errs:
         notes.append(f"{len(errs)} files could not be decoded (first: {Path(errs[0][0]).name}: {errs[0][1][:80]})")
 
+    n_trust = int(w["validity_trusted"].sum())
+    notes.append(
+        f"hard-validity filter applied to {n_trust}/{len(w)} windows; the rest come from the old recorder "
+        "(sticky validity bits) or no fixed-build time is set, so their validity flags are ignored."
+    )
+
     why = w["reason"].replace("", "used").value_counts()
     print("window usage:\n" + why.to_string())
-    d, dropped_gap = assign_blocks(w[w["use"]], args.chunk_min, args.chunk_gap_s)
+    d, dropped_gap = assign_blocks(w[w["use"]], args.chunk_min, args.chunk_gap_s, args.bulk_groups)
     d = d[d["label"].isin([LEGIT, CHEAT])].copy()
     if "window_key" not in d.columns:
         d["window_key"] = d["path"]

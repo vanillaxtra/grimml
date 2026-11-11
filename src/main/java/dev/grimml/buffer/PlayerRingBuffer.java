@@ -228,9 +228,43 @@ public final class PlayerRingBuffer {
         return nowNanos <= combatActiveUntilNanos;
     }
 
+    private static final int VALIDITY_BITS = 9;
+    private final java.util.concurrent.atomic.AtomicLongArray validityNanos = newValidityNanos();
+
+    private static java.util.concurrent.atomic.AtomicLongArray newValidityNanos() {
+        java.util.concurrent.atomic.AtomicLongArray a = new java.util.concurrent.atomic.AtomicLongArray(VALIDITY_BITS);
+        for (int i = 0; i < VALIDITY_BITS; i++) {
+            a.set(i, Long.MIN_VALUE);
+        }
+        return a;
+    }
+
+    /**
+     * Validity bits for [startNanos, endNanos]: an event bit is set only if that event happened inside the
+     * range (the old lifetime bitmask flagged every window after a player's first respawn/gamemode change).
+     * PARTIAL is a data-quality bit, not an event, so it stays sticky.
+     */
+    public int validityIn(long startNanos, long endNanos) {
+        int bits = validity & RecordTypes.VALID_PARTIAL;
+        for (int i = 0; i < VALIDITY_BITS; i++) {
+            long t = validityNanos.get(i);
+            if (t != Long.MIN_VALUE && t >= startNanos && t <= endNanos) {
+                bits |= 1 << i;
+            }
+        }
+        return bits;
+    }
+
     public void orValidity(int bit) {
-        validity |= bit;
         long now = System.nanoTime();
+        for (int i = 0; i < VALIDITY_BITS; i++) {
+            if ((bit & (1 << i)) != 0 && (1 << i) != RecordTypes.VALID_PARTIAL) {
+                validityNanos.set(i, now);
+            }
+        }
+        if ((bit & RecordTypes.VALID_PARTIAL) != 0) {
+            validity |= RecordTypes.VALID_PARTIAL;
+        }
         if ((bit & RecordTypes.VALID_TELEPORT) != 0) {
             lastTeleportNanos = now;
         }
