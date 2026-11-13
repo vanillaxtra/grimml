@@ -34,6 +34,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 13/11/26 | Silent Aim | CONTINOUS_TRACKING:TRUE | 4:40 | mcd7a19cf | notauthorised | cebbo |
 | 13/11/26 | Silent Aim | CONTINOUS_TRACKING:TRUE | 6:12 | m96dd5b71 | notauthorised | cebbo |
 | 13/11/26 | Silent Aim | CONTINOUS_TRACKING:TRUE | 4:17 | m8a278525 | notauthorised | bot |
+| 13/11/26 | Silent Aim | CONTINOUS_TRACKING:FALSE | 6:34 | mc723710d | notauthorised | bot |
 |  |  |  |  |  |  |  |
 | 02/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100 | 4:14 | m12b44916 | notauthorised | afk alt |
 | 02/11/26 | Triggerbot | DELAY_MIN_MS:25 DELAY_MAX_MS:50 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100 | 2:49 | m109c3312 | notauthorised | afk alt |
@@ -139,3 +140,4 @@ For this I have also put this on many different servers as to collect legit play
 | 13/11/26 | Dueling diamondsmp | 5:38 | mdf40d9cf | notauthorised | pvp bot |
 | 13/11/26 | Dueling diamondsmp | 7:16 | m457a9807 | notauthorised | pvp bot - it fucking 158 durad me |
 | 13/11/26 | Dueling diamondsmp | 8:37 | m39bac321 | notauthorised | pvp bot |
+| 13/11/26 | Dueling diamondsmp | 10:00 | m0dfe272f | notauthorised | pvp bot |
