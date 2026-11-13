@@ -41,6 +41,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 13/11/26 | Triggerbot | DELAY_MIN_MS:15 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 2:06 | m3ed146aa | notauthorised | cebbo |
 | 13/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 5:05 | m52ce330e | notauthorised | bot |
 | 13/11/26 | Triggerbot | DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 8:45 | m16f82554 | notauthorised | bot |
+| 13/11/26 | Triggerbot | DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 9:19 | md8c4ad84 | notauthorised | bot |
 |  |  |  |  |  |  |  |
 | 02/11/26 | Auto W Tap | CHANCE:100 HOLD_LENGTH_MIN:100 HOLD_LENGTH_MAX:200 REACTION_TIME_MIN:10 REACTION_TIME_MAX:30 | 2:46 | m56635106 | notauthorised | afk alt |
 |  |  |  |  |  |  |  |
@@ -137,3 +138,4 @@ For this I have also put this on many different servers as to collect legit play
 | 13/11/26 | Dueling diamondsmp | 4:13 | m456e408b | stumps | deco |
 | 13/11/26 | Dueling diamondsmp | 5:38 | mdf40d9cf | notauthorised | pvp bot |
 | 13/11/26 | Dueling diamondsmp | 7:16 | m457a9807 | notauthorised | pvp bot - it fucking 158 durad me |
+| 13/11/26 | Dueling diamondsmp | 8:37 | m39bac321 | notauthorised | pvp bot |
