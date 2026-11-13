@@ -131,3 +131,4 @@ For this I have also put this on many different servers as to collect legit play
 | 13/11/26 | Dueling diamondsmp | 2:51 | m4e10fb72 | cebbo | stumpps |
 | 13/11/26 | Dueling diamondsmp | 4:42 | mf9c15713 | deco | stumps |
 | 13/11/26 | Dueling diamondsmp | 4:13 | m456e408b | stumps | deco |
+| 13/11/26 | Dueling diamondsmp | 5:38 | mdf40d9cf | notauthorised | pvp bot |
