@@ -18,6 +18,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 11/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 4:51 | m1900082b | notauthorised | amariia |
 | 11/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 5:15 | m98f0b9c2 | notauthorised | amariia |
 | 11/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 6:58 | m1cde4c02 | notauthorised | cebbo |
+| 13/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.90 MISS_CHANCE:2 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 6:09 | m648246aa | notauthorised | bot |
 |  |  |  |  |  |  |  |
 | 02/11/26 | Auto Mace | HORS_TARGET_DISTANCE:5.0 MIN_FALL_DISTANCE:10 STUNSLAM:FALSE SILENT_AIM:TRUE SWAP_BACK:FALSE | 4:36 | m89ff4396 | notauthorised | afk alt |
 |  |  |  |  |  |  |  |
