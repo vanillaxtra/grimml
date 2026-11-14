@@ -52,6 +52,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 13/11/26 | Triggerbot | DELAY_MIN_MS:30 DELAY_MAX_MS:80 MISS_CHANCE:5 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 10:49 | m051a9a47 | notauthorised | bot | 4 |
 | 13/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 8:38 | m4f107966 | notauthorised | bot | 4 |
 | 13/11/26 | Triggerbot | DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 9:15 | m1ca0279f | notauthorised | bot | 4 |
+| 13/11/26 | Triggerbot | DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 7:30 | m61b69c50 | notauthorised | bot | 4 |
 |  |  |  |  |  |  |  |  |
 | 02/11/26 | Auto W Tap | CHANCE:100 HOLD_LENGTH_MIN:100 HOLD_LENGTH_MAX:200 REACTION_TIME_MIN:10 REACTION_TIME_MAX:30 | 2:46 | m56635106 | notauthorised |  | 3 |
 |  |  |  |  |  |  |  |  |
