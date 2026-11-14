@@ -1,0 +1,60 @@
+name: Bug report
+description: Something is broken in the recorder, detector or training pipeline
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security problems go to [SECURITY.md](../blob/main/SECURITY.md), not here.
+        Never paste raw player UUIDs, names, IPs or `.gmlml` recordings of real players.
+  - type: dropdown
+    id: part
+    attributes:
+      label: Part
+      options:
+        - recorder
+        - detector
+        - training
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start the server with ...
+        2. Run `/grimml ...`
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: server
+    attributes:
+      label: Server software and version
+      placeholder: Leaf 1.21.11, Paper 26.1, Folia ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: grimml version or commit
+      placeholder: 0.1.0-SNAPSHOT / 8f81752
+    validations:
+      required: true
+  - type: input
+    id: plugins
+    attributes:
+      label: PacketEvents, GrimAC and other related plugin versions
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or stack trace
+      render: text
