@@ -15,7 +15,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 14/11/26  | Aim Assist | FOV:90 SPEED:30 SMOOTHING:50 RANDOMNESS:0 | 7:35 | m5123c635 | notauthorised | bot | 4 (bugged transaction replies) |
 | 14/11/26  | Aim Assist | FOV:90 SPEED:30 SMOOTHING:50 RANDOMNESS:0 | 11:36 | m8f52a835| notauthorised | bot | 4 |
 | 14/11/26  | Aim Assist | FOV:90 SPEED:15 SMOOTHING:75 RANDOMNESS:0 | 7:25 | mff6051d6 | notauthorised | bot | 4 |
-| 14/11/26  | Aim Assist | FOV:90 SPEED:60 SMOOTHING:0 RANDOMNESS:0 | 8:51 | m1eaa1d2d| notauthorised | bot | 4 |
+| 14/11/26  | Aim Assist | FOV:90 SPEED:60 SMOOTHING:0 RANDOMNESS:0 | 8:51 | m1eaa1d2d | notauthorised | bot | 4 |
 |  |  |  |  |  |  |  |  |
 | 02/11/26 | Kill Aura | HUMANIZED:FALSE REACH:3 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 5:25 | m22700b10 | notauthorised |  | 3 |
 | 02/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 3:57 | mf2dd0754 | notauthorised |  | 3 |
@@ -50,6 +50,8 @@ This is where i can keep track of the different clients i have run cheats on and
 | 13/11/26 | Triggerbot | DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 9:19 | md8c4ad84 | notauthorised | bot | 3 |
 | 13/11/26 | Triggerbot | DELAY_MIN_MS:30 DELAY_MAX_MS:80 MISS_CHANCE:5 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 6:44 | m45e840bd | notauthorised | bot | 3 |
 | 13/11/26 | Triggerbot | DELAY_MIN_MS:30 DELAY_MAX_MS:80 MISS_CHANCE:5 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 10:49 | m051a9a47 | notauthorised | bot | 4 |
+| 13/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 8:38 | m4f107966 | notauthorised | bot | 4 |
+| 13/11/26 | Triggerbot | DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 9:15 | m1ca0279f | notauthorised | bot | 4 |
 |  |  |  |  |  |  |  |  |
 | 02/11/26 | Auto W Tap | CHANCE:100 HOLD_LENGTH_MIN:100 HOLD_LENGTH_MAX:200 REACTION_TIME_MIN:10 REACTION_TIME_MAX:30 | 2:46 | m56635106 | notauthorised |  | 3 |
 |  |  |  |  |  |  |  |  |
