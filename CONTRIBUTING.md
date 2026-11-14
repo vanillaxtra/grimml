@@ -18,7 +18,7 @@ If you change `BinaryFormat`, `CombatSnapshot`, `RecordTypes` or the feature ext
 ## Rules
 
 - **Java 21 bytecode, Paper API 1.21.1.** The jars must load on 1.21.1 and 26.x. Don't raise `java.version` and don't use newer API.
-- **Folia safe.** Schedule through `scheduler/Tasks`, never `Bukkit.getScheduler()`.
+- **Main thread stays light.** Heavy work runs async; only Bukkit calls go on the main thread. Folia is not supported yet.
 - **Hot path stays cheap.** Packet handlers must not allocate per packet, lock, look up entities or call Bukkit API.
 - **Privacy.** Raw UUIDs, names and IPs never reach disk. Use `Anonymizer`.
 - **Never punish.** The detector only alerts through Grim.
