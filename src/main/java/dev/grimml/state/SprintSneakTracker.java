@@ -34,9 +34,9 @@ public final class SprintSneakTracker implements Listener {
             return;
         }
         if (set) {
-            buf.liveFlags |= flag;
+            buf.setLive(flag);
         } else {
-            buf.liveFlags &= ~flag;
+            buf.clearLive(flag);
         }
         buf.stateFlags = buf.liveFlags;
     }

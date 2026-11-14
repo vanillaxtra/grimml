@@ -93,6 +93,8 @@ public final class GrimMLPlugin extends JavaPlugin {
         );
         writer.setAssembler(new FightAssembler(registry, config, clock, writer));
         stampTaxonomy();
+        // when this recorder revision went live on this server, for telling old and new recordings apart
+        writer.enqueueSessionLine("recorder " + RecordWriter.RECORDER_REV + " " + System.currentTimeMillis());
 
         diskCap = new DiskCapGuard(this, config);
         diskCap.start();

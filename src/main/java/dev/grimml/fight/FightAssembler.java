@@ -27,13 +27,34 @@ public final class FightAssembler {
         this.writer = writer;
     }
 
+    private int cycle;
+
+    // a player in several roles this cycle keeps the strongest one: attacker(1) beats defender(2) beats bystander(3)
+    static boolean strongerRole(byte candidate, byte current) {
+        return candidate < current;
+    }
+
+    private void claim(PlayerRingBuffer buf, byte role, long fightId) {
+        if (buf.asmCycle != cycle) {
+            buf.asmCycle = cycle;
+            buf.asmRole = role;
+            buf.asmFight = fightId;
+        } else if (strongerRole(role, buf.asmRole)) {
+            buf.asmRole = role;
+            buf.asmFight = fightId;
+        }
+    }
+
     public void assemble() {
         long now = System.nanoTime();
         long pre = config.preCombatSeconds() * 1_000_000_000L;
         long range = (long) config.bystanderRange() * 1000L;
         long rangeSq = range * range;
         int maxBy = Math.min(config.bystanderMax(), nearby.length);
+        cycle++;
 
+        // pass 1 decides who is written and as what. the old loop wrote a buffer once per role it had, so two
+        // players duelling produced four identical-content files per cycle and a group fight far more
         for (PlayerRingBuffer attacker : registry.allBuffers()) {
             if (!shouldFlush(attacker.markOnly, attacker.markActive, attacker.isCombatActive(now), attacker.lastAttackNanos)) {
                 continue;
@@ -47,7 +68,7 @@ public final class FightAssembler {
                 attacker.fightId = fightId;
             }
 
-            offer(attacker, RecordTypes.ROLE_ATTACKER, fightId, now, pre);
+            claim(attacker, RecordTypes.ROLE_ATTACKER, fightId);
             if (!includeNearby(attacker.markOnly)) {
                 continue;
             }
@@ -87,12 +108,19 @@ public final class FightAssembler {
             }
 
             if (defender != null) {
-                offer(defender, RecordTypes.ROLE_DEFENDER, fightId, now, pre);
+                claim(defender, RecordTypes.ROLE_DEFENDER, fightId);
             }
             for (int i = 0; i < n; i++) {
                 nearby[i].fightId = fightId;
-                offer(nearby[i], RecordTypes.ROLE_BYSTANDER, fightId, now, pre);
+                claim(nearby[i], RecordTypes.ROLE_BYSTANDER, fightId);
                 nearby[i] = null;
+            }
+        }
+
+        // pass 2 writes each claimed buffer exactly once
+        for (PlayerRingBuffer buf : registry.allBuffers()) {
+            if (buf.asmCycle == cycle) {
+                offer(buf, buf.asmRole, buf.asmFight, now, pre);
             }
         }
     }
@@ -128,7 +156,8 @@ public final class FightAssembler {
         snap.role = role;
         snap.trigger = buf.triggerReason;
         snap.labelSource = buf.labelSource;
-        snap.validity = buf.validityIn(windowStart, now);
+        // |= keeps the PARTIAL bit copyFrom just set for torn or lost data (a plain = used to erase it)
+        snap.validity |= buf.validityIn(windowStart, now);
         snap.sessionId = buf.sessionId;
         snap.anonPlayerId = buf.anonPlayerId;
         snap.markId = buf.markId == null ? "" : buf.markId;
@@ -180,7 +209,7 @@ public final class FightAssembler {
         snap.mcVersion = writer.mcVersion();
         snap.grimVersion = writer.grimVersion();
         snap.peVersion = writer.peVersion();
-        snap.world = writer.worldName();
+        snap.world = buf.world;
         if (clock.lastDurationMs() > 60) {
             snap.validity |= RecordTypes.VALID_LAG;
         }

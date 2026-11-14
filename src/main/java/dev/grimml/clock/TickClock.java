@@ -16,6 +16,7 @@ public final class TickClock {
     private volatile int lastDurationMs;
     private volatile double mspt;
     private volatile double tps;
+    private int statTicks;
 
     public void onTick() {
         long now = System.nanoTime();
@@ -26,8 +27,11 @@ public final class TickClock {
         }
         tickStartNanos = now;
         tick = Bukkit.getCurrentTick();
-        mspt = Bukkit.getAverageTickTime();
-        tps = Bukkit.getTPS()[0];
+        // both are multi-second averages and getTPS allocates; refreshing them every tick bought nothing
+        if ((statTicks++ & 15) == 0) {
+            mspt = Bukkit.getAverageTickTime();
+            tps = Bukkit.getTPS()[0];
+        }
     }
 
     public int tick() {

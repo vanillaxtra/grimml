@@ -1,0 +1,634 @@
+{
+  "header": {
+    "folder": "prestige temp test",
+    "windows_used": 10011,
+    "legit_windows": 3809,
+    "cheat_windows": 6202,
+    "chunk_gap_dropped": 61,
+    "trim_s": 3.0,
+    "chunk_min": 4.0,
+    "roles": [
+      1,
+      2
+    ]
+  },
+  "results": [
+    {
+      "module": "Aim Assist",
+      "cheat_windows": 467,
+      "cheat_segments": 2,
+      "legit_windows": 467,
+      "legit_chunks": 21,
+      "all": {
+        "auc": 0.3333547313252846,
+        "ci": [
+          0.16183949096599073,
+          0.5522748046944712
+        ],
+        "n_features": 18
+      },
+      "core": {
+        "auc": 0.5185956192196765,
+        "ci": [
+          0.41793251930840797,
+          0.6239038718350338
+        ],
+        "n_features": 13
+      },
+      "shortcut": {
+        "auc": 0.3470280481821642,
+        "ci": [
+          0.21474559271967575,
+          0.5163181289138379
+        ],
+        "n_features": 6
+      },
+      "core_operating_points": {
+        "fpr5": {
+          "thr": 0.7351999778146394,
+          "recall": 0.04068522483940043
+        },
+        "fpr1": {
+          "thr": 0.8805248408815559,
+          "recall": 0.0021413276231263384
+        }
+      },
+      "segments": [
+        {
+          "mark_id": "m5791f5dd",
+          "settings": "FOV:90 SPEED:20 SMOOTHING:50 RANDOMNESS:30 ONLY_ON_ROTATE:FALSE",
+          "windows": 251,
+          "recall_at_5pct_fpr": 0.0398406374501992,
+          "recall_at_1pct_fpr": 0.00398406374501992,
+          "median_score": 0.27517636247421456
+        },
+        {
+          "mark_id": "m6aaba334",
+          "settings": "FOV:360 SPEED:20 SMOOTHING:0 RANDOMNESS:10",
+          "windows": 216,
+          "recall_at_5pct_fpr": 0.041666666666666664,
+          "recall_at_1pct_fpr": 0.0,
+          "median_score": 0.23020712978996163
+        }
+      ],
+      "fights": {
+        "legit_units": 20,
+        "legit_share_median": 0.04880952380952381,
+        "legit_share_p95": 0.1544871794871795,
+        "legit_share_max": 0.16666666666666666,
+        "cheat_units": 2,
+        "cheat_caught": 0,
+        "cheat": [
+          {
+            "mark_id": "m5791f5dd",
+            "windows": 251,
+            "share": 0.0398406374501992
+          },
+          {
+            "mark_id": "m6aaba334",
+            "windows": 216,
+            "share": 0.041666666666666664
+          }
+        ],
+        "legit_top": [
+          {
+            "unit": "m4bc0a6be:0",
+            "mark_id": "m4b282fd8",
+            "windows": 18,
+            "share": 0.16666666666666666
+          },
+          {
+            "unit": "m39bac321:1",
+            "mark_id": "m39bac321",
+            "windows": 13,
+            "share": 0.15384615384615385
+          },
+          {
+            "unit": "m0dfe272f:1",
+            "mark_id": "m0dfe272f",
+            "windows": 21,
+            "share": 0.14285714285714285
+          }
+        ]
+      },
+      "top_core_features": [
+        [
+          "pitch_range",
+          1122.824382185936
+        ],
+        [
+          "speed_mean",
+          905.9689518213272
+        ],
+        [
+          "yaw_vel_std",
+          580.2477113008499
+        ],
+        [
+          "gcd_grid",
+          510.1006087064743
+        ],
+        [
+          "on_ground_frac",
+          495.6152495145798
+        ]
+      ],
+      "verdict": "no clear separation (features, or the setting is too subtle)",
+      "matched": {
+        "cells": 13,
+        "cols": [
+          "attack_count",
+          "event_count"
+        ],
+        "cheat_before": 467,
+        "cheat_after": 467,
+        "legit_before": 3809,
+        "legit_after": 467
+      }
+    },
+    {
+      "module": "Kill Aura",
+      "cheat_windows": 690,
+      "cheat_segments": 4,
+      "legit_windows": 690,
+      "legit_chunks": 21,
+      "all": {
+        "auc": 0.7566834698592733,
+        "ci": [
+          0.6964482709496786,
+          0.8470120302984965
+        ],
+        "n_features": 18
+      },
+      "core": {
+        "auc": 0.7711636210880067,
+        "ci": [
+          0.6954749828937788,
+          0.8682022080857239
+        ],
+        "n_features": 13
+      },
+      "shortcut": {
+        "auc": 0.4961310649023315,
+        "ci": [
+          0.4361857850819107,
+          0.5716605319338658
+        ],
+        "n_features": 6
+      },
+      "core_operating_points": {
+        "fpr5": {
+          "thr": 0.7702169405751537,
+          "recall": 0.28840579710144926
+        },
+        "fpr1": {
+          "thr": 0.865019868324655,
+          "recall": 0.16521739130434782
+        }
+      },
+      "segments": [
+        {
+          "mark_id": "m1900082b",
+          "settings": "HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100",
+          "windows": 132,
+          "recall_at_5pct_fpr": 0.4696969696969697,
+          "recall_at_1pct_fpr": 0.3181818181818182,
+          "median_score": 0.7586692883743744
+        },
+        {
+          "mark_id": "m1cde4c02",
+          "settings": "HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 ROTATIONS:SNAP",
+          "windows": 177,
+          "recall_at_5pct_fpr": 0.2542372881355932,
+          "recall_at_1pct_fpr": 0.15254237288135594,
+          "median_score": 0.5542626516181177
+        },
+        {
+          "mark_id": "m42852fa8",
+          "settings": "HUMANIZED:TRUE REACH:2.8 MISS_CHANCE:5 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 ROTATIONS:SNAP",
+          "windows": 240,
+          "recall_at_5pct_fpr": 0.1375,
+          "recall_at_1pct_fpr": 0.0625,
+          "median_score": 0.41235780708006087
+        },
+        {
+          "mark_id": "m98f0b9c2",
+          "settings": "HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100",
+          "windows": 141,
+          "recall_at_5pct_fpr": 0.41843971631205673,
+          "recall_at_1pct_fpr": 0.2127659574468085,
+          "median_score": 0.7150461827953198
+        }
+      ],
+      "fights": {
+        "legit_units": 21,
+        "legit_share_median": 0.034482758620689655,
+        "legit_share_p95": 0.16,
+        "legit_share_max": 0.16129032258064516,
+        "cheat_units": 4,
+        "cheat_caught": 3,
+        "cheat": [
+          {
+            "mark_id": "m1900082b",
+            "windows": 132,
+            "share": 0.4696969696969697
+          },
+          {
+            "mark_id": "m1cde4c02",
+            "windows": 177,
+            "share": 0.2542372881355932
+          },
+          {
+            "mark_id": "m42852fa8",
+            "windows": 240,
+            "share": 0.1375
+          },
+          {
+            "mark_id": "m98f0b9c2",
+            "windows": 141,
+            "share": 0.41843971631205673
+          }
+        ],
+        "legit_top": [
+          {
+            "unit": "md3d2f5e7:0",
+            "mark_id": "md3d2f5e7",
+            "windows": 31,
+            "share": 0.16129032258064516
+          },
+          {
+            "unit": "m4bc0a6be:0",
+            "mark_id": "m4b282fd8",
+            "windows": 25,
+            "share": 0.16
+          },
+          {
+            "unit": "mb1f0f01e:1",
+            "mark_id": "mb1f0f01e",
+            "windows": 26,
+            "share": 0.15384615384615385
+          }
+        ]
+      },
+      "top_core_features": [
+        [
+          "yaw_jerk_mean",
+          3266.6628773212433
+        ],
+        [
+          "yaw_vel_abs_mean",
+          1669.4730989933014
+        ],
+        [
+          "pitch_range",
+          1308.6373324394226
+        ],
+        [
+          "click_gap_cv",
+          805.0355153083801
+        ],
+        [
+          "speed_mean",
+          764.0168085098267
+        ]
+      ],
+      "verdict": "separates on held-out segments; single operator",
+      "matched": {
+        "cells": 14,
+        "cols": [
+          "attack_count",
+          "event_count"
+        ],
+        "cheat_before": 732,
+        "cheat_after": 690,
+        "legit_before": 3809,
+        "legit_after": 690
+      }
+    },
+    {
+      "module": "Silent Aim",
+      "cheat_windows": 599,
+      "cheat_segments": 4,
+      "legit_windows": 599,
+      "legit_chunks": 21,
+      "all": {
+        "auc": 0.6702238845488168,
+        "ci": [
+          0.4157155361047316,
+          0.9169528667910604
+        ],
+        "n_features": 18
+      },
+      "core": {
+        "auc": 0.7029579070292447,
+        "ci": [
+          0.4623946816629542,
+          0.8774006852809504
+        ],
+        "n_features": 13
+      },
+      "shortcut": {
+        "auc": 0.5954749289996405,
+        "ci": [
+          0.3930276537255369,
+          0.8003971502231483
+        ],
+        "n_features": 6
+      },
+      "core_operating_points": {
+        "fpr5": {
+          "thr": 0.7661171464481803,
+          "recall": 0.33889816360601
+        },
+        "fpr1": {
+          "thr": 0.9079295087154412,
+          "recall": 0.11018363939899833
+        }
+      },
+      "segments": [
+        {
+          "mark_id": "m8a278525",
+          "settings": "CONTINOUS_TRACKING:TRUE",
+          "windows": 121,
+          "recall_at_5pct_fpr": 0.4214876033057851,
+          "recall_at_1pct_fpr": 0.0743801652892562,
+          "median_score": 0.6925338776113618
+        },
+        {
+          "mark_id": "m96dd5b71",
+          "settings": "CONTINOUS_TRACKING:TRUE",
+          "windows": 162,
+          "recall_at_5pct_fpr": 0.48148148148148145,
+          "recall_at_1pct_fpr": 0.16666666666666666,
+          "median_score": 0.7494752660697713
+        },
+        {
+          "mark_id": "mc723710d",
+          "settings": "CONTINOUS_TRACKING:FALSE",
+          "windows": 190,
+          "recall_at_5pct_fpr": 0.06315789473684211,
+          "recall_at_1pct_fpr": 0.010526315789473684,
+          "median_score": 0.08533639090717976
+        },
+        {
+          "mark_id": "mcd7a19cf",
+          "settings": "CONTINOUS_TRACKING:TRUE",
+          "windows": 126,
+          "recall_at_5pct_fpr": 0.49206349206349204,
+          "recall_at_1pct_fpr": 0.2222222222222222,
+          "median_score": 0.7615618686969141
+        }
+      ],
+      "fights": {
+        "legit_units": 21,
+        "legit_share_median": 0.043478260869565216,
+        "legit_share_p95": 0.15,
+        "legit_share_max": 0.16666666666666666,
+        "cheat_units": 4,
+        "cheat_caught": 3,
+        "cheat": [
+          {
+            "mark_id": "m8a278525",
+            "windows": 121,
+            "share": 0.4214876033057851
+          },
+          {
+            "mark_id": "m96dd5b71",
+            "windows": 162,
+            "share": 0.48148148148148145
+          },
+          {
+            "mark_id": "mc723710d",
+            "windows": 190,
+            "share": 0.06315789473684211
+          },
+          {
+            "mark_id": "mcd7a19cf",
+            "windows": 126,
+            "share": 0.49206349206349204
+          }
+        ],
+        "legit_top": [
+          {
+            "unit": "md3d2f5e7:0",
+            "mark_id": "md3d2f5e7",
+            "windows": 30,
+            "share": 0.16666666666666666
+          },
+          {
+            "unit": "mb1f0f01e:1",
+            "mark_id": "mb1f0f01e",
+            "windows": 20,
+            "share": 0.15
+          },
+          {
+            "unit": "m0dfe272f:1",
+            "mark_id": "m0dfe272f",
+            "windows": 27,
+            "share": 0.1111111111111111
+          }
+        ]
+      },
+      "top_core_features": [
+        [
+          "pitch_range",
+          2069.8941774368286
+        ],
+        [
+          "yaw_jerk_mean",
+          1321.087837934494
+        ],
+        [
+          "speed_mean",
+          1221.3276084661484
+        ],
+        [
+          "yaw_vel_abs_mean",
+          903.5428906679153
+        ],
+        [
+          "click_gap_cv",
+          784.588472366333
+        ]
+      ],
+      "verdict": "separates on held-out segments; single operator",
+      "matched": {
+        "cells": 12,
+        "cols": [
+          "attack_count",
+          "event_count"
+        ],
+        "cheat_before": 623,
+        "cheat_after": 599,
+        "legit_before": 3809,
+        "legit_after": 599
+      }
+    },
+    {
+      "module": "Triggerbot",
+      "cheat_windows": 774,
+      "cheat_segments": 4,
+      "legit_windows": 774,
+      "legit_chunks": 21,
+      "all": {
+        "auc": 0.5564352436084904,
+        "ci": [
+          0.45687514026499054,
+          0.6536130043646109
+        ],
+        "n_features": 18
+      },
+      "core": {
+        "auc": 0.6286714874239663,
+        "ci": [
+          0.5408449328282197,
+          0.6967092321032551
+        ],
+        "n_features": 13
+      },
+      "shortcut": {
+        "auc": 0.46910241772329386,
+        "ci": [
+          0.38452452902942097,
+          0.5335067297620417
+        ],
+        "n_features": 6
+      },
+      "core_operating_points": {
+        "fpr5": {
+          "thr": 0.7734153307466094,
+          "recall": 0.08397932816537468
+        },
+        "fpr1": {
+          "thr": 0.8586693553560214,
+          "recall": 0.011627906976744186
+        }
+      },
+      "segments": [
+        {
+          "mark_id": "m16f82554",
+          "settings": "DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100",
+          "windows": 253,
+          "recall_at_5pct_fpr": 0.07905138339920949,
+          "recall_at_1pct_fpr": 0.007905138339920948,
+          "median_score": 0.5136736515505094
+        },
+        {
+          "mark_id": "m3ed146aa",
+          "settings": "DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100",
+          "windows": 56,
+          "recall_at_5pct_fpr": 0.05357142857142857,
+          "recall_at_1pct_fpr": 0.017857142857142856,
+          "median_score": 0.368198205799259
+        },
+        {
+          "mark_id": "m45e840bd",
+          "settings": "DELAY_MIN_MS:30 DELAY_MAX_MS:80 MISS_CHANCE:5 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100",
+          "windows": 195,
+          "recall_at_5pct_fpr": 0.07692307692307693,
+          "recall_at_1pct_fpr": 0.005128205128205128,
+          "median_score": 0.508038111345248
+        },
+        {
+          "mark_id": "md8c4ad84",
+          "settings": "DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100",
+          "windows": 270,
+          "recall_at_5pct_fpr": 0.1,
+          "recall_at_1pct_fpr": 0.018518518518518517,
+          "median_score": 0.4894023748513302
+        }
+      ],
+      "fights": {
+        "legit_units": 21,
+        "legit_share_median": 0.03076923076923077,
+        "legit_share_p95": 0.125,
+        "legit_share_max": 0.17647058823529413,
+        "cheat_units": 4,
+        "cheat_caught": 0,
+        "cheat": [
+          {
+            "mark_id": "m16f82554",
+            "windows": 253,
+            "share": 0.07905138339920949
+          },
+          {
+            "mark_id": "m3ed146aa",
+            "windows": 56,
+            "share": 0.05357142857142857
+          },
+          {
+            "mark_id": "m45e840bd",
+            "windows": 195,
+            "share": 0.07692307692307693
+          },
+          {
+            "mark_id": "md8c4ad84",
+            "windows": 270,
+            "share": 0.1
+          }
+        ],
+        "legit_top": [
+          {
+            "unit": "m39bac321:0",
+            "mark_id": "m39bac321",
+            "windows": 51,
+            "share": 0.17647058823529413
+          },
+          {
+            "unit": "mb1f0f01e:1",
+            "mark_id": "mb1f0f01e",
+            "windows": 32,
+            "share": 0.125
+          },
+          {
+            "unit": "me9366054:0",
+            "mark_id": "ma9691d79",
+            "windows": 49,
+            "share": 0.10204081632653061
+          }
+        ]
+      },
+      "top_core_features": [
+        [
+          "pitch_range",
+          1735.6748492717743
+        ],
+        [
+          "yaw_vel_mean",
+          1090.9449067115784
+        ],
+        [
+          "on_ground_frac",
+          880.8738877773285
+        ],
+        [
+          "click_gap_cv",
+          839.7959961891174
+        ],
+        [
+          "speed_mean",
+          740.3427023887634
+        ]
+      ],
+      "verdict": "separates on held-out segments; single operator",
+      "matched": {
+        "cells": 14,
+        "cols": [
+          "attack_count",
+          "event_count"
+        ],
+        "cheat_before": 778,
+        "cheat_after": 774,
+        "legit_before": 3809,
+        "legit_after": 774
+      }
+    }
+  ],
+  "notes": [
+    "hard-validity filter applied to 0/16292 windows; the rest come from the old recorder (sticky validity bits) or no fixed-build time is set, so their validity flags are ignored.",
+    "Activity matching is on: windows were subsampled to equal counts per (attack_count x event_count) cell; the old transfer line is skipped, use --loco for unseen clients.",
+    "Cheat comes from one operator's test sessions. The activity/setup confound is only partly controlled (see the shortcut-only line); legit now includes the same account plus a second account and bulk players.",
+    "legit comes from 17 recording(s); chunk-level CIs are wide and only describe those chunks.",
+    "Setting values come from your log; where marker and log disagreed the log was used (see the IDS table notes)."
+  ]
+}

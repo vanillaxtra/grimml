@@ -33,6 +33,10 @@ public final class SessionLifecycle implements Listener {
         buf.clientProtocol = clientProtocol(player);
         buf.staff = player.hasPermission("grimml.admin") || player.isOp();
         buf.gamemode = player.getGameMode().ordinal();
+        buf.world = player.getWorld().getName();
+        // the server tells the client its saved hotbar slot before this buffer exists, and the client never
+        // echoes it, so without this the mirror reported slot 0 until the player first scrolled
+        buf.inv.setHeld(player.getInventory().getHeldItemSlot());
         if (plugin.testAccounts() != null && plugin.testAccounts().isTest(player.getUniqueId())) {
             buf.testAccount = true;
         }

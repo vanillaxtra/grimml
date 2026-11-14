@@ -85,35 +85,41 @@ public final class PacketListener extends PacketListenerAbstract {
 
     @Override
     public void onPacketSend(PacketSendEvent event) {
+        // type first: nearly every outgoing packet is one we ignore, so that path must cost almost nothing
+        // (no clock read, no player lookup). a server sends hundreds of packets per player per second
+        if (!(event.getPacketType() instanceof PacketType.Play.Server type)) {
+            return;
+        }
+        switch (type) {
+            case ENTITY_VELOCITY, ENTITY_STATUS, SET_SLOT, WINDOW_ITEMS, OPEN_WINDOW,
+                 PLAYER_POSITION_AND_LOOK, HELD_ITEM_CHANGE -> {
+            }
+            default -> {
+                return;
+            }
+        }
         if (!plugin.recordingEnabled()) {
             return;
         }
-        long nanos = System.nanoTime();
-        var type = event.getPacketType();
-        if (type == PacketType.Play.Server.ENTITY_VELOCITY) {
-            outgoing.onVelocity(event, clock, nanos);
+        if (!(event.getPlayer() instanceof Player player)) {
             return;
         }
-        if (type == PacketType.Play.Server.ENTITY_STATUS) {
-            outgoing.onStatus(event, clock, nanos);
-            return;
-        }
-        Object p = event.getPlayer();
-        if (!(p instanceof Player player)) {
-            return;
-        }
+        // always the recipient's own buffer: a connection's thread is the only netty writer of its ring
         PlayerRingBuffer buf = plugin.registry().get(player.getUniqueId());
         if (buf == null) {
             return;
         }
-        if (type == PacketType.Play.Server.SET_SLOT) {
-            inventory.onSetSlot(event, buf);
-        } else if (type == PacketType.Play.Server.WINDOW_ITEMS) {
-            inventory.onWindowItems(event, buf);
-        } else if (type == PacketType.Play.Server.OPEN_WINDOW) {
-            inventory.onOpen(event, buf, clock, nanos);
-        } else if (type == PacketType.Play.Server.PLAYER_POSITION_AND_LOOK) {
-            outgoing.onTeleport(event, buf, clock, nanos);
+        long nanos = System.nanoTime();
+        switch (type) {
+            case ENTITY_VELOCITY -> outgoing.onVelocity(event, buf, clock, nanos);
+            case ENTITY_STATUS -> outgoing.onStatus(event, buf, clock, nanos);
+            case SET_SLOT -> inventory.onSetSlot(event, buf);
+            case WINDOW_ITEMS -> inventory.onWindowItems(event, buf);
+            case OPEN_WINDOW -> inventory.onOpen(event, buf, clock, nanos);
+            case PLAYER_POSITION_AND_LOOK -> outgoing.onTeleport(event, buf, clock, nanos);
+            case HELD_ITEM_CHANGE -> outgoing.onHeldSlot(event, buf);
+            default -> {
+            }
         }
     }
 }

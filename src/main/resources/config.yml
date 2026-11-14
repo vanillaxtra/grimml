@@ -20,13 +20,16 @@ writer-queue-capacity: 256
 # Per-player frame ring size (ticks). 160 ≈ 8s at 20 TPS.
 ring-capacity: 160
 
-# Per-player event ring (attacks flags clicks etc).
-event-ring-capacity: 128
+# Per-player event ring (attacks flags clicks etc). Must hold every event of one window (~8s).
+# 128 was too small: busy fights filled it and the oldest events of the window were overwritten.
+# A window that still overflows is marked PARTIAL. Costs about 50 bytes per slot per online player.
+event-ring-capacity: 512
 
 # Auto-pause recording when average MSPT exceeds this (0 = disabled).
 mspt-pause-threshold: 50.0
 
-# How often the grimml-disk thread measures the recordings directory (ms).
+# How often the grimml-disk thread compares usage with max-disk-mb (ms). This is cheap arithmetic:
+# the directory is fully walked once at start and then only every 30 minutes (2 minutes while paused for disk).
 safety-check-interval-ms: 5000
 
 # Cap total size of the recordings directory in MiB (0 = unlimited). Auto-pauses when exceeded.

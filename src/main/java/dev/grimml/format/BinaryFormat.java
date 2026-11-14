@@ -16,6 +16,9 @@ public final class BinaryFormat {
     public static final byte[] MAGIC_V2 = {'G', 'M', 'L', '2'};
     public static final byte[] MAGIC_V1 = {'G', 'M', 'L', '1'};
 
+    private static final ThreadLocal<Deflater> DEFLATER =
+            ThreadLocal.withInitial(() -> new Deflater(Deflater.BEST_SPEED));
+
     private BinaryFormat() {}
 
     public static byte[] encodeWindow(CombatSnapshot snap) throws IOException {
@@ -148,11 +151,12 @@ public final class BinaryFormat {
 
             byte[] plain = records.toByteArray();
             ByteArrayOutputStream zipped = new ByteArrayOutputStream(plain.length / 2 + 16);
-            Deflater def = new Deflater(Deflater.BEST_SPEED);
+            // one deflater per thread, reset between windows: creating one allocates ~270 KB of native state,
+            // and that was being done and thrown away for every single window. output bytes are unchanged
+            Deflater def = DEFLATER.get();
+            def.reset();
             try (DeflaterOutputStream dos = new DeflaterOutputStream(zipped, def)) {
                 dos.write(plain);
-            } finally {
-                def.end();
             }
             byte[] compressed = zipped.toByteArray();
             out.writeInt(compressed.length);

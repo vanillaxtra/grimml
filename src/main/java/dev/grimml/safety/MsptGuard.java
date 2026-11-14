@@ -27,14 +27,15 @@ public final class MsptGuard {
         lastTickCheck = now;
         RecordWriter writer = plugin.writer();
         double mspt = Bukkit.getAverageTickTime();
+        // only this guard's own bit: recovering from lag must not resume a disk-cap or manual pause
         if (mspt > config.msptPauseThreshold()) {
-            if (!writer.isPaused()) {
-                writer.setPaused(true);
+            if (!writer.isPaused(RecordWriter.PAUSE_MSPT)) {
+                writer.setPaused(RecordWriter.PAUSE_MSPT, true);
                 plugin.getLogger().warning("mspt " + mspt + " over threshold " + config.msptPauseThreshold() + "; pausing recorder");
             }
         } else if (mspt < config.msptPauseThreshold() * 0.8) {
-            if (writer.isPaused()) {
-                writer.setPaused(false);
+            if (writer.isPaused(RecordWriter.PAUSE_MSPT)) {
+                writer.setPaused(RecordWriter.PAUSE_MSPT, false);
                 plugin.getLogger().info("mspt recovered; resuming recorder");
             }
         }

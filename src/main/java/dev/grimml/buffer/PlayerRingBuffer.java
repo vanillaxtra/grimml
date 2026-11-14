@@ -75,6 +75,37 @@ public final class PlayerRingBuffer {
     // open /grimml mark segment: writer keeps dumping the ring until end
     public volatile boolean markActive;
     public volatile String markId = "";
+    // world of this player, sampled on the main thread (was one global value shared by every window)
+    public volatile String world = "";
+
+    // writer thread only: role this buffer was claimed with in the current assemble cycle
+    public int asmCycle;
+    public byte asmRole;
+    public long asmFight;
+
+    private static final java.util.concurrent.atomic.AtomicIntegerFieldUpdater<PlayerRingBuffer> LIVE =
+            java.util.concurrent.atomic.AtomicIntegerFieldUpdater.newUpdater(PlayerRingBuffer.class, "liveFlags");
+
+    // netty and the main thread both change live flags so every change is one atomic step
+    public void updateLive(int clear, int set) {
+        int prev;
+        int next;
+        do {
+            prev = liveFlags;
+            next = (prev & ~clear) | set;
+            if (next == prev) {
+                return;
+            }
+        } while (!LIVE.compareAndSet(this, prev, next));
+    }
+
+    public void setLive(int bits) {
+        updateLive(0, bits);
+    }
+
+    public void clearLive(int bits) {
+        updateLive(bits, 0);
+    }
 
     private int orderInTick;
     private int orderTick = Integer.MIN_VALUE;
@@ -163,16 +194,8 @@ public final class PlayerRingBuffer {
         }
         jumpWasOn = jump;
         scratchFlags = f;
-        if (sneak) {
-            liveFlags |= RecordTypes.FLAG_SNEAK;
-        } else {
-            liveFlags &= ~RecordTypes.FLAG_SNEAK;
-        }
-        if (sprint) {
-            liveFlags |= RecordTypes.FLAG_SPRINT;
-        } else {
-            liveFlags &= ~RecordTypes.FLAG_SPRINT;
-        }
+        updateLive(RecordTypes.FLAG_SNEAK | RecordTypes.FLAG_SPRINT,
+                (sneak ? RecordTypes.FLAG_SNEAK : 0) | (sprint ? RecordTypes.FLAG_SPRINT : 0));
     }
 
     public void markClientTickEnd() {
@@ -196,9 +219,7 @@ public final class PlayerRingBuffer {
                 packetsThisTick, pingMs, jitterMs, lastAckTx,
                 lastGroundYMilli, fallMilli, vehicleType, vehicleId
         );
-        if (frames.overflows() > 0) {
-            validity |= RecordTypes.VALID_PARTIAL;
-        }
+        // a ring wrapping is normal; PARTIAL is decided per window in CombatSnapshot (torn slot or lost events)
         packetsThisTick = 0;
         scratchFlags &= ~(FrameRing.F_CLIENT_TICK_END | FrameRing.F_JUMP_EDGE);
         openTick = Integer.MIN_VALUE;
@@ -206,9 +227,6 @@ public final class PlayerRingBuffer {
 
     public void writeEvent(byte type, int tick, int nsOff, int ord, long nanos, long a, int b, int c, int d, int e, int f) {
         events.write(type, tick, nsOff, ord, nanos, a, b, c, d, e, f, pingMs);
-        if (events.overflows() > 0) {
-            validity |= RecordTypes.VALID_PARTIAL;
-        }
     }
 
     public void markCombat(long nowNanos, long postNanos, byte trigger) {
@@ -303,9 +321,6 @@ public final class PlayerRingBuffer {
         int f = scratchFlags;
         if ((liveFlags & RecordTypes.FLAG_SPRINT) != 0) f |= FrameRing.F_SPRINT;
         if ((liveFlags & RecordTypes.FLAG_SNEAK) != 0) f |= FrameRing.F_SNEAK;
-        if ((liveFlags & RecordTypes.FLAG_BLOCKING) != 0) {
-            // blocking is in liveFlags via RecordTypes not frame bits
-        }
         return f;
     }
 }

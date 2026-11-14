@@ -44,17 +44,13 @@ public final class ActionCapture {
         buf.writeEvent(RecordTypes.USE_ITEM, tick, clock.nsOffset(nanos), ord, nanos, hand, cat, 1,
                 (int) (pkt.getYaw() * 100), (int) (pkt.getPitch() * 100), 0);
         if (cat == ItemCategories.SHIELD) {
-            buf.liveFlags |= RecordTypes.FLAG_BLOCKING;
+            buf.setLive(RecordTypes.FLAG_BLOCKING);
             buf.markCombat(nanos, plugin.config().postCombatSeconds() * 1_000_000_000L, RecordTypes.TRIGGER_SHIELD);
         }
         if (cat == ItemCategories.WIND_CHARGE) {
             buf.markCombat(nanos, plugin.config().postCombatSeconds() * 1_000_000_000L, RecordTypes.TRIGGER_WIND);
         }
-        if (hand == 0) {
-            buf.liveFlags |= RecordTypes.FLAG_USING_MAIN;
-        } else {
-            buf.liveFlags |= RecordTypes.FLAG_USING_OFF;
-        }
+        buf.setLive(hand == 0 ? RecordTypes.FLAG_USING_MAIN : RecordTypes.FLAG_USING_OFF);
     }
 
     public void onDig(PacketReceiveEvent event, PlayerRingBuffer buf, TickClock clock, long nanos) {
@@ -69,7 +65,7 @@ public final class ActionCapture {
         int relZ = pos.getZ() - buf.zMilli / 1000;
         buf.writeEvent(RecordTypes.BREAK, tick, clock.nsOffset(nanos), ord, nanos, code, relX, relY, relZ, pkt.getBlockFaceId(), 0);
         if (action != null && action.name().contains("RELEASE")) {
-            buf.liveFlags &= ~(RecordTypes.FLAG_USING_MAIN | RecordTypes.FLAG_USING_OFF | RecordTypes.FLAG_BLOCKING);
+            buf.clearLive(RecordTypes.FLAG_USING_MAIN | RecordTypes.FLAG_USING_OFF | RecordTypes.FLAG_BLOCKING);
             buf.writeEvent(RecordTypes.USE_ITEM, tick, clock.nsOffset(nanos), ord, nanos, 0, 0, 0, 0, 0, 0);
         }
         if (action != null && action.name().contains("SWAP")) {
@@ -113,20 +109,21 @@ public final class ActionCapture {
         }
         String n = a.name();
         if (n.contains("SPRINTING") && n.contains("START")) {
-            buf.liveFlags |= RecordTypes.FLAG_SPRINT;
+            buf.setLive(RecordTypes.FLAG_SPRINT);
         } else if (n.contains("SPRINTING")) {
-            buf.liveFlags &= ~RecordTypes.FLAG_SPRINT;
+            buf.clearLive(RecordTypes.FLAG_SPRINT);
         }
         if (n.contains("SNEAK") && n.contains("START")) {
-            buf.liveFlags |= RecordTypes.FLAG_SNEAK;
+            buf.setLive(RecordTypes.FLAG_SNEAK);
         } else if (n.contains("SNEAK")) {
-            buf.liveFlags &= ~RecordTypes.FLAG_SNEAK;
+            buf.clearLive(RecordTypes.FLAG_SNEAK);
         }
         if (n.contains("ELYTRA") || n.contains("FLYING_WITH")) {
             int tick = clock.tick();
             int ord = buf.nextOrder(tick);
             buf.writeEvent(RecordTypes.ELYTRA, tick, clock.nsOffset(nanos), ord, nanos, 1, 0, 0, 0, 0, 0);
-            buf.liveFlags |= RecordTypes.FLAG_ELYTRA;
+            // set here for an immediate start; the main-thread sampler clears it once gliding stops
+            buf.setLive(RecordTypes.FLAG_ELYTRA);
         }
     }
 

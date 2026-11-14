@@ -13,7 +13,7 @@ public final class ResumeCommand implements SubCommand {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        plugin.writer().setPaused(false);
+        plugin.writer().resumeAll();
         GrimMLCommand.msg(sender, "<green>writer resumed");
     }
 }

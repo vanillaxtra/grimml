@@ -84,6 +84,18 @@ IDS = [
     {'mark_id': 'm1dff7271', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Auto Shield Breaker|Kill Aura', 'settings': 'HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100', 'start_ms': 1793728410449, 'end_ms': 1793728928323, 'interrupted': False, 'multi_module': True, 'note': ''},
     {'mark_id': 'm3367bfcd', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Auto Shield Breaker|Silent Aim', 'settings': 'CONTINOUS_TRACKING:TRUE', 'start_ms': 1793731852010, 'end_ms': 1793732505110, 'interrupted': False, 'multi_module': True, 'note': ''},
     {'mark_id': 'med3d6926', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1793925135475, 'end_ms': 1793926477847, 'interrupted': False, 'multi_module': False, 'note': 'THE ~22 min legit recording (ended cleanly)'},
+    # 2026-11-11/12 additions; start_ms read from the in-file marker, end_ms = start + duration from the operator's table
+    {'mark_id': 'm1900082b', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Kill Aura', 'settings': 'HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100', 'start_ms': 1794413968055, 'end_ms': 1794414259055, 'interrupted': False, 'multi_module': False, 'note': 'friend opponent (4:51)'},
+    {'mark_id': 'm98f0b9c2', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Kill Aura', 'settings': 'HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100', 'start_ms': 1794415716084, 'end_ms': 1794416031084, 'interrupted': False, 'multi_module': False, 'note': 'friend opponent (5:15)'},
+    {'mark_id': 'md3d2f5e7', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794415326772, 'end_ms': 1794415644772, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP with a friend (5:18)'},
+    # legit recorded 2026-11-11; start_ms read from the in-file marker, end_ms = start + duration from the operator's table
+    {'mark_id': 'm3ab6bfb8', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794357587755, 'end_ms': 1794358023755, 'interrupted': False, 'multi_module': False, 'note': 'critting, webbing, full boxing, comboing (7:16)'},
+    {'mark_id': 'm6013e9ff', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794358373058, 'end_ms': 1794358664058, 'interrupted': False, 'multi_module': False, 'note': 'spear swap as fast as possible (4:51)'},
+    {'mark_id': 'm24d6d071', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794358829953, 'end_ms': 1794358989953, 'interrupted': False, 'multi_module': False, 'note': 'block placing/item use, butterfly right+left click (2:40)'},
+    {'mark_id': 'me9366054', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794407099811, 'end_ms': 1794408149811, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP kit, second account (17:30); same fight as ma9691d79'},
+    {'mark_id': 'ma9691d79', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794407092037, 'end_ms': 1794408148037, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP kit (17:36); same fight as me9366054'},
+    {'mark_id': 'm69a17c52', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794408439833, 'end_ms': 1794408781833, 'interrupted': False, 'multi_module': False, 'note': 'duel Spearmace kit, second account (5:42); same fight as mc27105be'},
+    {'mark_id': 'mc27105be', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794408443154, 'end_ms': 1794408783154, 'interrupted': False, 'multi_module': False, 'note': 'duel Spearmace kit (5:40); same fight as m69a17c52'},
     {'mark_id': 'm5c84ea76', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1793925139516, 'end_ms': 1793926235154, 'interrupted': True, 'multi_module': False, 'note': 'legit, ended when the player quit (interrupted)'},
     {'mark_id': 'm9e797b92', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1793925523767, 'end_ms': 1793926490353, 'interrupted': True, 'multi_module': False, 'note': 'legit, ended when the player quit (interrupted)'},
     {'mark_id': 'm5045e1ea', 'label': 'CHEAT', 'client': 'grim', 'module': 'Auto Stun Slam', 'settings': 'MACE_DELAY_MIN_TICKS:1 MACE_DELAY_MAX_TICKS:1', 'start_ms': 1794011270021, 'end_ms': 1794011587006, 'interrupted': False, 'multi_module': False, 'note': ''},
@@ -100,6 +112,31 @@ IDS = [
     {'mark_id': 'm13d96247', 'label': 'CHEAT', 'client': 'grim', 'module': 'Kill Aura', 'settings': 'ROTATIONS:SNAP REACH:3 MISS_CHANCE:0 STUN:TRUE', 'start_ms': 1794062884345, 'end_ms': 1794063220269, 'interrupted': False, 'multi_module': False, 'note': ''},
     {'mark_id': 'm3f63358f', 'label': 'CHEAT', 'client': 'doomsday', 'module': 'Triggerbot', 'settings': 'cooldown_max_percent=100 cooldown_min_percent=90 delay_max_ms=0 delay_min_ms=0 miss_chance=0', 'start_ms': 1794349673670, 'end_ms': 1794349957035, 'interrupted': False, 'multi_module': False, 'note': 'doomsday; not in your log, module inferred from the setting keys'},
     {'mark_id': 'm7ecb1998', 'label': 'CHEAT', 'client': 'doomsday', 'module': 'UNLOGGED', 'settings': 'chance=100', 'start_ms': 1794350913243, 'end_ms': 1794350948212, 'interrupted': False, 'multi_module': False, 'note': '35 s doomsday, module unknown (not in your log)'},
+    # 2026-11-12 evening session vs a friend; start_ms read from the in-file marker, end_ms = start + duration from the table
+    {'mark_id': 'mcd7a19cf', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Silent Aim', 'settings': 'CONTINOUS_TRACKING:TRUE', 'start_ms': 1794525075538, 'end_ms': 1794525355538, 'interrupted': False, 'multi_module': False, 'note': 'friend opponent (4:40)'},
+    {'mark_id': 'm96dd5b71', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Silent Aim', 'settings': 'CONTINOUS_TRACKING:TRUE', 'start_ms': 1794525867563, 'end_ms': 1794526239563, 'interrupted': False, 'multi_module': False, 'note': 'friend opponent (6:12)'},
+    {'mark_id': 'mc723710d', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Silent Aim', 'settings': 'CONTINOUS_TRACKING:FALSE', 'start_ms': 1794609518037, 'end_ms': 1794609912037, 'interrupted': False, 'multi_module': False, 'note': 'vs the mineflayer pvp bot (6:34)'},
+    {'mark_id': 'm42852fa8', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Kill Aura', 'settings': 'HUMANIZED:TRUE REACH:2.8 MISS_CHANCE:5 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 ROTATIONS:SNAP', 'start_ms': 1794610040837, 'end_ms': 1794610535837, 'interrupted': False, 'multi_module': False, 'note': 'vs the mineflayer pvp bot (8:15); rotations=snap from the marker'},
+    {'mark_id': 'm16f82554', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Triggerbot', 'settings': 'DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100', 'start_ms': 1794598215361, 'end_ms': 1794598740361, 'interrupted': False, 'multi_module': False, 'note': 'vs the mineflayer pvp bot (8:45)'},
+    {'mark_id': 'md8c4ad84', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Triggerbot', 'settings': 'DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100', 'start_ms': 1794607554994, 'end_ms': 1794608113994, 'interrupted': False, 'multi_module': False, 'note': 'vs the mineflayer pvp bot (9:19)'},
+    {'mark_id': 'm45e840bd', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Triggerbot', 'settings': 'DELAY_MIN_MS:30 DELAY_MAX_MS:80 MISS_CHANCE:5 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100', 'start_ms': 1794614378831, 'end_ms': 1794614782831, 'interrupted': False, 'multi_module': False, 'note': 'vs the mineflayer pvp bot (6:44)'},
+    {'mark_id': 'm8a278525', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Silent Aim', 'settings': 'CONTINOUS_TRACKING:TRUE', 'start_ms': 1794571126851, 'end_ms': 1794571383851, 'interrupted': False, 'multi_module': False, 'note': 'vs the mineflayer pvp bot (4:17)'},
+    {'mark_id': 'm6aaba334', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Aim Assist', 'settings': 'FOV:360 SPEED:20 SMOOTHING:0 RANDOMNESS:10', 'start_ms': 1794526393677, 'end_ms': 1794526838677, 'interrupted': False, 'multi_module': False, 'note': 'friend opponent (7:25)'},
+    {'mark_id': 'm5791f5dd', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Aim Assist', 'settings': 'FOV:90 SPEED:20 SMOOTHING:50 RANDOMNESS:30 ONLY_ON_ROTATE:FALSE', 'start_ms': 1794601594311, 'end_ms': 1794602110311, 'interrupted': False, 'multi_module': False, 'note': 'vs the mineflayer pvp bot (8:36); MARKED LEGIT IN-GAME BY MISTAKE, the in-file marker says label=1, this row is the truth'},
+    {'mark_id': 'm1cde4c02', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Kill Aura', 'settings': 'HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 ROTATIONS:SNAP', 'start_ms': 1794526977277, 'end_ms': 1794527395277, 'interrupted': False, 'multi_module': False, 'note': 'friend opponent (6:58)'},
+    {'mark_id': 'm3ed146aa', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Triggerbot', 'settings': 'DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100', 'start_ms': 1794527493331, 'end_ms': 1794527619331, 'interrupted': False, 'multi_module': False, 'note': 'friend opponent (2:06)'},
+    {'mark_id': 'm4bc0a6be', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794527828791, 'end_ms': 1794528255791, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP vs friends (7:07)'},
+    {'mark_id': 'm4b282fd8', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794527786138, 'end_ms': 1794528176138, 'interrupted': False, 'multi_module': False, 'note': 'friend account, duel DiamondSMP (6:30)'},
+    {'mark_id': 'm7f9d360a', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794527793636, 'end_ms': 1794528200636, 'interrupted': False, 'multi_module': False, 'note': 'friend account, duel DiamondSMP (6:47)'},
+    {'mark_id': 'mfe92d472', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794527797682, 'end_ms': 1794528225682, 'interrupted': False, 'multi_module': False, 'note': 'friend account, duel DiamondSMP (7:08)'},
+    {'mark_id': 'm4e10fb72', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794528197402, 'end_ms': 1794528368402, 'interrupted': False, 'multi_module': False, 'note': 'friend account, duel DiamondSMP (2:51)'},
+    {'mark_id': 'mf9c15713', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794528216754, 'end_ms': 1794528498754, 'interrupted': False, 'multi_module': False, 'note': 'friend account, duel DiamondSMP (4:42)'},
+    {'mark_id': 'm456e408b', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794528247651, 'end_ms': 1794528500651, 'interrupted': False, 'multi_module': False, 'note': 'friend account, duel DiamondSMP (4:13)'},
+    {'mark_id': 'mdf40d9cf', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794570419350, 'end_ms': 1794570757350, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP vs the mineflayer pvp bot (5:38); only the operator is recorded'},
+    {'mark_id': 'm457a9807', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794597689788, 'end_ms': 1794598125788, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP vs the mineflayer pvp bot (7:16)'},
+    {'mark_id': 'm39bac321', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794606916259, 'end_ms': 1794607433259, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP vs the mineflayer pvp bot (8:37)'},
+    {'mark_id': 'm0dfe272f', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794608176235, 'end_ms': 1794608776235, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP vs the mineflayer pvp bot (10:00)'},
+    {'mark_id': 'mb1f0f01e', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794613672156, 'end_ms': 1794614293156, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP vs the mineflayer pvp bot (10:21)'},
 ]
 
 SELECTED_DEFAULT = ["Aim Assist", "Silent Aim", "Kill Aura", "Triggerbot"]
@@ -121,6 +158,22 @@ FLAG_COLS = ["valid_partial", "valid_lag", *HARD_INVALID]
 
 
 # ---------------------------------------------------------------- id table
+
+# Permanently left out of training (decided 2026-11-14). Every session against the afk alt: the target never moves,
+# so legit hits on it look like Kill Aura (steady aim, regular clicks) and the cheat sessions on it teach the model
+# "still target = cheat". With them in, one legit afk-alt chunk (med3d6926) was flagged at 54% by Kill Aura; with them
+# out, no legit fight is above 18% and Kill Aura still separates (core AUC 0.77, shortcut 0.50).
+_AFK = "afk-alt session: still target, causes false flags"
+EXCLUDE_IDS = {
+    # legit vs afk alt
+    "med3d6926": _AFK, "m3ab6bfb8": _AFK, "m6013e9ff": _AFK, "m24d6d071": _AFK,
+    "m5c84ea76": _AFK, "m9e797b92": _AFK,  # interrupted legit from the same 06/11 afk-alt session
+    # cheat vs afk alt
+    "me9b0dc92": _AFK, "ma2e0fb94": _AFK, "m9ec7d620": _AFK, "m0a6016b0": _AFK, "m4108b362": _AFK,  # Aim Assist
+    "m22700b10": _AFK, "mf2dd0754": _AFK,  # Kill Aura
+    "mb1f6fa34": _AFK, "md5e8301b": _AFK,  # Silent Aim
+    "m12b44916": _AFK, "m109c3312": _AFK, "m70c1ef87": _AFK,  # Triggerbot
+}
 
 def id_table(args) -> pd.DataFrame:
     t = pd.DataFrame(IDS)
@@ -144,6 +197,11 @@ def id_table(args) -> pd.DataFrame:
     if args.legit_ids:
         keep = {x.strip().lower() for x in args.legit_ids.split(",") if x.strip()}
         t.loc[(t.label == LEGIT) & ~t.mark_id.isin(keep), "exclude_reason"] = "not in --legit-ids"
+    for mid, why in EXCLUDE_IDS.items():
+        t.loc[(t.mark_id == mid) & (t.exclude_reason == ""), "exclude_reason"] = why
+    if args.drop_ids:
+        drop = {x.strip().lower() for x in args.drop_ids.split(",") if x.strip()}
+        t.loc[t.mark_id.isin(drop) & (t.exclude_reason == ""), "exclude_reason"] = "in --drop-ids"
     return t
 
 
@@ -155,6 +213,13 @@ def find_files(folder: Path) -> list[Path]:
 
 MARK_RE = re.compile(r"_(m[0-9a-fA-F]{8})_")
 BULK_ID = "bulk"  # pseudo mark id for sampled bulk legit windows
+# legit duels recorded from both players' accounts: the same fight twice, so never split across train/test
+SAME_FIGHT = {
+    "ma9691d79": "me9366054", "mc27105be": "m69a17c52",
+    # 2026-11-12 23:56 friend duels: overlapping in time with shared opponents, so one group
+    "m4b282fd8": "m4bc0a6be", "m4e10fb72": "m4bc0a6be", "mf9c15713": "m4bc0a6be", "m456e408b": "m4bc0a6be",
+    "mfe92d472": "m7f9d360a",
+}
 
 
 def load_processed_bulk(win_dir: Path, holdout_file: str) -> tuple[pd.DataFrame, str]:
@@ -280,7 +345,9 @@ def assign_blocks(d: pd.DataFrame, chunk_min: float, gap_s: float, bulk_groups: 
     d = d.copy()
     d["block"] = d["mark_id"]
     keep = pd.Series(True, index=d.index)
-    for mid, g in d[d["label"] == LEGIT].groupby("mark_id"):
+    leg = d[d["label"] == LEGIT]
+    # two accounts recording the same duel share time chunks, so both sides always land in the same fold
+    for mid, g in leg.groupby(leg["mark_id"].map(lambda m: SAME_FIGHT.get(m, m))):
         if mid == BULK_ID:
             # bulk legit: block = a group of whole players (never split one player across train/test)
             grp = g["anon_player_id"].astype(str).map(lambda a: zlib.crc32(a.encode()) % bulk_groups)
@@ -329,12 +396,43 @@ def loso(cheat: pd.DataFrame, legit: pd.DataFrame, cols: list[str], seed: int):
         te = pd.concat([cheat[cheat["block"] == s], legit[legit["block"] == c]])
         tr = pd.concat([cheat[cheat["block"] != s], legit[legit["block"] != c]])
         te = te.assign(score=_score(_fit(tr, cols, seed + j), te, cols))
-        rows.append(te[["window_key", "label", "block", "mark_id", "score"]])
+        te["player"] = te["anon_player_id"].astype(str) if "anon_player_id" in te.columns else ""
+        rows.append(te[["window_key", "label", "block", "mark_id", "player", "score"]])
     return (
         pd.concat(rows)
         .groupby("window_key", as_index=False)
-        .agg(label=("label", "first"), block=("block", "first"), mark_id=("mark_id", "first"), score=("score", "mean"))
+        .agg(label=("label", "first"), block=("block", "first"), mark_id=("mark_id", "first"),
+             player=("player", "first"), score=("score", "mean"))
     )
+
+
+FIGHT_MIN_WINDOWS = 10
+
+
+def fight_scores(oof: pd.DataFrame, ops: dict) -> dict:
+    """Judge whole fights instead of single 8 s windows.
+    Unit = one cheat segment, one legit chunk, or one bulk player. Its 'flag share' is the fraction of its windows
+    scoring above the 5%-of-legit-windows threshold. The decision line is set so ~5% of legit units are flagged."""
+    thr = ops["fpr5"]["thr"]
+    o = oof.copy()
+    o["unit"] = np.where(o["block"].astype(str).str.startswith("bulk"), o["block"].astype(str) + "/" + o["player"], o["block"].astype(str))
+    g = o.groupby("unit").agg(label=("label", "first"), mark_id=("mark_id", "first"), n=("score", "size"),
+                              share=("score", lambda s: float((s >= thr).mean())))
+    g = g[g["n"] >= FIGHT_MIN_WINDOWS]
+    leg, che = g[g["label"] == LEGIT], g[g["label"] == CHEAT]
+    if len(leg) < 5 or che.empty:
+        return {"skipped": f"needs >=5 legit and >=1 cheat units of {FIGHT_MIN_WINDOWS}+ windows"}
+    line = float(np.quantile(leg["share"], 0.95))
+    return {
+        "legit_units": int(len(leg)), "legit_share_median": float(leg["share"].median()),
+        "legit_share_p95": line, "legit_share_max": float(leg["share"].max()),
+        "cheat_units": int(len(che)),
+        "cheat_caught": int((che["share"] > line).sum()),
+        "cheat": [{"mark_id": str(r.mark_id), "windows": int(r.n), "share": float(r.share)} for r in che.itertuples()],
+        # the legit fights the model likes least: the first place to look for false positives
+        "legit_top": [{"unit": str(u), "mark_id": str(r.mark_id), "windows": int(r.n), "share": float(r.share)}
+                      for u, r in leg.sort_values("share", ascending=False).head(3).iterrows()],
+    }
 
 
 def _auc(label: np.ndarray, score: np.ndarray) -> float:
@@ -409,6 +507,73 @@ def transfer(train_cheat, legit, other_cheat, cols, seed):
     return res
 
 
+ATTACK_EDGES = [-1, 0, 2, 5, 10, 1e9]
+
+
+def match_activity(cheat: pd.DataFrame, legit: pd.DataFrame, cols: list[str], seed: int):
+    """Subsample both classes so they have the same number of windows in every activity cell
+    (attack_count bins x event_count terciles). A model can then no longer separate them by 'how busy the window was'."""
+    cols = [c for c in cols if c in cheat.columns and c in legit.columns]
+    if not cols or cheat.empty or legit.empty:
+        return cheat, legit, {"cells": 0, "note": "no activity columns"}
+    both = pd.concat([cheat, legit])
+    cell = pd.Series("", index=both.index, dtype=object)
+    for c in cols:
+        v = pd.to_numeric(both[c], errors="coerce")
+        if c == "attack_count":
+            b = pd.cut(v, ATTACK_EDGES, labels=False)
+        else:
+            b = pd.qcut(v.rank(method="first"), 3, labels=False)
+        cell = cell + "|" + b.astype("Int64").astype(str)
+    rng = np.random.default_rng(seed)
+    keep_c, keep_l, used = [], [], 0
+    for _, idx in both.groupby(cell).groups.items():
+        ic = [i for i in idx if i in cheat.index]
+        il = [i for i in idx if i in legit.index]
+        n = min(len(ic), len(il))
+        if n == 0:
+            continue
+        used += 1
+        keep_c += list(rng.choice(ic, n, replace=False))
+        keep_l += list(rng.choice(il, n, replace=False))
+    stats = {"cells": used, "cols": cols, "cheat_before": len(cheat), "cheat_after": len(keep_c),
+             "legit_before": len(legit), "legit_after": len(keep_l)}
+    return cheat.loc[keep_c], legit.loc[keep_l], stats
+
+
+def run_loco(d: pd.DataFrame, sets: dict, test_client: str, train_clients: list[str], args) -> list[dict]:
+    """Leave-one-client-out: train on cheat from train_clients, test on the unseen test_client.
+    Legit is held out chunk by chunk, so the legit used for thresholds was never trained on either."""
+    cl = d["id_client"].fillna("").str.lower()
+    cheat_d = d[d["label"] == CHEAT]
+    legit = d[d["label"] == LEGIT]
+    out = []
+    for m in sorted(cheat_d.loc[cl[cheat_d.index] == test_client, "id_module"].dropna().unique()):
+        tr = cheat_d[(cl[cheat_d.index].isin(train_clients)) & (cheat_d["id_module"] == m)]
+        te = cheat_d[(cl[cheat_d.index] == test_client) & (cheat_d["id_module"] == m)]
+        r = {"module": m, "test_client": test_client, "train_clients": train_clients,
+             "train_windows": int(len(tr)), "train_segments": int(tr["block"].nunique()),
+             "test_windows": int(len(te)), "test_segments": int(te["block"].nunique())}
+        if tr.empty or te.empty:
+            r["skipped"] = "no cheat windows for this module in the training clients"
+            out.append(r)
+            continue
+        lg = legit
+        if args.match_activity:
+            pool, lg, st = match_activity(pd.concat([tr, te]), legit, args.match_cols, args.seed)
+            tr, te = pool.loc[pool.index.isin(tr.index)], pool.loc[pool.index.isin(te.index)]
+            r["matched"] = st
+            r["train_windows"], r["test_windows"] = int(len(tr)), int(len(te))
+            if tr.empty or te.empty or lg["block"].nunique() < 2:
+                r["skipped"] = "too few windows left after activity matching"
+                out.append(r)
+                continue
+        for name, cols in sets.items():
+            r[name] = transfer(tr, lg, te, cols, args.seed)
+        out.append(r)
+    return out
+
+
 def verdict(core_auc: float, short_auc: float, n_seg: int, n_chunks: int) -> str:
     if core_auc != core_auc:
         return "not enough segments/chunks"
@@ -440,11 +605,13 @@ def run_module(name, cheat, legit, ids, sets, seed) -> dict:
     ops = operating_points(oofs["core"])
     res["core_operating_points"] = ops
     res["segments"] = per_segment(oofs["core"], ops, ids)
+    res["fights"] = fight_scores(oofs["core"], ops)
     full = pd.concat([cheat, legit])
     clf = _fit(full, sets["core"], seed)
     gain = clf.booster_.feature_importance("gain")
     top = sorted(zip(sets["core"], gain), key=lambda x: -x[1])[:5]
     res["top_core_features"] = [(k, float(v)) for k, v in top]
+    res["_model"], res["_features"] = clf, list(sets["core"])  # saved (then dropped) by write_report
     res["verdict"] = verdict(res["core"]["auc"], res["shortcut"]["auc"], res["cheat_segments"], res["legit_chunks"])
     return res
 
@@ -467,13 +634,67 @@ def fmt(x) -> str:
     return "n/a" if x is None or x != x else f"{x:.2f}"
 
 
+def save_models(folder: Path, header: dict, results: list[dict]) -> None:
+    """One LightGBM model per module, fitted on all of that module's (matched) cheat + legit windows with the core
+    features. The thresholds come from the held-out scores, not from the final model's own training data."""
+    for r in results:
+        clf, feats = r.pop("_model", None), r.pop("_features", None)
+        if clf is None:
+            continue
+        folder.mkdir(parents=True, exist_ok=True)
+        slug = re.sub(r"[^a-z0-9]+", "_", str(r["module"]).lower()).strip("_")
+        clf.booster_.save_model(str(folder / f"{slug}.txt"))
+        ops, fights = r.get("core_operating_points", {}), r.get("fights", {})
+        meta = {
+            "module": r["module"], "features": feats,
+            "window_threshold_fpr5": ops.get("fpr5", {}).get("thr"),
+            "window_threshold_fpr1": ops.get("fpr1", {}).get("thr"),
+            "fight_line_share": fights.get("legit_share_p95"), "fight_min_windows": FIGHT_MIN_WINDOWS,
+            "held_out_core_auc": r.get("core", {}).get("auc"),
+            "cheat_windows": r["cheat_windows"], "cheat_segments": r["cheat_segments"],
+            "legit_windows": r["legit_windows"], "legit_chunks": r["legit_chunks"],
+            "use": "score each 8 s window; flag a fight when >= fight_line_share of its windows (min fight_min_windows) "
+                   "score >= window_threshold_fpr5",
+            "warning": "PIPELINE TEST ONLY: one cheat operator on one client. Do not ban on this model.",
+            "built": header.get("run_at", ""),
+        }
+        (folder / f"{slug}.json").write_text(json.dumps(meta, indent=2, default=str), encoding="utf-8")
+
+
 def write_report(out: Path, header: dict, results: list[dict], notes: list[str]) -> str:
     L = [BANNER, ""]
     L += [f"{k}: {v}" for k, v in header.items()]
     L.append("")
     for r in results:
+        if "test_client" in r:  # leave-one-client-out entry
+            L.append(f"== LOCO {r['module']} ==  train on {'+'.join(r['train_clients'])} ({r['train_windows']} windows / "
+                     f"{r['train_segments']} segments), test on unseen {r['test_client']} ({r['test_windows']} windows / {r['test_segments']} segments)")
+            if "matched" in r:
+                st = r["matched"]
+                L.append(f"   activity-matched on {st.get('cols')}: cheat {st.get('cheat_before')}->{st.get('cheat_after')}, "
+                         f"legit {st.get('legit_before')}->{st.get('legit_after')}, {st.get('cells')} cells")
+            if "skipped" in r:
+                L += [f"   skipped: {r['skipped']}", ""]
+                continue
+            for s in ("all", "core", "shortcut"):
+                t = r.get(s)
+                if not t:
+                    L.append(f"   {s:<9} n/a")
+                    continue
+                L.append(f"   {s:<9} unseen-client AUC {fmt(t['auc'])}   recall@5% FPR {t['recall_fpr5']}   @1% {t['recall_fpr1']}")
+            sh, co = (r.get("shortcut") or {}).get("auc"), (r.get("core") or {}).get("auc")
+            if sh is not None and sh == sh and sh >= 0.75:
+                L.append("   verdict: LEAK RISK: shortcut-only already separates, do not trust the core number")
+            elif co is not None and co == co and co >= 0.7:
+                L.append("   verdict: core separates the unseen client while shortcut-only does not (hint of shared behaviour; few segments)")
+            else:
+                L.append("   verdict: no clear transfer to the unseen client")
+            L.append("")
+            continue
         L.append(f"== {r['module']} ==  cheat {r['cheat_windows']} windows / {r['cheat_segments']} segments,"
                  f" legit {r['legit_windows']} windows / {r['legit_chunks']} chunks")
+        if "matched" in r:
+            L.append(f"   activity-matched (equal counts per {r['matched'].get('cols')} cell, {r['matched'].get('cells')} cells)")
         if "skipped" in r:
             L += [f"   skipped: {r['skipped']}", ""]
             continue
@@ -487,6 +708,16 @@ def write_report(out: Path, header: dict, results: list[dict], notes: list[str])
         for s in r["segments"]:
             L.append(f"     {s['mark_id']}  {s['windows']:>4} win  @5% {s['recall_at_5pct_fpr']:.0%}  @1% {s['recall_at_1pct_fpr']:.0%}"
                      f"  {s['settings'][:60]}")
+        ft = r.get("fights")
+        if ft and "skipped" not in ft:
+            L.append(f"   per FIGHT (flag share = windows above the 5% line; {ft['legit_units']} legit units, {ft['cheat_units']} cheat segments):")
+            L.append(f"     legit fights: median {ft['legit_share_median']:.0%}, 95th pct {ft['legit_share_p95']:.0%}, max {ft['legit_share_max']:.0%}"
+                     f"  -> decision line {ft['legit_share_p95']:.0%} (flags ~5% of legit fights)")
+            L.append(f"     cheat segments above the line: {ft['cheat_caught']}/{ft['cheat_units']}   "
+                     + "  ".join(f"{c['mark_id']}={c['share']:.0%}" for c in ft["cheat"]))
+            L.append("     top legit fights: " + "  ".join(f"{c['unit']}={c['share']:.0%} ({c['windows']} win)" for c in ft.get("legit_top", [])))
+        elif ft:
+            L.append(f"   per FIGHT: {ft['skipped']}")
         tr = r.get("transfer")
         if tr:
             L.append(f"   transfer to other clients: AUC {fmt(tr['auc'])}  windows {tr['windows_by_client']}")
@@ -497,6 +728,7 @@ def write_report(out: Path, header: dict, results: list[dict], notes: list[str])
         L += [f"  - {n}" for n in notes]
     text = "\n".join(L)
     out.mkdir(parents=True, exist_ok=True)
+    save_models(out / "models", header, results)
     (out / "report.txt").write_text(text, encoding="utf-8")
     (out / "results.json").write_text(json.dumps({"header": header, "results": results, "notes": notes}, indent=2, default=str), encoding="utf-8")
     return text
@@ -535,6 +767,7 @@ def parse_args(argv=None):
     p.add_argument("--chunk-gap-s", type=float, default=7.0, help="drop windows this close after a chunk boundary")
     p.add_argument("--legit-ids", default="", help="comma list of legit mark ids to use (default: all non-excluded)")
     p.add_argument("--include-interrupted-legit", action="store_true")
+    p.add_argument("--drop-ids", default="", help="comma list of mark ids (cheat or legit) to leave out, e.g. every afk-alt session")
     p.add_argument("--roles", default="1,2", help="window roles to keep (1 attacker, 2 defender, 3 bystander); '' = all")
     p.add_argument("--keep-hard-invalid", dest="hard_invalid", action="store_const", const="keep",
                    help="never apply the hard-validity filter (override)")
@@ -553,9 +786,20 @@ def parse_args(argv=None):
     p.add_argument("--bulk-files", type=int, default=6000, help="how many random unmarked files to decode from --bulk-dir")
     p.add_argument("--bulk-per-player", type=int, default=30, help="max windows kept per player from the bulk sample")
     p.add_argument("--bulk-groups", type=int, default=8, help="bulk players are split into this many held-out groups")
+    p.add_argument("--match-activity", action="store_true",
+                   help="subsample cheat and legit to equal window counts per activity cell (attack_count x event_count), "
+                        "so 'how busy the window was' cannot separate them")
+    p.add_argument("--match-cols", default="attack_count,event_count")
+    p.add_argument("--loco", action="store_true",
+                   help="leave-one-client-out: train on --train-clients, test on the unseen --test-client (replaces the per-module run)")
+    p.add_argument("--train-clients", default="prestige,grim")
+    p.add_argument("--test-client", default="doomsday", help="client to hold out, or 'all' to rotate every client")
     p.add_argument("--workers", type=int, default=0)
     p.add_argument("--seed", type=int, default=7)
     a = p.parse_args(argv)
+    a.match_cols = [c.strip() for c in a.match_cols.split(",") if c.strip()]
+    a.train_clients = [c.strip().lower() for c in a.train_clients.split(",") if c.strip()]
+    a.test_client = a.test_client.strip().lower()
     a.roles = [int(x) for x in a.roles.split(",") if x.strip()] if a.roles else []
     v = a.validity_fixed_from.strip()
     if not v:
@@ -655,19 +899,41 @@ def main(argv=None) -> int:
     other = d[(d["label"] == CHEAT) & (d["id_client"].str.lower() != args.train_client.lower())]
 
     results = []
-    for m in modules:
-        cheat = cheat_all[cheat_all["id_module"] == m]
-        print(f"training {m}: {len(cheat)} cheat windows")
-        r = run_module(m, cheat, legit, ids, sets, args.seed)
-        o = other[other["id_module"] == m]
-        if "skipped" not in r and not o.empty:
-            r["transfer"] = transfer(cheat, legit, o, sets["core"], args.seed)
-        results.append(r)
-    if not modules:
-        notes.append("no cheat windows for the chosen modules: check the file names contain the mark id")
+    if args.loco:
+        clients = sorted(set(d.loc[d["label"] == CHEAT, "id_client"].fillna("").str.lower()) - {""})
+        tests = clients if args.test_client == "all" else [args.test_client]
+        for tc in tests:
+            trains = [c for c in clients if c != tc] if args.test_client == "all" else args.train_clients
+            print(f"leave-one-client-out: train {trains} -> test unseen '{tc}'", flush=True)
+            results += run_loco(d, sets, tc, trains, args)
+        if not any("skipped" not in r for r in results):
+            notes.append("no module has cheat windows in both the training clients and the test client")
+        notes.append("Each held-out client is usually 1-3 segments: treat the numbers as a hint, and compare core with shortcut-only.")
+    else:
+        for m in modules:
+            cheat = cheat_all[cheat_all["id_module"] == m]
+            leg = legit
+            stats = None
+            if args.match_activity:
+                cheat, leg, stats = match_activity(cheat, legit, args.match_cols, args.seed)
+                print(f"training {m}: activity-matched {stats.get('cheat_before')}->{stats.get('cheat_after')} cheat, "
+                      f"{stats.get('legit_before')}->{stats.get('legit_after')} legit windows")
+            else:
+                print(f"training {m}: {len(cheat)} cheat windows")
+            r = run_module(m, cheat, leg, ids, sets, args.seed)
+            if stats:
+                r["matched"] = stats
+            o = other[other["id_module"] == m]
+            if "skipped" not in r and not o.empty and not args.match_activity:
+                r["transfer"] = transfer(cheat, legit, o, sets["core"], args.seed)
+            results.append(r)
+        if not modules:
+            notes.append("no cheat windows for the chosen modules: check the file names contain the mark id")
+        if args.match_activity:
+            notes.append("Activity matching is on: windows were subsampled to equal counts per (attack_count x event_count) cell; the old transfer line is skipped, use --loco for unseen clients.")
 
     lacc = ids[(ids.label == LEGIT) & (ids.exclude_reason == "")]["mark_id"].nunique()
-    notes.append("Cheat marks are all from one account and legit marks from other accounts, so the model may be learning the account/session, not the cheat. The shortcut-only line helps, but cannot rule this out.")
+    notes.append("Cheat comes from one operator's test sessions. The activity/setup confound is only partly controlled (see the shortcut-only line); legit now includes the same account plus a second account and bulk players.")
     notes.append(f"legit comes from {lacc} recording(s); chunk-level CIs are wide and only describe those chunks.")
     notes.append("Setting values come from your log; where marker and log disagreed the log was used (see the IDS table notes).")
     header = {

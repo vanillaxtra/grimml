@@ -12,35 +12,61 @@ import dev.grimml.geyser.GeyserHook;
 import dev.grimml.safety.MsptGuard;
 import org.bukkit.Bukkit;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 // one tick heartbeat for the clock plus a staggered slice of bukkit state
+// this is the only grimml code on the server thread every tick so it must stay cheap
 public final class StateSampler {
+
+    // flags this sampler owns: rebuilt from server state on every sample so they clear when the state ends
+    // (they used to be OR-ed in and never cleared, so one swim marked a whole session as in water)
+    static final int SAMPLED_FLAGS = RecordTypes.FLAG_VEHICLE | RecordTypes.FLAG_ELYTRA | RecordTypes.FLAG_BEDROCK
+            | RecordTypes.FLAG_VANISHED | RecordTypes.FLAG_CREATIVE_FLIGHT | RecordTypes.FLAG_IN_WATER;
+
+    private static final int GRIM_RETRY_TICKS = 200;
 
     private final GrimMLPlugin plugin;
     private final SessionRegistry registry;
     private final PluginConfig config;
-    private final GeyserHook geyser;
     private final MsptGuard mspt;
     private final TickClock clock;
     private int tickTaskId = -1;
     private int cursor;
+
+    // resolved once: looking an attribute up by name costs a registry search (and an exception on a miss)
+    private final Attribute attrDamage = resolve("GENERIC_ATTACK_DAMAGE", "ATTACK_DAMAGE");
+    private final Attribute attrSpeed = resolve("GENERIC_ATTACK_SPEED", "ATTACK_SPEED");
+    private final Attribute attrRange = resolve("PLAYER_ENTITY_INTERACTION_RANGE", "ENTITY_INTERACTION_RANGE");
+    private final Attribute attrMove = resolve("GENERIC_MOVEMENT_SPEED", "MOVEMENT_SPEED");
+    private final Attribute attrJump = resolve("GENERIC_JUMP_STRENGTH", "JUMP_STRENGTH");
+    private final Attribute attrScale = resolve("GENERIC_SCALE", "SCALE");
+    private final Attribute attrKbRes = resolve("GENERIC_KNOCKBACK_RESISTANCE", "KNOCKBACK_RESISTANCE");
+    private final Attribute attrGravity = resolve("GENERIC_GRAVITY", "GRAVITY");
+
+    // main thread only
+    private final Map<PotionEffectType, Integer> effectIds = new HashMap<>();
+    private boolean grimPresent;
+    private int grimRetryTick;
 
     public StateSampler(GrimMLPlugin plugin, SessionRegistry registry, PluginConfig config, GeyserHook geyser,
                         MsptGuard mspt, TickClock clock) {
         this.plugin = plugin;
         this.registry = registry;
         this.config = config;
-        this.geyser = geyser;
         this.mspt = mspt;
         this.clock = clock;
     }
 
     public void start() {
+        grimPresent = Bukkit.getPluginManager().isPluginEnabled("GrimAC");
         tickTaskId = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 1L, 1L).getTaskId();
     }
 
@@ -58,18 +84,34 @@ public final class StateSampler {
                 buf.orValidity(RecordTypes.VALID_LAG);
             }
         }
-        Player[] online = Bukkit.getOnlinePlayers().toArray(Player[]::new);
-        int n = online.length;
+        if (!grimPresent && clock.tick() >= grimRetryTick) {
+            grimPresent = Bukkit.getPluginManager().isPluginEnabled("GrimAC");
+            grimRetryTick = clock.tick() + GRIM_RETRY_TICKS;
+        }
+        Collection<? extends Player> online = Bukkit.getOnlinePlayers();
+        int n = online.size();
         if (n == 0) {
             mspt.check();
             return;
         }
         int take = Math.min(config.staggerPerTick(), n);
-        for (int i = 0; i < take; i++) {
-            Player player = online[(cursor + i) % n];
-            samplePlayer(player);
+        if (online instanceof List<?> list) {
+            // paper hands out an indexable view: touch only this tick's slice instead of copying everyone
+            for (int i = 0; i < take; i++) {
+                int at = (cursor + i) % n;
+                if (at < list.size() && list.get(at) instanceof Player player) {
+                    samplePlayer(player);
+                }
+            }
+        } else {
+            Player[] all = online.toArray(Player[]::new);
+            n = all.length;
+            take = Math.min(take, n);
+            for (int i = 0; i < take; i++) {
+                samplePlayer(all[(cursor + i) % n]);
+            }
         }
-        cursor = (cursor + take) % n;
+        cursor = n == 0 ? 0 : (cursor + take) % n;
         mspt.check();
     }
 
@@ -78,23 +120,31 @@ public final class StateSampler {
         if (buf == null) {
             return;
         }
-        int flags = buf.liveFlags;
-        if (player.isSprinting()) flags |= RecordTypes.FLAG_SPRINT;
-        if (player.isSneaking()) flags |= RecordTypes.FLAG_SNEAK;
-        if (player.isInsideVehicle()) flags |= RecordTypes.FLAG_VEHICLE;
-        if (player.isGliding()) flags |= RecordTypes.FLAG_ELYTRA;
-        if (geyser.isBedrock(player)) flags |= RecordTypes.FLAG_BEDROCK;
+        int fresh = 0;
+        Entity vehicle = player.isInsideVehicle() ? player.getVehicle() : null;
+        if (vehicle != null) {
+            fresh |= RecordTypes.FLAG_VEHICLE;
+            buf.vehicleId = vehicle.getEntityId();
+            buf.vehicleType = vehicle.getType().ordinal();
+        } else {
+            buf.vehicleId = 0;
+            buf.vehicleType = 0;
+        }
+        if (player.isGliding()) fresh |= RecordTypes.FLAG_ELYTRA;
+        // bedrock is fixed for a session and resolved at join (it costs reflection)
+        if (buf.bedrock) fresh |= RecordTypes.FLAG_BEDROCK;
         if (player.isInvisible()) {
-            flags |= RecordTypes.FLAG_VANISHED;
+            fresh |= RecordTypes.FLAG_VANISHED;
             buf.orValidity(RecordTypes.VALID_VANISH);
         }
-        if (player.isFlying()) flags |= RecordTypes.FLAG_CREATIVE_FLIGHT;
-        if (player.isInWater()) flags |= RecordTypes.FLAG_IN_WATER;
-        buf.liveFlags = flags;
-        buf.stateFlags = flags;
+        if (player.isFlying()) fresh |= RecordTypes.FLAG_CREATIVE_FLIGHT;
+        if (player.isInWater()) fresh |= RecordTypes.FLAG_IN_WATER;
+        // sprint sneak blocking and item use belong to the packet path and the toggle events; leave them alone
+        buf.updateLive(SAMPLED_FLAGS, fresh);
+        buf.stateFlags = buf.liveFlags;
+
         int ping = player.getPing();
-        int prev = buf.pingMs;
-        buf.jitterMs = Math.abs(ping - prev);
+        buf.jitterMs = Math.abs(ping - buf.pingMs);
         buf.pingMs = ping;
         buf.healthMilli = (int) Math.round(player.getHealth() * 100);
         buf.absorptionMilli = (int) Math.round(player.getAbsorptionAmount() * 100);
@@ -102,28 +152,23 @@ public final class StateSampler {
         buf.pose = player.getPose().ordinal();
         buf.gamemode = player.getGameMode().ordinal();
         buf.staff = player.hasPermission("grimml.admin") || player.isOp();
-        buf.bedrock = geyser.isBedrock(player);
-        if (player.isInsideVehicle() && player.getVehicle() != null) {
-            buf.vehicleId = player.getVehicle().getEntityId();
-            buf.vehicleType = player.getVehicle().getType().ordinal();
-        } else {
-            buf.vehicleId = 0;
-            buf.vehicleType = 0;
-        }
-        buf.attrDamage = attr(player, "GENERIC_ATTACK_DAMAGE", "ATTACK_DAMAGE");
-        buf.attrSpeed = attr(player, "GENERIC_ATTACK_SPEED", "ATTACK_SPEED");
-        buf.attrRange = attr(player, "PLAYER_ENTITY_INTERACTION_RANGE", "ENTITY_INTERACTION_RANGE");
-        buf.attrMove = attr(player, "GENERIC_MOVEMENT_SPEED", "MOVEMENT_SPEED");
-        buf.attrJump = attr(player, "GENERIC_JUMP_STRENGTH", "JUMP_STRENGTH");
-        buf.attrScale = attr(player, "GENERIC_SCALE", "SCALE");
-        buf.attrKbRes = attr(player, "GENERIC_KNOCKBACK_RESISTANCE", "KNOCKBACK_RESISTANCE");
-        buf.attrGravity = attr(player, "GENERIC_GRAVITY", "GRAVITY");
+        buf.world = player.getWorld().getName();
+        buf.attrDamage = attr(player, attrDamage);
+        buf.attrSpeed = attr(player, attrSpeed);
+        buf.attrRange = attr(player, attrRange);
+        buf.attrMove = attr(player, attrMove);
+        buf.attrJump = attr(player, attrJump);
+        buf.attrScale = attr(player, attrScale);
+        buf.attrKbRes = attr(player, attrKbRes);
+        buf.attrGravity = attr(player, attrGravity);
         packEffects(player, buf);
         sampleGrim(player, buf);
-        plugin.writer().setWorldName(player.getWorld().getName());
     }
 
     private void sampleGrim(Player player, PlayerRingBuffer buf) {
+        if (!grimPresent) {
+            return;
+        }
         try {
             GrimUser user = GrimAPIProvider.get().getGrimUser(player.getUniqueId());
             if (user == null) {
@@ -131,25 +176,36 @@ public final class StateSampler {
             }
             buf.lastAckTx = user.getLastTransactionReceived();
             buf.lastRttMs = user.getTransactionPing();
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            // grim missing or not ready: a throw per player per tick is expensive, so back off and look again later
+            grimPresent = false;
+            grimRetryTick = clock.tick() + GRIM_RETRY_TICKS;
         }
     }
 
-    private static int attr(Player player, String... names) {
+    // old servers name these GENERIC_x, 1.21.3+ drops the prefix; whichever exists is kept for the whole run
+    private static Attribute resolve(String... names) {
         for (String name : names) {
             try {
                 Attribute a = Attribute.valueOf(name);
-                var inst = player.getAttribute(a);
-                if (inst != null) {
-                    return (int) Math.round(inst.getValue() * 1000);
+                if (a != null) {
+                    return a;
                 }
-            } catch (IllegalArgumentException ignored) {
+            } catch (Throwable ignored) {
             }
         }
-        return 0;
+        return null;
     }
 
-    private static void packEffects(Player player, PlayerRingBuffer buf) {
+    private static int attr(Player player, Attribute a) {
+        if (a == null) {
+            return 0;
+        }
+        var inst = player.getAttribute(a);
+        return inst == null ? 0 : (int) Math.round(inst.getValue() * 1000);
+    }
+
+    private void packEffects(Player player, PlayerRingBuffer buf) {
         Collection<PotionEffect> fx = player.getActivePotionEffects();
         int p0 = 0;
         int p1 = 0;
@@ -167,18 +223,29 @@ public final class StateSampler {
         buf.effectsPacked1 = p1;
     }
 
-    private static int effectId(PotionEffectType t) {
+    private int effectId(PotionEffectType t) {
+        Integer known = effectIds.get(t);
+        if (known != null) {
+            return known;
+        }
+        int id = classifyEffect(t);
+        effectIds.put(t, id);
+        return id;
+    }
+
+    private static int classifyEffect(PotionEffectType t) {
         if (t.equals(PotionEffectType.STRENGTH) || t.getKey().getKey().equals("strength")) return 1;
         if (t.equals(PotionEffectType.WEAKNESS)) return 2;
         if (t.equals(PotionEffectType.SPEED)) return 3;
         if (t.equals(PotionEffectType.SLOWNESS)) return 4;
-        if (t.getKey().getKey().contains("jump")) return 5;
-        if (t.getKey().getKey().contains("slow_falling")) return 6;
-        if (t.getKey().getKey().contains("levitation")) return 7;
-        if (t.getKey().getKey().contains("resistance")) return 8;
-        if (t.getKey().getKey().contains("blindness")) return 9;
-        if (t.getKey().getKey().contains("haste")) return 10;
-        if (t.getKey().getKey().contains("mining_fatigue")) return 11;
+        String key = t.getKey().getKey();
+        if (key.contains("jump")) return 5;
+        if (key.contains("slow_falling")) return 6;
+        if (key.contains("levitation")) return 7;
+        if (key.contains("resistance")) return 8;
+        if (key.contains("blindness")) return 9;
+        if (key.contains("haste")) return 10;
+        if (key.contains("mining_fatigue")) return 11;
         return 0;
     }
 }

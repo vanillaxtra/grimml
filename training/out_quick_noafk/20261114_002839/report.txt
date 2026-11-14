@@ -1,0 +1,83 @@
+PIPELINE TEST ONLY: one operator, legit = a few recordings, cheat and legit may come from different accounts. These numbers say whether features/labels work, not how it performs live.
+
+folder: prestige temp test
+windows_used: 10011
+legit_windows: 3809
+cheat_windows: 6202
+chunk_gap_dropped: 61
+trim_s: 3.0
+chunk_min: 4.0
+roles: [1, 2]
+
+== Aim Assist ==  cheat 467 windows / 2 segments, legit 467 windows / 21 chunks
+   activity-matched (equal counts per ['attack_count', 'event_count'] cell, 13 cells)
+   all       AUC 0.33  95% CI [0.16, 0.55]  (18 features)
+   core      AUC 0.52  95% CI [0.42, 0.62]  (13 features)
+   shortcut  AUC 0.35  95% CI [0.21, 0.52]  (6 features)
+   core recall @5% legit-window FPR 4%   @1% 0%
+   verdict: no clear separation (features, or the setting is too subtle)
+   top features: pitch_range, speed_mean, yaw_vel_std, gcd_grid, on_ground_frac
+     m5791f5dd   251 win  @5% 4%  @1% 0%  FOV:90 SPEED:20 SMOOTHING:50 RANDOMNESS:30 ONLY_ON_ROTATE:FA
+     m6aaba334   216 win  @5% 4%  @1% 0%  FOV:360 SPEED:20 SMOOTHING:0 RANDOMNESS:10
+   per FIGHT (flag share = windows above the 5% line; 20 legit units, 2 cheat segments):
+     legit fights: median 5%, 95th pct 15%, max 17%  -> decision line 15% (flags ~5% of legit fights)
+     cheat segments above the line: 0/2   m5791f5dd=4%  m6aaba334=4%
+     top legit fights: m4bc0a6be:0=17% (18 win)  m39bac321:1=15% (13 win)  m0dfe272f:1=14% (21 win)
+
+== Kill Aura ==  cheat 690 windows / 4 segments, legit 690 windows / 21 chunks
+   activity-matched (equal counts per ['attack_count', 'event_count'] cell, 14 cells)
+   all       AUC 0.76  95% CI [0.70, 0.85]  (18 features)
+   core      AUC 0.77  95% CI [0.70, 0.87]  (13 features)
+   shortcut  AUC 0.50  95% CI [0.44, 0.57]  (6 features)
+   core recall @5% legit-window FPR 29%   @1% 17%
+   verdict: separates on held-out segments; single operator
+   top features: yaw_jerk_mean, yaw_vel_abs_mean, pitch_range, click_gap_cv, speed_mean
+     m1900082b   132 win  @5% 47%  @1% 32%  HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:8
+     m1cde4c02   177 win  @5% 25%  @1% 15%  HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:8
+     m42852fa8   240 win  @5% 14%  @1% 6%  HUMANIZED:TRUE REACH:2.8 MISS_CHANCE:5 COOLDOWN_RANGE_MIN:88
+     m98f0b9c2   141 win  @5% 42%  @1% 21%  HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:8
+   per FIGHT (flag share = windows above the 5% line; 21 legit units, 4 cheat segments):
+     legit fights: median 3%, 95th pct 16%, max 16%  -> decision line 16% (flags ~5% of legit fights)
+     cheat segments above the line: 3/4   m1900082b=47%  m1cde4c02=25%  m42852fa8=14%  m98f0b9c2=42%
+     top legit fights: md3d2f5e7:0=16% (31 win)  m4bc0a6be:0=16% (25 win)  mb1f0f01e:1=15% (26 win)
+
+== Silent Aim ==  cheat 599 windows / 4 segments, legit 599 windows / 21 chunks
+   activity-matched (equal counts per ['attack_count', 'event_count'] cell, 12 cells)
+   all       AUC 0.67  95% CI [0.42, 0.92]  (18 features)
+   core      AUC 0.70  95% CI [0.46, 0.88]  (13 features)
+   shortcut  AUC 0.60  95% CI [0.39, 0.80]  (6 features)
+   core recall @5% legit-window FPR 34%   @1% 11%
+   verdict: separates on held-out segments; single operator
+   top features: pitch_range, yaw_jerk_mean, speed_mean, yaw_vel_abs_mean, click_gap_cv
+     m8a278525   121 win  @5% 42%  @1% 7%  CONTINOUS_TRACKING:TRUE
+     m96dd5b71   162 win  @5% 48%  @1% 17%  CONTINOUS_TRACKING:TRUE
+     mc723710d   190 win  @5% 6%  @1% 1%  CONTINOUS_TRACKING:FALSE
+     mcd7a19cf   126 win  @5% 49%  @1% 22%  CONTINOUS_TRACKING:TRUE
+   per FIGHT (flag share = windows above the 5% line; 21 legit units, 4 cheat segments):
+     legit fights: median 4%, 95th pct 15%, max 17%  -> decision line 15% (flags ~5% of legit fights)
+     cheat segments above the line: 3/4   m8a278525=42%  m96dd5b71=48%  mc723710d=6%  mcd7a19cf=49%
+     top legit fights: md3d2f5e7:0=17% (30 win)  mb1f0f01e:1=15% (20 win)  m0dfe272f:1=11% (27 win)
+
+== Triggerbot ==  cheat 774 windows / 4 segments, legit 774 windows / 21 chunks
+   activity-matched (equal counts per ['attack_count', 'event_count'] cell, 14 cells)
+   all       AUC 0.56  95% CI [0.46, 0.65]  (18 features)
+   core      AUC 0.63  95% CI [0.54, 0.70]  (13 features)
+   shortcut  AUC 0.47  95% CI [0.38, 0.53]  (6 features)
+   core recall @5% legit-window FPR 8%   @1% 1%
+   verdict: separates on held-out segments; single operator
+   top features: pitch_range, yaw_vel_mean, on_ground_frac, click_gap_cv, speed_mean
+     m16f82554   253 win  @5% 8%  @1% 1%  DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_P
+     m3ed146aa    56 win  @5% 5%  @1% 2%  DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_P
+     m45e840bd   195 win  @5% 8%  @1% 1%  DELAY_MIN_MS:30 DELAY_MAX_MS:80 MISS_CHANCE:5 COOLDOWN_MIN_P
+     md8c4ad84   270 win  @5% 10%  @1% 2%  DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_P
+   per FIGHT (flag share = windows above the 5% line; 21 legit units, 4 cheat segments):
+     legit fights: median 3%, 95th pct 12%, max 18%  -> decision line 12% (flags ~5% of legit fights)
+     cheat segments above the line: 0/4   m16f82554=8%  m3ed146aa=5%  m45e840bd=8%  md8c4ad84=10%
+     top legit fights: m39bac321:0=18% (51 win)  mb1f0f01e:1=12% (32 win)  me9366054:0=10% (49 win)
+
+Warnings:
+  - hard-validity filter applied to 0/16292 windows; the rest come from the old recorder (sticky validity bits) or no fixed-build time is set, so their validity flags are ignored.
+  - Activity matching is on: windows were subsampled to equal counts per (attack_count x event_count) cell; the old transfer line is skipped, use --loco for unseen clients.
+  - Cheat comes from one operator's test sessions. The activity/setup confound is only partly controlled (see the shortcut-only line); legit now includes the same account plus a second account and bulk players.
+  - legit comes from 17 recording(s); chunk-level CIs are wide and only describe those chunks.
+  - Setting values come from your log; where marker and log disagreed the log was used (see the IDS table notes).

@@ -109,6 +109,7 @@ public final class CombatSnapshot {
         fightId = 0;
         windowId = 0;
         labelSource = 0;
+        validity = 0;
         relativePositions = false;
     }
 
@@ -157,11 +158,19 @@ public final class CombatSnapshot {
         int ec = er.count();
         int ew = er.writeIndex();
         int eStart = (ew - ec + er.cap) % er.cap;
+        boolean sawOldest = false;
+        boolean eventsLost = false;
         for (int n = 0; n < ec; n++) {
             int i = (eStart + n) % er.cap;
             if (!er.copySlot(i, eventTmp)) {
                 torn++;
                 continue;
+            }
+            if (!sawOldest) {
+                sawOldest = true;
+                // a full ring whose oldest surviving event is already inside the window means older events of
+                // this window were overwritten: the window really is incomplete (raise event-ring-capacity)
+                eventsLost = ec >= er.cap && eventTmp.nanos > windowStart;
             }
             if (eventTmp.nanos < windowStart || eventTmp.nanos > windowEnd) {
                 continue;
@@ -183,7 +192,7 @@ public final class CombatSnapshot {
             eF[k] = eventTmp.f;
             ePing[k] = eventTmp.ping;
         }
-        if (torn > 0) {
+        if (torn > 0 || eventsLost) {
             validity |= dev.grimml.format.RecordTypes.VALID_PARTIAL;
         }
         return frameCount > 0 || eventCount > 0;

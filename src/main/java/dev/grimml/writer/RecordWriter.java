@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -35,7 +36,17 @@ public final class RecordWriter {
     private final SnapshotPool pool;
     private final RecordingFiles files;
     private final DropCounters drops = new DropCounters();
-    private final AtomicBoolean paused = new AtomicBoolean(false);
+
+    // bumped when recorder behaviour changes what the files mean; written to sessions.idx at start
+    // 2: per-window validity, PARTIAL only on real data loss, no duplicate knockback/totem events,
+    //    one file per player per cycle, live flags clear, per-player world, real file date
+    public static final int RECORDER_REV = 2;
+
+    // each guard owns one bit so the lag guard recovering cannot undo a disk-cap or manual pause
+    public static final int PAUSE_MANUAL = 1;
+    public static final int PAUSE_MSPT = 1 << 1;
+    public static final int PAUSE_DISK = 1 << 2;
+    private final AtomicInteger pauseBits = new AtomicInteger();
     private final AtomicBoolean running = new AtomicBoolean(true);
     private final AtomicLong writtenWindows = new AtomicLong(0);
     private final AtomicLong writtenBytes = new AtomicLong(0);
@@ -49,7 +60,8 @@ public final class RecordWriter {
         this.plugin = plugin;
         this.config = config;
         this.queue = new ArrayBlockingQueue<>(config.writerQueueCapacity());
-        this.sidecarQueue = new ArrayBlockingQueue<>(64);
+        // 64 overflowed during a burst of flags and silently dropped mark/join lines
+        this.sidecarQueue = new ArrayBlockingQueue<>(1024);
         this.files = new RecordingFiles(plugin, config);
         this.pool = new SnapshotPool(config);
         scheduler.scheduleAtFixedRate(this::cycle, config.writerIntervalMs(), config.writerIntervalMs(), TimeUnit.MILLISECONDS);
@@ -97,7 +109,7 @@ public final class RecordWriter {
     }
 
     public void offerAssembled(CombatSnapshot snap) {
-        if (!running.get() || paused.get()) {
+        if (!running.get() || isPaused()) {
             pool.giveBack(snap);
             return;
         }
@@ -121,12 +133,38 @@ public final class RecordWriter {
         return drops;
     }
 
+    public void setPaused(int reason, boolean pause) {
+        pauseBits.updateAndGet(v -> pause ? v | reason : v & ~reason);
+    }
+
+    // /grimml pause
     public void setPaused(boolean pause) {
-        paused.set(pause);
+        setPaused(PAUSE_MANUAL, pause);
+    }
+
+    // /grimml resume: an explicit operator override; a guard whose condition still holds pauses again
+    public void resumeAll() {
+        pauseBits.set(0);
     }
 
     public boolean isPaused() {
-        return paused.get();
+        return pauseBits.get() != 0;
+    }
+
+    public boolean isPaused(int reason) {
+        return (pauseBits.get() & reason) != 0;
+    }
+
+    public String pauseReasons() {
+        int b = pauseBits.get();
+        if (b == 0) {
+            return "none";
+        }
+        StringBuilder sb = new StringBuilder();
+        if ((b & PAUSE_MANUAL) != 0) sb.append("manual ");
+        if ((b & PAUSE_MSPT) != 0) sb.append("mspt ");
+        if ((b & PAUSE_DISK) != 0) sb.append("disk ");
+        return sb.toString().trim();
     }
 
     public long droppedWindows() {
@@ -142,7 +180,7 @@ public final class RecordWriter {
     }
 
     private void cycle() {
-        if (!paused.get()) {
+        if (!isPaused()) {
             FightAssembler a = assembler.get();
             if (a != null) {
                 a.assemble();
@@ -151,7 +189,7 @@ public final class RecordWriter {
         drainSidecars();
         CombatSnapshot snap;
         while ((snap = queue.poll()) != null) {
-            if (paused.get()) {
+            if (isPaused()) {
                 pool.giveBack(snap);
                 continue;
             }
@@ -182,14 +220,19 @@ public final class RecordWriter {
     }
 
     private void drainSidecars() {
+        byte[] line = sidecarQueue.poll();
+        if (line == null) {
+            return;
+        }
         Path idx = files.dir().resolve("sessions.idx");
-        byte[] line;
-        while ((line = sidecarQueue.poll()) != null) {
-            try {
-                Files.write(idx, line, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-            } catch (IOException e) {
-                plugin.getLogger().warning("failed to write session index: " + e.getMessage());
-            }
+        // one open and one write for the whole batch (was open + append + close for every single line)
+        try (java.io.OutputStream out = new java.io.BufferedOutputStream(
+                Files.newOutputStream(idx, StandardOpenOption.CREATE, StandardOpenOption.APPEND), 8192)) {
+            do {
+                out.write(line);
+            } while ((line = sidecarQueue.poll()) != null);
+        } catch (IOException e) {
+            plugin.getLogger().warning("failed to write session index: " + e.getMessage());
         }
     }
 
