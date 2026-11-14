@@ -1,0 +1,21 @@
+name: GrimMLDetector
+version: ${project.version}
+main: dev.grimml.detect.GrimMLDetector
+api-version: '1.21'
+description: Live ML combat checks that report through Grim
+authors: [grimml]
+# PacketEvents comes from inside GrimAC (references are relocated at build time), so Grim is the only dependency
+depend:
+  - GrimAC
+commands:
+  grimmldetector:
+    description: GrimML detector status, reload and model update
+    aliases: [gmld]
+    permission: grimml.detect.admin
+permissions:
+  grimml.detect.admin:
+    description: Use /grimmldetector
+    default: op
+  grimml.detect.bypass:
+    description: Never scanned
+    default: false

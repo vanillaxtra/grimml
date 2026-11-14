@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "published": "2026-11-14 00:59 UTC",
+  "source_run": "20261114_003501",
+  "models": [
+    {
+      "module": "Aim Assist",
+      "check": "MLAimAssist",
+      "description": "ML model for Aim Assist (experimental)",
+      "model": "aim_assist.txt",
+      "meta": "aim_assist.json",
+      "enabled": false,
+      "alert_share": 0.21,
+      "held_out_core_auc": 0.519,
+      "cheat_sessions_caught": "0/2",
+      "model_sha256": "5bed3071485801b6f24a7ffa2206e0acde51d24d381b2213f8ab1922888470b6",
+      "meta_sha256": "8c006081c4dd1828c68c595589191aa267a0dee21be5c9c7ae4780ddeca3441c"
+    },
+    {
+      "module": "Kill Aura",
+      "check": "MLKillAura",
+      "description": "ML model for Kill Aura (experimental)",
+      "model": "kill_aura.txt",
+      "meta": "kill_aura.json",
+      "enabled": true,
+      "alert_share": 0.2,
+      "held_out_core_auc": 0.771,
+      "cheat_sessions_caught": "3/4",
+      "model_sha256": "eb320a7976f8e57a8b0b327a2d4c5adcdb15ab1a3051ea60ea93ed0dcc3b2f2f",
+      "meta_sha256": "ce1040669ace41dec13cbe1aa3db293dcbecb17c9d7ca3bb6a5a0fcb919af3ab"
+    },
+    {
+      "module": "Silent Aim",
+      "check": "MLSilentAim",
+      "description": "ML model for Silent Aim (experimental)",
+      "model": "silent_aim.txt",
+      "meta": "silent_aim.json",
+      "enabled": true,
+      "alert_share": 0.21,
+      "held_out_core_auc": 0.703,
+      "cheat_sessions_caught": "3/4",
+      "model_sha256": "af8419a77655806f6ef9a71767aea85bc66db248ccd450ef50a8de49b9650cf7",
+      "meta_sha256": "d003c9e57a96272b5026f6ac3385718ed2dcfeeeb4c95be9169ea5f70a3db29c"
+    },
+    {
+      "module": "Triggerbot",
+      "check": "MLTriggerbot",
+      "description": "ML model for Triggerbot (experimental)",
+      "model": "triggerbot.txt",
+      "meta": "triggerbot.json",
+      "enabled": false,
+      "alert_share": 0.22,
+      "held_out_core_auc": 0.629,
+      "cheat_sessions_caught": "0/4",
+      "model_sha256": "af446ba5fee4056e8204197f5d89082a244b59c8474b95f9ee46cb4b35ec3e3a",
+      "meta_sha256": "2d7e24528e5de5df2adaea2592a6ed23c91bf74a73f24379abac51187159c299"
+    }
+  ]
+}

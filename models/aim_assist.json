@@ -1,0 +1,30 @@
+{
+  "module": "Aim Assist",
+  "features": [
+    "yaw_vel_mean",
+    "yaw_vel_std",
+    "yaw_vel_abs_mean",
+    "yaw_jerk_mean",
+    "yaw_snap_rate",
+    "gcd_grid",
+    "pitch_vel_mean",
+    "pitch_range",
+    "speed_mean",
+    "on_ground_frac",
+    "cps",
+    "click_gap_mean_ms",
+    "click_gap_cv"
+  ],
+  "window_threshold_fpr5": 0.7351999778146394,
+  "window_threshold_fpr1": 0.8805248408815559,
+  "fight_line_share": 0.1544871794871795,
+  "fight_min_windows": 10,
+  "held_out_core_auc": 0.5185956192196765,
+  "cheat_windows": 467,
+  "cheat_segments": 2,
+  "legit_windows": 467,
+  "legit_chunks": 21,
+  "use": "score each 8 s window; flag a fight when >= fight_line_share of its windows (min fight_min_windows) score >= window_threshold_fpr5",
+  "warning": "PIPELINE TEST ONLY: one cheat operator on one client. Do not ban on this model.",
+  "built": ""
+}

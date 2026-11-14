@@ -7,7 +7,16 @@ A Paper plugin that records anonymized PvP combat data next to [Grim Anticheat](
 
 Rule-based anticheats like Grim are good at catching movement and protocol cheats. Combat cheats such as aim assist and subtle killaura are harder to pin down with fixed rules. A model trained on real fights could catch them, but that first needs clean, labelled combat data. grimml collects that data on a live server without hurting performance.
 
-**In scope today:** GML3 combat recorder, staff **mark** segments, weak Grim-evidence sidecars, ban backfill labels. **Out of scope:** no ML inference, no staff alerts, no punishments (see [TODO.md](TODO.md) for training/inference repos).
+**Repository layout**
+
+| Folder | What |
+|---|---|
+| `recorder/` | the recording plugin (this README): GML3 combat recorder, staff **mark** segments, weak Grim-evidence sidecars, ban backfill labels |
+| `detector/` | the live detection plugin: loads the trained models and reports flags through Grim. See [detector/README.md](detector/README.md) |
+| `training/` | decode → features → train → `publish_models.py` |
+| `models/` | the published models the detector downloads (`manifest.json` + one LightGBM model per module) |
+
+`mvn clean package` in the root builds both plugins.
 
 ## Features
 
@@ -41,7 +50,7 @@ cd grimml
 mvn clean package
 ```
 
-1. Copy `target/grimml-0.1.0-SNAPSHOT.jar` and PacketEvents into `plugins/`.
+1. Copy `recorder/target/grimml-0.1.0-SNAPSHOT.jar` and PacketEvents into `plugins/`.
 2. Start the server once to generate `plugins/grimml/config.yml`, `taxonomy.yml`, `grim-weights.yml`.
 3. **Change `anonymize-salt`** to a random secret value, then run `/grimml reload` or restart.
 

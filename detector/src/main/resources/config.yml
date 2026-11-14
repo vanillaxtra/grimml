@@ -1,0 +1,39 @@
+# GrimML detector
+# Scores fights with models trained from grimml recordings and reports through Grim.
+# The models are a pipeline test (one cheat operator, one client). Keep punishments off until the
+# models are trained on more data; alerts are safe to use.
+
+models:
+  # newest models are downloaded from here (checked every few minutes, off the main thread);
+  # the copy bundled in the jar is used until then, and if the download fails
+  auto-update: true
+  manifest-url: "https://raw.githubusercontent.com/vanillaxtra/grimml/main/models/manifest.json"
+  check-every-minutes: 15
+
+window:
+  # frames per window; must match the recorder's ring-capacity used for training (160 = 8 s)
+  frames: 160
+
+scan:
+  interval-ms: 2000      # how often windows are scored (the recorder wrote a window every 2 s)
+  min-attacks: 2         # windows with fewer attacks are not scored
+  min-frames: 40
+  fight-gap-ms: 20000    # this long without attacking starts a new fight
+  skip-bedrock: true     # Floodgate players are never scanned
+
+alerts:
+  # empty = Grim's own alerts-format and prefix, so ML flags look like any Grim flag.
+  # placeholders: %prefix% %player% %check_name% %description% %vl% %verbose% %experimental%
+  format: ""
+  console: true
+  # Discord: empty = Grim's own webhook url (if Grim has one set and use-grim-webhook is true)
+  webhook-url: ""
+  use-grim-webhook: true
+  decay-per-minute: 0.05
+
+# Console commands at a violation count (one violation = one flagged fight).
+punishments:
+  enabled: false
+  at-violations:
+    3:
+      - "say %player% flagged %check_name% %vl% times"

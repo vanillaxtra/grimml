@@ -57,6 +57,12 @@ The main pipeline (`ingest`, `exclude_flagged_from_train`) does **not** have thi
 - `--match-activity` subsamples cheat and legit to equal window counts per (attack_count x event_count) cell, so "how busy the window was" cannot separate them (`--match-cols` changes the columns). Cheat test sessions are mostly continuous hitting, so unmatched shortcut-only scores are inflated by activity, not just by setup.
 - Read order: shortcut-only first. If it is high, the core number is not trustworthy. A held-out client with 1-3 segments is a hint, not a result.
 
+### Publishing to the detector
+
+- `python publish_models.py out_quick/<run> --enable "Kill Aura,Silent Aim"` copies that run's models into `../models`, sets each module's fight alert line above every held-out legit fight, writes `manifest.json` (version +1, sha256 sums), and switches on only the listed modules.
+- `python export_parity.py` refreshes the detector's parity fixture; `mvn package` then fails if Java and Python disagree.
+- Commit and push `models/`; running detectors download it on their next check. See `../detector/README.md`.
+
 ### Permanently excluded sessions and saved models
 
 - `EXCLUDE_IDS` in `prestige_quick.py` leaves out every session recorded against the afk alt (cheat and legit). A target that never moves makes legit hits look like Kill Aura: one afk-alt legit chunk was flagged at 54% while every real-opponent fight stayed under 18%. Record new sessions against a moving opponent (a player or the mineflayer pvp bot); a new afk-alt session must be added to `EXCLUDE_IDS`.

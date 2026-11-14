@@ -1,0 +1,30 @@
+{
+  "module": "Triggerbot",
+  "features": [
+    "yaw_vel_mean",
+    "yaw_vel_std",
+    "yaw_vel_abs_mean",
+    "yaw_jerk_mean",
+    "yaw_snap_rate",
+    "gcd_grid",
+    "pitch_vel_mean",
+    "pitch_range",
+    "speed_mean",
+    "on_ground_frac",
+    "cps",
+    "click_gap_mean_ms",
+    "click_gap_cv"
+  ],
+  "window_threshold_fpr5": 0.7734153307466094,
+  "window_threshold_fpr1": 0.8586693553560214,
+  "fight_line_share": 0.125,
+  "fight_min_windows": 10,
+  "held_out_core_auc": 0.6286714874239663,
+  "cheat_windows": 774,
+  "cheat_segments": 4,
+  "legit_windows": 774,
+  "legit_chunks": 21,
+  "use": "score each 8 s window; flag a fight when >= fight_line_share of its windows (min fight_min_windows) score >= window_threshold_fpr5",
+  "warning": "PIPELINE TEST ONLY: one cheat operator on one client. Do not ban on this model.",
+  "built": ""
+}
