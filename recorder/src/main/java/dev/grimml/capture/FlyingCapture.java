@@ -18,6 +18,7 @@ public final class FlyingCapture {
         int yaw = (int) Math.round(loc.getYaw() * 100);
         int pitch = (int) Math.round(loc.getPitch() * 100);
         buf.applyFlying(tick, clock.nsOffset(nanos), ord, x, y, z, yaw, pitch,
-                pkt.isOnGround(), pkt.isHorizontalCollision(), pkt.hasPositionChanged(), pkt.hasRotationChanged());
+                pkt.isOnGround(), pkt.isHorizontalCollision(), pkt.hasPositionChanged(), pkt.hasRotationChanged(),
+                loc.getYaw(), loc.getPitch());
     }
 }

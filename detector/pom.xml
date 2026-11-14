@@ -148,6 +148,16 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>format-self-check</id>
+                        <phase>test</phase>
+                        <goals><goal>java</goal></goals>
+                        <configuration>
+                            <mainClass>dev.grimml.detect.grim.FormatSelfCheck</mainClass>
+                            <classpathScope>test</classpathScope>
+                            <skip>${skipTests}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>parity-self-check</id>
                         <phase>test</phase>
                         <goals><goal>java</goal></goals>

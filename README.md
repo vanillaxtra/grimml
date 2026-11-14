@@ -21,6 +21,7 @@ Rule-based anticheats like Grim are good at catching movement and protocol cheat
 ## Features
 
 - **Combat windows** with rolling pre/post buffer (configurable). Optional **`recording-mode: mark-only`** so `.gmlml` files are written only for the marked player while `/grimml mark` is open (everyone still buffers packets).
+- **GML4 capture** ([docs/schema4.md](docs/schema4.md)): everything below plus exact rotation, the opponent's position/state every tick, client ticks, every input and sprint toggle, transaction send times, opponent movement as sent to the client, crystal spawns, attack cooldown and clicked block, in skippable extension blocks.
 - **GML3 capture:** per-tick frames (position, rotation, input flags, ping, ack tick), fight-linked attacker/target/bystander snapshots, attacks with target anon ids, damage, swings, use-item, inventory/window, shield/totem/knockback, block place, setbacks, markers, and more.
 - **Staff labeling:** `taxonomy.yml` defines clients/modules/settings; `/grimml mark start` writes time-range MARKER records with optional `client-name=meteor` (or any free text) plus module settings.
 - **Live mark feedback:** marked players see an action bar with label/module/client name and data-quality hints (ping, jitter, mspt, frame count).

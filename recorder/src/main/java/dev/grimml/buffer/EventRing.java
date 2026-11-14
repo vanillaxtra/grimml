@@ -19,6 +19,8 @@ public final class EventRing {
     public final int[] e;
     public final int[] f;
     public final short[] ping;
+    // schema 4: client tick at the event, and four extra values (docs/schema4.md)
+    public final int[] clientTick, g, h, i2, j;
     private int write;
     private int count;
     private int overflows;
@@ -38,9 +40,19 @@ public final class EventRing {
         this.e = new int[cap];
         this.f = new int[cap];
         this.ping = new short[cap];
+        this.clientTick = new int[cap];
+        this.g = new int[cap];
+        this.h = new int[cap];
+        this.i2 = new int[cap];
+        this.j = new int[cap];
     }
 
     public void write(byte t, int tk, int nsOff, int ord, long nano, long aa, int bb, int cc, int dd, int ee, int ff, int pingMs) {
+        write(t, tk, nsOff, ord, nano, aa, bb, cc, dd, ee, ff, pingMs, 0, 0, 0, 0, 0);
+    }
+
+    public void write(byte t, int tk, int nsOff, int ord, long nano, long aa, int bb, int cc, int dd, int ee, int ff, int pingMs,
+                      int cTick, int gg, int hh, int ii, int jj) {
         int i = write;
         int s = seq.get(i);
         seq.set(i, s | 1);
@@ -56,6 +68,11 @@ public final class EventRing {
         e[i] = ee;
         f[i] = ff;
         ping[i] = (short) Math.min(Math.max(pingMs, 0), Short.MAX_VALUE);
+        clientTick[i] = cTick;
+        g[i] = gg;
+        h[i] = hh;
+        i2[i] = ii;
+        j[i] = jj;
         seq.set(i, (s | 1) + 1);
         write = (i + 1) % cap;
         if (count < cap) {
@@ -94,6 +111,11 @@ public final class EventRing {
         out.e = e[i];
         out.f = f[i];
         out.ping = ping[i];
+        out.clientTick = clientTick[i];
+        out.g = g[i];
+        out.h = h[i];
+        out.i = i2[i];
+        out.j = j[i];
         int s2 = seq.get(i);
         return s1 == s2 && (s2 & 1) == 0;
     }
@@ -103,5 +125,6 @@ public final class EventRing {
         public int tick, nsOffset, b, c, d, e, f;
         public long nanos, a;
         public short ping;
+        public int clientTick, g, h, i, j;
     }
 }

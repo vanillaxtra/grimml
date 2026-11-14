@@ -1,6 +1,8 @@
 package dev.grimml.detect.scan;
 
 import dev.grimml.detect.features.Features;
+import dev.grimml.detect.features.Schema4Features;
+import dev.grimml.detect.features.Window4;
 import dev.grimml.detect.model.ModelSet;
 import dev.grimml.detect.model.ModuleModel;
 import dev.grimml.detect.track.PlayerTrack;
@@ -41,6 +43,8 @@ public final class Scanner implements Runnable {
     private final Supplier<ModelSet> models;
     private final Sink sink;
     private final PlayerTrack.Window w;
+    private final Window4 w4;
+    private final double[] combined = new double[Features.NAMES.length + Schema4Features.NAMES.length];
     private final Map<UUID, Map<String, Fight>> fights = new HashMap<>();
     private volatile Settings settings;
 
@@ -56,6 +60,7 @@ public final class Scanner implements Runnable {
         this.sink = sink;
         this.settings = settings;
         this.w = new PlayerTrack.Window(settings.frameCap(), attackCap);
+        this.w4 = new Window4(settings.frameCap(), attackCap);
     }
 
     public void settings(Settings s) {
@@ -87,11 +92,22 @@ public final class Scanner implements Runnable {
             if (last == 0 || now - last > windowNs || Boolean.TRUE.equals(exempt.get(id))) {
                 continue;
             }
-            t.snapshot(w, now - windowNs, now);
+            t.snapshot(w, w4, now - windowNs, now);
             if (w.m < s.minAttacks() || w.n < s.minFrames()) {
                 continue;
             }
-            double[] f = Features.compute(w.yaw, w.pitch, w.x, w.z, w.flags, w.n, w.attacks, w.m);
+            double[] core = Features.compute(w.yaw, w.pitch, w.x, w.z, w.flags, w.n, w.attacks, w.m);
+            System.arraycopy(core, 0, combined, 0, core.length);
+            boolean need4 = false;
+            for (ModuleModel m : set.models()) {
+                need4 |= m.enabled() && m.usesSchema4();
+            }
+            java.util.Arrays.fill(combined, core.length, combined.length, Double.NaN);
+            if (need4) {
+                double[] s4 = Schema4Features.compute(w4, true);
+                System.arraycopy(s4, 0, combined, core.length, s4.length);
+            }
+            double[] f = combined;
             windowsScored.incrementAndGet();
             Map<String, Fight> mine = fights.computeIfAbsent(id, k -> new HashMap<>());
             for (ModuleModel m : set.models()) {

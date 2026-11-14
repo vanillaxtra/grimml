@@ -27,10 +27,29 @@ public record ModuleModel(
         return model.predict(x);
     }
 
+    /** Index into the combined vector: the 13 core features, then the 44 schema 4 features. */
+    public static int combinedIndex(String name) {
+        int i = Features.indexOf(name);
+        if (i >= 0) {
+            return i;
+        }
+        int j = dev.grimml.detect.features.Schema4Features.indexOf(name);
+        return j < 0 ? -1 : Features.NAMES.length + j;
+    }
+
+    public boolean usesSchema4() {
+        for (int i : featureIndex) {
+            if (i >= Features.NAMES.length) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static int[] mapFeatures(java.util.List<String> names) {
         int[] idx = new int[names.size()];
         for (int i = 0; i < idx.length; i++) {
-            idx[i] = Features.indexOf(names.get(i));
+            idx[i] = combinedIndex(names.get(i));
             if (idx[i] < 0) {
                 throw new IllegalArgumentException("model wants feature '" + names.get(i) + "' which this plugin version does not compute; update the plugin");
             }

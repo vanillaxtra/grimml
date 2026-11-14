@@ -90,8 +90,108 @@ public final class ParitySelfCheck {
         if (store.current().version() != set.version() || store.current().models().size() != set.models().size()) {
             throw new AssertionError("bundled models did not load: " + store.lastError());
         }
+        schema4(fixture.resolveSibling("windows4.txt"), byCheck);
         System.out.printf("parity: %d windows, %d scores match Python (worst feature diff %.1e, worst score diff %.1e)%n",
                 windows, scores, worstFeat, worstScore);
+    }
+
+    /** Schema 4 features: Java (Schema4Features) vs Python (schema4.py) on real schema 4 windows. */
+    private static void schema4(Path file, Map<String, ModuleModel> byCheck) throws Exception {
+        if (!Files.exists(file)) {
+            System.out.println("parity: no schema 4 fixture; skipped");
+            return;
+        }
+        List<String> lines = Files.readAllLines(file);
+        String[] names = lines.get(0).substring("# features=".length()).split(",");
+        int windows = 0;
+        int compared = 0;
+        int scores4 = 0;
+        double worst = 0;
+        for (String line : lines) {
+            if (!line.startsWith("W4|")) {
+                continue;
+            }
+            String[] part = line.split("\\|", -1);
+            String[] exp = part[1].split(",");
+            String[] frames = part[2].isEmpty() ? new String[0] : part[2].split(";");
+            String[] events = part[3].isEmpty() ? new String[0] : part[3].split(";");
+            var w = new dev.grimml.detect.features.Window4(frames.length, events.length);
+            int[] yc = new int[frames.length], pc = new int[frames.length], xs = new int[frames.length], zs = new int[frames.length];
+            for (String fs : frames) {
+                String[] v = fs.split(",");
+                int k = w.n++;
+                w.tick[k] = Integer.parseInt(v[0]);
+                w.flags[k] = Integer.parseInt(v[1]);
+                w.clientTick[k] = Integer.parseInt(v[2]);
+                w.hasRot[k] = v[3].equals("1");
+                w.yawExact[k] = (float) Double.parseDouble(v[4]);
+                w.pitchExact[k] = (float) Double.parseDouble(v[5]);
+                w.hasOpp[k] = v[6].equals("1");
+                w.oppDx[k] = Integer.parseInt(v[7]);
+                w.oppDy[k] = Integer.parseInt(v[8]);
+                w.oppDz[k] = Integer.parseInt(v[9]);
+                w.oppState[k] = Integer.parseInt(v[10]);
+                w.oppBlockAgo[k] = Integer.parseInt(v[11]);
+                w.oppHurtAgo[k] = Integer.parseInt(v[12]);
+                w.maxGap[k] = Integer.parseInt(v[13]);
+                w.burst[k] = Integer.parseInt(v[14]);
+                yc[k] = Integer.parseInt(v[15]);
+                pc[k] = Integer.parseInt(v[16]);
+                xs[k] = Integer.parseInt(v[17]);
+                zs[k] = Integer.parseInt(v[18]);
+            }
+            for (String es : events) {
+                String[] v = es.split(",");
+                int k = w.m++;
+                w.eType[k] = Integer.parseInt(v[0]);
+                w.eTick[k] = Integer.parseInt(v[1]);
+                w.eNanos[k] = Long.parseLong(v[2]);
+                w.eA[k] = Long.parseLong(v[3]);
+                w.eB[k] = Integer.parseInt(v[4]);
+                w.eC[k] = Integer.parseInt(v[5]);
+                w.eD[k] = Integer.parseInt(v[6]);
+                w.eG[k] = Integer.parseInt(v[7]);
+                w.eClientTick[k] = Integer.parseInt(v[8]);
+            }
+            double[] got = dev.grimml.detect.features.Schema4Features.compute(w, true);
+            // model scores on the combined vector (13 core + 44 schema 4), as the Scanner builds it
+            java.util.List<Long> att = new java.util.ArrayList<>();
+            for (int e = 0; e < w.m; e++) if (w.eType[e] == dev.grimml.detect.features.Window4.ATTACK) att.add(w.eNanos[e]);
+            long[] attacks = att.stream().mapToLong(Long::longValue).toArray();
+            double[] core = Features.compute(yc, pc, xs, zs, w.flags, w.n, attacks, attacks.length);
+            double[] combined = new double[core.length + got.length];
+            System.arraycopy(core, 0, combined, 0, core.length);
+            System.arraycopy(got, 0, combined, core.length, got.length);
+            if (part.length > 4 && !part[4].isEmpty()) {
+                for (String kv : part[4].split(";")) {
+                    String[] p = kv.split("=");
+                    double d = Math.abs(Double.parseDouble(p[1]) - byCheck.get(p[0]).score(combined));
+                    if (d > 1e-9) {
+                        throw new AssertionError("schema4 window " + windows + " " + p[0] + " score: python " + p[1]
+                                + " java " + byCheck.get(p[0]).score(combined));
+                    }
+                    scores4++;
+                }
+            }
+            for (int i = 0; i < names.length; i++) {
+                double e = exp[i].equals("nan") ? Double.NaN : Double.parseDouble(exp[i]);
+                double g = got[dev.grimml.detect.features.Schema4Features.indexOf(names[i])];
+                if (Double.isNaN(e) != Double.isNaN(g)) {
+                    throw new AssertionError("schema4 window " + windows + " " + names[i] + ": python " + e + " java " + g);
+                }
+                if (!Double.isNaN(e)) {
+                    double d = Math.abs(e - g) / Math.max(1.0, Math.abs(e));
+                    worst = Math.max(worst, d);
+                    if (d > 1e-9) {
+                        throw new AssertionError("schema4 window " + windows + " " + names[i] + ": python " + e + " java " + g);
+                    }
+                    compared++;
+                }
+            }
+            windows++;
+        }
+        System.out.printf("parity: schema 4 features match Python on %d windows (%d values, worst diff %.1e), %d model scores match%n",
+                windows, compared, worst, scores4);
     }
 
     private static int[] ints(String s) {

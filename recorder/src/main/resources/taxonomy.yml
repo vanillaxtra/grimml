@@ -161,3 +161,13 @@ modules:
   attribute_swap:
     settings:
       swap_delay_ticks: int
+  # schema 4 (appended at the end so existing module ids keep their numbers)
+  backtrack:
+    settings:
+      delay_ms: int
+      min_range: float
+      max_range: float
+  criticals:
+    settings:
+      mode: [jump, packet, mini_jump]
+      chance: float

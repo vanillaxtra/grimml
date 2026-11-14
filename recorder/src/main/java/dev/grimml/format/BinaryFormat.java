@@ -11,8 +11,9 @@ import java.util.zip.DeflaterOutputStream;
 
 public final class BinaryFormat {
 
-    public static final int SCHEMA = 3;
-    public static final byte[] MAGIC = {'G', 'M', 'L', '3'};
+    public static final int SCHEMA = 4;
+    public static final byte[] MAGIC = {'G', 'M', 'L', '4'};
+    public static final byte[] MAGIC_V3 = {'G', 'M', 'L', '3'};
     public static final byte[] MAGIC_V2 = {'G', 'M', 'L', '2'};
     public static final byte[] MAGIC_V1 = {'G', 'M', 'L', '1'};
 
@@ -76,6 +77,8 @@ public final class BinaryFormat {
             writeStr(out, snap.peVersion);
             out.writeInt(snap.taxonomyVersion);
             out.writeLong(snap.taxonomyHash);
+            Ext ext = new Ext();
+            ext.writeTo(out); // header extension: no tags yet (docs/schema4.md)
 
             ByteArrayOutputStream records = new ByteArrayOutputStream(snap.frameCount * 40 + snap.eventCount * 32);
             DataOutputStream rec = new DataOutputStream(records);
@@ -131,6 +134,8 @@ public final class BinaryFormat {
                 rec.writeInt(snap.fFall[i]);
                 rec.writeInt(snap.fVehType[i]);
                 rec.writeInt(snap.fVehId[i]);
+                frameExt(ext, snap.fExt[i]);
+                ext.writeTo(rec);
             }
             rec.writeShort(snap.eventCount);
             for (int i = 0; i < snap.eventCount; i++) {
@@ -146,6 +151,12 @@ public final class BinaryFormat {
                 rec.writeInt(snap.eE[i]);
                 rec.writeInt(snap.eF[i]);
                 rec.writeShort(snap.ePing[i]);
+                ext.reset();
+                ext.begin(RecordTypes.EX_CLIENT_TICK).zz(snap.eClientTick[i]).end();
+                if ((snap.eG[i] | snap.eH[i] | snap.eI[i] | snap.eJ[i]) != 0) {
+                    ext.begin(RecordTypes.EX_EXTRA).zz(snap.eG[i]).zz(snap.eH[i]).zz(snap.eI[i]).zz(snap.eJ[i]).end();
+                }
+                ext.writeTo(rec);
             }
             rec.flush();
 
@@ -163,6 +174,81 @@ public final class BinaryFormat {
             out.write(compressed);
         }
         return raw.toByteArray();
+    }
+
+    private static void frameExt(Ext ext, dev.grimml.buffer.FrameRing.Ext f) throws IOException {
+        ext.reset();
+        if (f.hasExactRot) {
+            ext.begin(RecordTypes.FX_ROT_EXACT).f32(f.yawExact).f32(f.pitchExact).end();
+        }
+        ext.begin(RecordTypes.FX_CLIENT_TICK).zz(f.clientTick).end();
+        if (f.oppAnon != 0L) {
+            ext.begin(RecordTypes.FX_OPPONENT).i64(f.oppAnon).zz(f.oppDx).zz(f.oppDy).zz(f.oppDz).zz(f.oppYaw)
+                    .u8(f.oppPose).u8(f.oppState).zz(f.oppBlockAgo).zz(f.oppHurtAgo).u8(f.nearby).end();
+        }
+        ext.begin(RecordTypes.FX_PACKET_TIMING).zz(f.maxGapMs).u8(f.burst).end();
+    }
+
+    /**
+     * Schema 4 extension block: varint byteLength, then entries of (u8 tag, varint len, payload).
+     * Readers skip tags they do not know, so adding a tag never needs a new schema.
+     */
+    static final class Ext {
+        private final ByteArrayOutputStream block = new ByteArrayOutputStream(64);
+        private final ByteArrayOutputStream entry = new ByteArrayOutputStream(48);
+        private final DataOutputStream e = new DataOutputStream(entry);
+        private int tag;
+
+        void reset() {
+            block.reset();
+        }
+
+        Ext begin(int t) {
+            tag = t;
+            entry.reset();
+            return this;
+        }
+
+        Ext zz(int v) throws IOException {
+            writeVar(e, v);
+            return this;
+        }
+
+        Ext u8(int v) throws IOException {
+            e.writeByte(v);
+            return this;
+        }
+
+        Ext i64(long v) throws IOException {
+            e.writeLong(v);
+            return this;
+        }
+
+        Ext f32(float v) throws IOException {
+            e.writeFloat(v);
+            return this;
+        }
+
+        void end() throws IOException {
+            e.flush();
+            block.write(tag);
+            writeUVar(block, entry.size());
+            entry.writeTo(block);
+        }
+
+        void writeTo(DataOutputStream out) throws IOException {
+            writeUVar(out, block.size());
+            block.writeTo(out);
+            block.reset();
+        }
+    }
+
+    static void writeUVar(java.io.OutputStream out, int v) throws IOException {
+        while ((v & ~0x7F) != 0) {
+            out.write((v & 0x7F) | 0x80);
+            v >>>= 7;
+        }
+        out.write(v);
     }
 
     public static int schemaOf(byte[] data) {

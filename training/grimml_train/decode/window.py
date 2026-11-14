@@ -10,6 +10,7 @@ from grimml_train.decode import records as R
 from grimml_train.decode.gml_common import (
     UnknownRecordTypeError,
     read_events_v2,
+    read_ext,
     read_frames_v2,
     read_gml1_body,
 )
@@ -62,7 +63,7 @@ def decode_file(path: Path) -> dict:
     try:
         if schema == 1:
             out = _decode_gml1(stream, window_key, path.name)
-        elif schema in (2, 3):
+        elif schema in (2, 3, 4):
             out = _decode_gml23(stream, window_key, schema, path.name)
         else:
             raise ValueError(f"unsupported schema {schema} in {path}")
@@ -196,6 +197,8 @@ def _decode_gml23(stream: BytesIO, window_key: str, schema: int, file_name: str)
     if schema >= 3:
         tax_ver = read_i32(stream)
         tax_hash = read_u64(stream)
+    if schema >= 4:
+        read_ext(stream)  # header extension: no tags defined yet
     rec = _inflate(stream)
     frames = read_frames_v2(rec, window_key, schema)
     events, markers = read_events_v2(rec, window_key, schema)

@@ -51,7 +51,8 @@ public final class PluginConfig {
         writerIntervalMs = Math.max(250L, cfg.getLong("writer-interval-ms", 2000L));
         writerQueueCapacity = Math.max(8, cfg.getInt("writer-queue-capacity", 256));
         ringCapacity = Math.max(32, cfg.getInt("ring-capacity", 160));
-        eventRingCapacity = Math.max(16, cfg.getInt("event-ring-capacity", 512));
+        // schema 4 adds ~60-80 events/s in a fight (opponent moves, transactions, inputs): never below 1536
+        eventRingCapacity = Math.max(1536, cfg.getInt("event-ring-capacity", 2048));
         msptPauseThreshold = cfg.getDouble("mspt-pause-threshold", 50.0);
         safetyCheckIntervalMs = Math.max(1000L, cfg.getLong("safety-check-interval-ms", 5000L));
         maxDiskMb = Math.max(0L, cfg.getLong("max-disk-mb", 20480L));

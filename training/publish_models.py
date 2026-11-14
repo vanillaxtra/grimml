@@ -41,6 +41,7 @@ def main() -> None:
     ap.add_argument("run", help="a prestige_quick output folder (has results.json and models/)")
     ap.add_argument("--enable", default="Kill Aura", help="comma list of modules that may flag")
     ap.add_argument("--margin", type=float, default=0.04)
+    ap.add_argument("--keep", default="", help="comma list of modules to carry over unchanged from the current models/")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -76,7 +77,22 @@ def main() -> None:
         })
         print(f"{'ON ' if on else 'off'} {check_name(name):<14} alert at {share:.0%} of 10+ windows  "
               f"(legit max {fights['legit_share_max']:.0%}, AUC {r['core']['auc']:.2f})")
-    if not entries:
+    # modules kept from the current models/ (e.g. a schema 3 model no newer run replaces yet)
+    keep = {m.strip().lower() for m in args.keep.split(",") if m.strip()}
+    have = {e["module"].lower() for e in entries}
+    kept = []
+    if old.exists():
+        for e in json.loads(old.read_text(encoding="utf-8"))["models"]:
+            if e["module"].lower() in keep and e["module"].lower() not in have:
+                e = dict(e)
+                files = {e["model"]: (MODELS / e["model"]).read_bytes(), e["meta"]: (MODELS / e["meta"]).read_bytes()}
+                kept.append((e, files))
+                print(f"{'ON ' if e['enabled'] else 'off'} {e['check']:<14} kept from v{version - 1} "
+                      f"(alert at {e['alert_share']:.0%}, AUC {e['held_out_core_auc']})")
+    missing = keep - have - {e["module"].lower() for e, _ in kept}
+    if missing:
+        raise SystemExit(f"--keep: not in the current models/: {sorted(missing)}")
+    if not entries and not kept:
         raise SystemExit("nothing to publish")
     if args.dry_run:
         return
@@ -90,6 +106,10 @@ def main() -> None:
             shutil.copyfile(p, MODELS / p.name)
         e["model_sha256"] = sha256(MODELS / e["model"])
         e["meta_sha256"] = sha256(MODELS / e["meta"])
+    for e, files in kept:
+        for name, data in files.items():
+            (MODELS / name).write_bytes(data)
+        entries.append(e)
     manifest = {
         "version": version,
         "published": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),

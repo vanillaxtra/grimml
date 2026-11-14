@@ -50,6 +50,20 @@ def read_str255(stream: BytesIO) -> str:
     return _read(stream, n).decode("utf-8", errors="replace")
 
 
+def read_uvarint(stream: BytesIO) -> int:
+    """Unsigned LEB128 (schema 4 extension lengths)."""
+    v = 0
+    shift = 0
+    while True:
+        b = read_u8(stream)
+        v |= (b & 0x7F) << shift
+        if not b & 0x80:
+            return v
+        shift += 7
+        if shift > 35:
+            raise TruncatedFileError("uvarint too long")
+
+
 def read_varint(stream: BytesIO) -> int:
     u = 0
     shift = 0

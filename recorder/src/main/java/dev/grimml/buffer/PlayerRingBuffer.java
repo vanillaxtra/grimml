@@ -78,6 +78,30 @@ public final class PlayerRingBuffer {
     // world of this player, sampled on the main thread (was one global value shared by every window)
     public volatile String world = "";
 
+    // ---- schema 4 (docs/schema4.md)
+    // opponent: chosen on the main thread by StateSampler, read by this player's netty thread at frame flush
+    public volatile int opponentEntityId;
+    public volatile int nearbyPlayers;
+    public volatile int lastAttackerEntityId;
+    public volatile long lastHitPacketNanos;   // this player's last attack packet
+    public volatile long lastHurtNanos;        // this player last took damage (main thread)
+    public volatile long blockChangeNanos;     // this player last raised or lowered a shield
+    public volatile int pubFlags;              // frame flags at the last flush, for opponents to read
+    public volatile Object grimUser;           // ac.grim.grimac.api.GrimUser when Grim is present (main thread sets)
+    public volatile java.util.function.IntFunction<PlayerRingBuffer> peers = id -> null;
+    // netty thread only
+    private float yawExact;
+    private float pitchExact;
+    private boolean hasExactRot;
+    private int clientTick;
+    private long lastInboundNanos;
+    private int maxGapMs;
+    private int burst;
+    private int lastResetTick = Integer.MIN_VALUE;
+    private final int[] crystalIds = new int[32];
+    private int crystalWrite;
+    private final FrameRing.Ext ext = new FrameRing.Ext();
+
     // writer thread only: role this buffer was claimed with in the current assemble cycle
     public int asmCycle;
     public byte asmRole;
@@ -97,6 +121,9 @@ public final class PlayerRingBuffer {
                 return;
             }
         } while (!LIVE.compareAndSet(this, prev, next));
+        if (((prev ^ next) & RecordTypes.FLAG_BLOCKING) != 0) {
+            blockChangeNanos = System.nanoTime();
+        }
     }
 
     public void setLive(int bits) {
@@ -144,6 +171,11 @@ public final class PlayerRingBuffer {
     }
 
     public void applyFlying(int tick, int nsOff, int ord, int x, int y, int z, int yaw, int pitch, boolean onGround, boolean horiz, boolean hasPos, boolean hasRot) {
+        applyFlying(tick, nsOff, ord, x, y, z, yaw, pitch, onGround, horiz, hasPos, hasRot, yaw / 100f, pitch / 100f);
+    }
+
+    public void applyFlying(int tick, int nsOff, int ord, int x, int y, int z, int yaw, int pitch, boolean onGround, boolean horiz, boolean hasPos, boolean hasRot,
+                            float yawF, float pitchF) {
         if (hasPos) {
             xMilli = x;
             yMilli = y;
@@ -159,6 +191,9 @@ public final class PlayerRingBuffer {
         if (hasRot) {
             yawCenti = yaw;
             pitchCenti = pitch;
+            yawExact = yawF;
+            pitchExact = pitchF;
+            hasExactRot = true;
         }
         if (onGround) {
             scratchFlags |= FrameRing.F_ON_GROUND;
@@ -201,6 +236,49 @@ public final class PlayerRingBuffer {
     public void markClientTickEnd() {
         scratchFlags |= FrameRing.F_CLIENT_TICK_END;
         flushOpenFrame();
+        clientTick++;
+    }
+
+    public int clientTick() {
+        return clientTick;
+    }
+
+    /** Every inbound packet (netty): longest silence and bursts for the PACKET_TIMING frame tag. */
+    public void noteInbound(long nanos) {
+        if (lastInboundNanos != 0L) {
+            long gap = nanos - lastInboundNanos;
+            int ms = (int) Math.min(gap / 1_000_000L, 65_535L);
+            if (ms > maxGapMs) {
+                maxGapMs = ms;
+            }
+            if (gap < 2_000_000L) {
+                burst++;
+            }
+        }
+        lastInboundNanos = nanos;
+    }
+
+    /** Attack cooldown resets on a swing or a hotbar change (server ticks). */
+    public void resetCooldown(int tick) {
+        lastResetTick = tick;
+    }
+
+    public int cooldownTicks(int tick) {
+        return lastResetTick == Integer.MIN_VALUE ? 255 : Math.max(0, Math.min(255, tick - lastResetTick));
+    }
+
+    public void noteCrystal(int entityId) {
+        crystalIds[crystalWrite] = entityId;
+        crystalWrite = (crystalWrite + 1) % crystalIds.length;
+    }
+
+    public boolean isCrystal(int entityId) {
+        for (int id : crystalIds) {
+            if (id == entityId && id != 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void commitFrame() {
@@ -211,14 +289,20 @@ public final class PlayerRingBuffer {
         if (openTick == Integer.MIN_VALUE) {
             return;
         }
+        int frameFlags = scratchFlags | liveInputFlags();
+        fillExt();
         frames.write(
                 openTick, lastNsOff, lastOrd, clock.lastDurationMs(),
                 xMilli, yMilli, zMilli, yawCenti, pitchCenti,
-                scratchFlags | liveInputFlags(), pose,
+                frameFlags, pose,
                 inv.held(), inv.heldCat(), inv.heldId(), inv.offCat(), inv.offId(),
                 packetsThisTick, pingMs, jitterMs, lastAckTx,
-                lastGroundYMilli, fallMilli, vehicleType, vehicleId
+                lastGroundYMilli, fallMilli, vehicleType, vehicleId,
+                ext
         );
+        pubFlags = frameFlags;
+        maxGapMs = 0;
+        burst = 0;
         // a ring wrapping is normal; PARTIAL is decided per window in CombatSnapshot (torn slot or lost events)
         packetsThisTick = 0;
         scratchFlags &= ~(FrameRing.F_CLIENT_TICK_END | FrameRing.F_JUMP_EDGE);
@@ -226,7 +310,60 @@ public final class PlayerRingBuffer {
     }
 
     public void writeEvent(byte type, int tick, int nsOff, int ord, long nanos, long a, int b, int c, int d, int e, int f) {
-        events.write(type, tick, nsOff, ord, nanos, a, b, c, d, e, f, pingMs);
+        events.write(type, tick, nsOff, ord, nanos, a, b, c, d, e, f, pingMs, clientTick, 0, 0, 0, 0);
+    }
+
+    /** Same as writeEvent plus the four schema 4 extra values (meaning per type in docs/schema4.md). */
+    public void writeEventX(byte type, int tick, int nsOff, int ord, long nanos, long a, int b, int c, int d, int e, int f,
+                            int g, int h, int i, int j) {
+        events.write(type, tick, nsOff, ord, nanos, a, b, c, d, e, f, pingMs, clientTick, g, h, i, j);
+    }
+
+    /** Order index for schema 4 events that must not open a frame tick (keeps schema 3 frames unchanged). */
+    public int peekOrder() {
+        return orderInTick;
+    }
+
+    private void fillExt() {
+        ext.yawExact = yawExact;
+        ext.pitchExact = pitchExact;
+        ext.hasExactRot = hasExactRot;
+        ext.clientTick = clientTick;
+        ext.maxGapMs = maxGapMs;
+        ext.burst = burst;
+        ext.oppAnon = 0L;
+        int oid = opponentEntityId;
+        PlayerRingBuffer o = oid == 0 ? null : peers.apply(oid);
+        if (o == null || o == this) {
+            return;
+        }
+        long now = System.nanoTime();
+        ext.oppAnon = o.anonPlayerId;
+        ext.oppDx = o.xMilli - xMilli;
+        ext.oppDy = o.yMilli - yMilli;
+        ext.oppDz = o.zMilli - zMilli;
+        ext.oppYaw = o.yawCenti;
+        ext.oppPose = o.pose;
+        int of = o.pubFlags;
+        int ol = o.liveFlags;
+        int st = 0;
+        if ((of & FrameRing.F_ON_GROUND) != 0) st |= RecordTypes.OPP_ON_GROUND;
+        if ((of & FrameRing.F_SPRINT) != 0) st |= RecordTypes.OPP_SPRINT;
+        if ((of & FrameRing.F_SNEAK) != 0) st |= RecordTypes.OPP_SNEAK;
+        if ((ol & RecordTypes.FLAG_BLOCKING) != 0) st |= RecordTypes.OPP_BLOCKING;
+        if ((ol & RecordTypes.FLAG_ELYTRA) != 0) st |= RecordTypes.OPP_GLIDING;
+        if ((ol & (RecordTypes.FLAG_USING_MAIN | RecordTypes.FLAG_USING_OFF)) != 0) st |= RecordTypes.OPP_USING;
+        ext.oppState = st;
+        ext.oppBlockAgo = agoMs(o.blockChangeNanos, now);
+        ext.oppHurtAgo = agoMs(o.lastHurtNanos, now);
+        ext.nearby = nearbyPlayers;
+    }
+
+    private static int agoMs(long then, long now) {
+        if (then == 0L) {
+            return -1;
+        }
+        return (int) Math.max(0L, Math.min(65_535L, (now - then) / 1_000_000L));
     }
 
     public void markCombat(long nowNanos, long postNanos, byte trigger) {

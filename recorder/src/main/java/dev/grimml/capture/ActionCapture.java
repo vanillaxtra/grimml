@@ -33,6 +33,7 @@ public final class ActionCapture {
         int ord = buf.nextOrder(tick);
         int hand = pkt.getHand() == InteractionHand.OFF_HAND ? 1 : 0;
         buf.writeEvent(RecordTypes.SWING, tick, clock.nsOffset(nanos), ord, nanos, hand, 0, 0, 0, 0, 0);
+        buf.resetCooldown(tick);
     }
 
     public void onUseItem(PacketReceiveEvent event, PlayerRingBuffer buf, TickClock clock, long nanos) {
@@ -88,8 +89,9 @@ public final class ActionCapture {
         int cursorPacked = ((int) (cursor.x * 15) & 0xF) | (((int) (cursor.y * 15) & 0xF) << 4) | (((int) (cursor.z * 15) & 0xF) << 8);
         byte cat = pkt.getItemStack().map(ItemUtil::category).orElse(buf.inv.heldCat());
         int inside = pkt.getInsideBlock().orElse(false) ? 1 : 0;
-        buf.writeEvent(RecordTypes.BLOCK_PLACE, tick, clock.nsOffset(nanos), ord, nanos,
-                relX, relY, relZ | (pkt.getFaceId() << 16), cursorPacked, cat | (inside << 8), buf.yawCenti);
+        buf.writeEventX(RecordTypes.BLOCK_PLACE, tick, clock.nsOffset(nanos), ord, nanos,
+                relX, relY, relZ | (pkt.getFaceId() << 16), cursorPacked, cat | (inside << 8), buf.yawCenti,
+                ClickedBlock.category(buf.grimUser, pos.getX(), pos.getY(), pos.getZ()), 0, 0, 0);
         if (buf.isCombatActive(nanos) || buf.fallMilli > 1000) {
             buf.markCombat(nanos, plugin.config().postCombatSeconds() * 1_000_000_000L, RecordTypes.TRIGGER_PLACE);
         }
@@ -108,15 +110,24 @@ public final class ActionCapture {
             return;
         }
         String n = a.name();
+        int moveState = 0;
         if (n.contains("SPRINTING") && n.contains("START")) {
             buf.setLive(RecordTypes.FLAG_SPRINT);
+            moveState = 1;
         } else if (n.contains("SPRINTING")) {
             buf.clearLive(RecordTypes.FLAG_SPRINT);
+            moveState = 2;
         }
         if (n.contains("SNEAK") && n.contains("START")) {
             buf.setLive(RecordTypes.FLAG_SNEAK);
+            moveState = 3;
         } else if (n.contains("SNEAK")) {
             buf.clearLive(RecordTypes.FLAG_SNEAK);
+            moveState = 4;
+        }
+        if (moveState != 0) {
+            int t = clock.tick();
+            buf.writeEvent(RecordTypes.MOVE_STATE, t, clock.nsOffset(nanos), buf.peekOrder(), nanos, moveState, 0, 0, 0, 0, 0);
         }
         if (n.contains("ELYTRA") || n.contains("FLYING_WITH")) {
             int tick = clock.tick();

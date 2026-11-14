@@ -123,6 +123,10 @@ IDS = [
     {'mark_id': 'm8a278525', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Silent Aim', 'settings': 'CONTINOUS_TRACKING:TRUE', 'start_ms': 1794571126851, 'end_ms': 1794571383851, 'interrupted': False, 'multi_module': False, 'note': 'vs the mineflayer pvp bot (4:17)'},
     {'mark_id': 'm6aaba334', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Aim Assist', 'settings': 'FOV:360 SPEED:20 SMOOTHING:0 RANDOMNESS:10', 'start_ms': 1794526393677, 'end_ms': 1794526838677, 'interrupted': False, 'multi_module': False, 'note': 'friend opponent (7:25)'},
     {'mark_id': 'm5791f5dd', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Aim Assist', 'settings': 'FOV:90 SPEED:20 SMOOTHING:50 RANDOMNESS:30 ONLY_ON_ROTATE:FALSE', 'start_ms': 1794601594311, 'end_ms': 1794602110311, 'interrupted': False, 'multi_module': False, 'note': 'vs the mineflayer pvp bot (8:36); MARKED LEGIT IN-GAME BY MISTAKE, the in-file marker says label=1, this row is the truth'},
+    {'mark_id': 'm5123c635', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Aim Assist', 'settings': 'FOV:90 SPEED:30 SMOOTHING:50 RANDOMNESS:0 ONLY_ON_ROTATE:FALSE', 'start_ms': 1794657258135, 'end_ms': 1794657712721, 'interrupted': False, 'multi_module': False, 'note': 'first schema 4 session, vs the pvp bot (~7:35); no end marker, end = last window; in-game marker says module 18 (Silent Aim on the server list) but the settings and the operator say Aim Assist; transaction replies were not captured (pre-fix recorder)'},
+    {'mark_id': 'm8f52a835', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Aim Assist', 'settings': 'FOV:90 SPEED:30 SMOOTHING:50 RANDOMNESS:0 ONLY_ON_ROTATE:FALSE', 'start_ms': 1794662575345, 'end_ms': 1794663262203, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, vs the pvp bot (11:36); no end marker, end = last window; in-game module id 21'},
+    {'mark_id': 'mff6051d6', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Aim Assist', 'settings': 'FOV:90 SPEED:15 SMOOTHING:75 RANDOMNESS:0 ONLY_ON_ROTATE:FALSE', 'start_ms': 1794663354591, 'end_ms': 1794663790203, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, vs the pvp bot (7:25), subtle; no end marker, end = last window'},
+    {'mark_id': 'm1eaa1d2d', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Aim Assist', 'settings': 'FOV:90 SPEED:60 SMOOTHING:0 RANDOMNESS:0 ONLY_ON_ROTATE:FALSE', 'start_ms': 1794663905011, 'end_ms': 1794664428203, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, vs the pvp bot (8:51), blatant; no end marker, end = last window'},
     {'mark_id': 'm1cde4c02', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Kill Aura', 'settings': 'HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 ROTATIONS:SNAP', 'start_ms': 1794526977277, 'end_ms': 1794527395277, 'interrupted': False, 'multi_module': False, 'note': 'friend opponent (6:58)'},
     {'mark_id': 'm3ed146aa', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Triggerbot', 'settings': 'DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100', 'start_ms': 1794527493331, 'end_ms': 1794527619331, 'interrupted': False, 'multi_module': False, 'note': 'friend opponent (2:06)'},
     {'mark_id': 'm4bc0a6be', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794527828791, 'end_ms': 1794528255791, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP vs friends (7:07)'},
@@ -137,6 +141,13 @@ IDS = [
     {'mark_id': 'm39bac321', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794606916259, 'end_ms': 1794607433259, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP vs the mineflayer pvp bot (8:37)'},
     {'mark_id': 'm0dfe272f', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794608176235, 'end_ms': 1794608776235, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP vs the mineflayer pvp bot (10:00)'},
     {'mark_id': 'mb1f0f01e', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794613672156, 'end_ms': 1794614293156, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP vs the mineflayer pvp bot (10:21)'},
+    {'mark_id': 'm4ca53577', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Kill Aura', 'settings': 'HUMANIZED:TRUE REACH:2.9 MISS_CHANCE:3 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100', 'start_ms': 1794689593622, 'end_ms': 1794690206620, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, vs the pvp bot (10:22), realistic; no end marker, end = last window'},
+    {'mark_id': 'm051a9a47', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Triggerbot', 'settings': 'DELAY_MIN_MS:30 DELAY_MAX_MS:80 MISS_CHANCE:5 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100', 'start_ms': 1794686607799, 'end_ms': 1794687248620, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, vs the pvp bot (10:49), subtle; no end marker, end = last window'},
+    {'mark_id': 'm4f107966', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Triggerbot', 'settings': 'DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100', 'start_ms': 1794687381968, 'end_ms': 1794687890620, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, vs the pvp bot (8:38), blatant; no end marker, end = last window'},
+    {'mark_id': 'm1ca0279f', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Triggerbot', 'settings': 'DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100', 'start_ms': 1794688143043, 'end_ms': 1794688688620, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, vs the pvp bot (9:15), realistic; no end marker, end = last window'},
+    {'mark_id': 'm61b69c50', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Triggerbot', 'settings': 'DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100', 'start_ms': 1794688929672, 'end_ms': 1794689370620, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, vs the pvp bot (7:30), realistic; no end marker, end = last window'},
+    {'mark_id': 'm1c38d70b', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794660227452, 'end_ms': 1794660746203, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (8:46); no end marker, end = last window'},
+    {'mark_id': 'ma90a44db', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794660900922, 'end_ms': 1794661484203, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot, bot spams shield (9:51); no end marker, end = last window'},
 ]
 
 SELECTED_DEFAULT = ["Aim Assist", "Silent Aim", "Kill Aura", "Triggerbot"]
@@ -314,6 +325,10 @@ def label_windows(w: pd.DataFrame, ids: pd.DataFrame, args) -> pd.DataFrame:
     if args.roles:
         role = _num(w, "role")
         mark(role.notna() & ~role.isin(args.roles), "role not in --roles")
+    if args.schema4_features:
+        # schema 4 features are NaN on older windows: mixing schema 3 legit with schema 4 cheat would let the model
+        # learn "has schema 4 data = cheat". With the flag on, both classes come from schema 4 windows only.
+        mark(_num(w, "schema_version").fillna(0) < 4, "not schema 4 (--schema4-features)")
     trim = args.trim_s * 1000.0
     ws = epoch
     we = epoch + w["win_len_ms"].fillna(7000.0)
@@ -618,15 +633,38 @@ def run_module(name, cheat, legit, ids, sets, seed) -> dict:
 
 # ---------------------------------------------------------------- report
 
-def feature_sets(d: pd.DataFrame) -> dict[str, list[str]]:
+USE_SCHEMA4 = False  # set by --schema4-features
+
+
+# Schema 4 features that measure the connection, not the player: they track ping and network jitter, which differ
+# between recording days and servers (like ping_ms). Never in core; they join the shortcut-only set instead.
+S4_NETWORK = ["bt_rtt_mean", "bt_rtt_std", "bt_pong_burst_frac", "bt_gap_p95_ms", "bt_burst_mean"]
+# Each module only sees the schema 4 families that describe it. Otherwise it learns whatever else differed
+# between its sessions and the legit ones (e.g. shield-axe swaps because one legit bot spammed shield).
+S4_FAMILIES = {
+    "aim assist": ("aim_",), "silent aim": ("aim_",), "kill aura": ("aim_", "trig_", "click_"),
+    "triggerbot": ("trig_", "click_"), "backtrack": ("bt_",), "jump reset": ("jr_",), "auto jump reset": ("jr_",),
+    "auto w tap": ("wtap_",), "auto w-tap": ("wtap_",), "autoclicker": ("click_",), "criticals": ("jr_", "click_"),
+    "auto crystal": ("crystal_",), "anchor macro": ("anchor_",),
+    "auto shield breaker": ("shield_",), "auto shield break": ("shield_",),
+}
+
+
+def feature_sets(d: pd.DataFrame, module: str = "") -> dict[str, list[str]]:
     from grimml_train.features.extract import FEATURE_COLUMNS
+    from grimml_train.features.schema4 import SCHEMA4_FEATURES
 
     base = [c for c in FEATURE_COLUMNS if c in d.columns]
+    if USE_SCHEMA4:
+        # the detector computes these live too (detector/.../Schema4Features, checked against Python every build)
+        fam = S4_FAMILIES.get(module.lower())
+        base += [c for c in SCHEMA4_FEATURES if c in d.columns and c not in S4_NETWORK
+                 and (fam is None or c.startswith(fam))]
     if "win_len_ms" in d.columns and "win_len_ms" not in base:
         base = base + ["win_len_ms"]
     ok = [c for c in base if d[c].notna().any()]
     core = [c for c in ok if c not in CORE_DROP and c != "win_len_ms"]
-    short = [c for c in SHORTCUT_COLS if c in d.columns and d[c].notna().any()]
+    short = [c for c in SHORTCUT_COLS + (S4_NETWORK if USE_SCHEMA4 else []) if c in d.columns and d[c].notna().any()]
     return {"all": ok, "core": core, "shortcut": short or ok[:1]}
 
 
@@ -767,6 +805,8 @@ def parse_args(argv=None):
     p.add_argument("--chunk-gap-s", type=float, default=7.0, help="drop windows this close after a chunk boundary")
     p.add_argument("--legit-ids", default="", help="comma list of legit mark ids to use (default: all non-excluded)")
     p.add_argument("--include-interrupted-legit", action="store_true")
+    p.add_argument("--schema4-features", action="store_true",
+                   help="also train on the schema 4 feature families (docs/schema4.md); needs schema 4 recordings")
     p.add_argument("--drop-ids", default="", help="comma list of mark ids (cheat or legit) to leave out, e.g. every afk-alt session")
     p.add_argument("--roles", default="1,2", help="window roles to keep (1 attacker, 2 defender, 3 bystander); '' = all")
     p.add_argument("--keep-hard-invalid", dest="hard_invalid", action="store_const", const="keep",
@@ -813,6 +853,8 @@ def parse_args(argv=None):
 
 def main(argv=None) -> int:
     args = parse_args(argv)
+    global USE_SCHEMA4
+    USE_SCHEMA4 = bool(args.schema4_features)
     ids = id_table(args)
     folder = Path(args.folder)
     if args.list:
@@ -886,7 +928,11 @@ def main(argv=None) -> int:
     sets = feature_sets(d)
     legit = d[d["label"] == LEGIT]
     if legit.empty:
-        print("No usable legit windows: drop the legit recording files (mark med3d6926) into the folder.")
+        if args.schema4_features:
+            print("No usable legit windows: --schema4-features uses schema 4 recordings only, and no legit schema 4 "
+                  "session is in the table yet. Record legit sessions with the new recorder and add them to IDS.")
+        else:
+            print("No usable legit windows: drop the legit recording files into the folder and add them to IDS.")
         return 1
     if not (legit["has_epoch"].any()):
         notes.append("legit/cheat files have no wall-clock time (old GML1): edge trimming was skipped")
@@ -920,7 +966,7 @@ def main(argv=None) -> int:
                       f"{stats.get('legit_before')}->{stats.get('legit_after')} legit windows")
             else:
                 print(f"training {m}: {len(cheat)} cheat windows")
-            r = run_module(m, cheat, leg, ids, sets, args.seed)
+            r = run_module(m, cheat, leg, ids, feature_sets(d, m), args.seed)
             if stats:
                 r["matched"] = stats
             o = other[other["id_module"] == m]

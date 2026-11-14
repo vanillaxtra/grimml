@@ -49,11 +49,12 @@ public final class PacketListener extends PacketListenerAbstract {
             return;
         }
         long nanos = System.nanoTime();
+        buf.noteInbound(nanos);
         var type = event.getPacketType();
         if (WrapperPlayClientPlayerFlying.isFlying(type)) {
             flying.onFlying(event, buf, clock, nanos);
         } else if (type == PacketType.Play.Client.PLAYER_INPUT) {
-            input.onInput(event, buf);
+            input.onInput(event, buf, clock, nanos);
         } else if (type == PacketType.Play.Client.CLIENT_TICK_END) {
             buf.markClientTickEnd();
         } else if (type == PacketType.Play.Client.INTERACT_ENTITY) {
@@ -92,7 +93,9 @@ public final class PacketListener extends PacketListenerAbstract {
         }
         switch (type) {
             case ENTITY_VELOCITY, ENTITY_STATUS, SET_SLOT, WINDOW_ITEMS, OPEN_WINDOW,
-                 PLAYER_POSITION_AND_LOOK, HELD_ITEM_CHANGE -> {
+                 PLAYER_POSITION_AND_LOOK, HELD_ITEM_CHANGE,
+                 ENTITY_RELATIVE_MOVE, ENTITY_RELATIVE_MOVE_AND_ROTATION, ENTITY_TELEPORT, ENTITY_POSITION_SYNC,
+                 SPAWN_ENTITY, PING, KEEP_ALIVE -> {
             }
             default -> {
                 return;
@@ -118,6 +121,10 @@ public final class PacketListener extends PacketListenerAbstract {
             case OPEN_WINDOW -> inventory.onOpen(event, buf, clock, nanos);
             case PLAYER_POSITION_AND_LOOK -> outgoing.onTeleport(event, buf, clock, nanos);
             case HELD_ITEM_CHANGE -> outgoing.onHeldSlot(event, buf);
+            case ENTITY_RELATIVE_MOVE, ENTITY_RELATIVE_MOVE_AND_ROTATION, ENTITY_TELEPORT, ENTITY_POSITION_SYNC ->
+                    outgoing.onEntityMove(event, buf, clock, nanos, type);
+            case SPAWN_ENTITY -> outgoing.onSpawn(event, buf, clock, nanos);
+            case PING, KEEP_ALIVE -> outgoing.onRttSent(event, buf, clock, nanos, type);
             default -> {
             }
         }

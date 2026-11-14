@@ -40,9 +40,10 @@ import java.util.concurrent.TimeUnit;
  */
 public final class GrimMLDetector extends JavaPlugin implements Listener {
 
-    private static final int ATTACK_CAP = 256;
+    private static final int ATTACK_CAP = 2048; // per-player event ring (schema 4 events, ~60-80/s in a fight)
 
     private final Map<UUID, PlayerTrack> tracks = new ConcurrentHashMap<>();
+    private final Map<Integer, PlayerTrack> byEntity = new ConcurrentHashMap<>();
     private final Map<UUID, Boolean> exempt = new ConcurrentHashMap<>();
     private final Map<UUID, String> names = new ConcurrentHashMap<>();
     private volatile int tick;
@@ -73,6 +74,8 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
         }
         Bukkit.getScheduler().runTaskTimer(this, () -> tick = Bukkit.getCurrentTick(), 0L, 1L);
         Bukkit.getScheduler().runTaskTimer(this, this::refreshExempt, 20L, 20L);
+        Bukkit.getScheduler().runTaskTimer(this, this::sample, 2L, 2L);
+        hookGrimTransactions();
 
         tap = PacketEvents.getAPI().getEventManager().registerListener(new PacketTap(tracks, () -> tick));
 
@@ -148,7 +151,10 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
     // ---- players
 
     private void add(Player p) {
-        tracks.put(p.getUniqueId(), new PlayerTrack(p.getEntityId(), frameCap, ATTACK_CAP));
+        PlayerTrack t = new PlayerTrack(p.getEntityId(), frameCap, ATTACK_CAP);
+        t.peers = byEntity::get;
+        tracks.put(p.getUniqueId(), t);
+        byEntity.put(p.getEntityId(), t);
         names.put(p.getUniqueId(), p.getName());
         exempt.put(p.getUniqueId(), isExempt(p));
     }
@@ -162,9 +168,110 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
     public void onQuit(PlayerQuitEvent e) {
         UUID id = e.getPlayer().getUniqueId();
         tracks.remove(id);
+        byEntity.remove(e.getPlayer().getEntityId());
         exempt.remove(id);
         names.remove(id);
         grim.forget(id);
+    }
+
+    // ---- schema 4 main-thread state (the recorder's StateSampler + DamageListener equivalents)
+
+    private static final long OPPONENT_MEMORY_NANOS = 5_000_000_000L;
+
+    /** Every 2 ticks: hotbar categories, gliding, Grim user, and each player's opponent (hit / hit by / nearest in 6). */
+    private void sample() {
+        long now = System.nanoTime();
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            PlayerTrack t = tracks.get(p.getUniqueId());
+            if (t == null) {
+                continue;
+            }
+            int[] cats = new int[9];
+            var inv = p.getInventory();
+            for (int i = 0; i < 9; i++) {
+                cats[i] = category(inv.getItem(i));
+            }
+            t.hotbarCats = cats;
+            t.offCat = category(inv.getItemInOffHand());
+            t.setLive(PlayerTrack.L_GLIDING, p.isGliding());
+            if (t.grimUser == null) {
+                try {
+                    t.grimUser = ac.grim.grimac.api.GrimAPIProvider.get().getGrimUser(p.getUniqueId());
+                } catch (Throwable ignored) {
+                    // Grim not ready yet
+                }
+            }
+            int opp = 0;
+            int hit = t.lastTargetEntityId;
+            if (hit != 0 && now - t.lastHitPacketNanos < OPPONENT_MEMORY_NANOS && byEntity.containsKey(hit)) {
+                opp = hit;
+            }
+            int by = t.lastAttackerEntityId;
+            if (opp == 0 && by != 0 && now - t.lastHurtNanos < OPPONENT_MEMORY_NANOS && byEntity.containsKey(by)) {
+                opp = by;
+            }
+            int nearby = 0;
+            int nearest = 0;
+            double best = Double.MAX_VALUE;
+            var loc = p.getLocation();
+            for (Player o : p.getWorld().getPlayers()) {
+                if (o == p || o.getGameMode() == GameMode.SPECTATOR) {
+                    continue;
+                }
+                double d = o.getLocation().distanceSquared(loc);
+                if (d <= 36.0) {
+                    nearby++;
+                    if (d < best) {
+                        best = d;
+                        nearest = o.getEntityId();
+                    }
+                }
+            }
+            t.opponentEntityId = opp != 0 ? opp : nearest;
+            t.nearby = nearby;
+        }
+    }
+
+    private static int category(org.bukkit.inventory.ItemStack item) {
+        if (item == null) {
+            return 0;
+        }
+        String n = item.getType().name();
+        if (n.endsWith("_AXE")) {
+            return PlayerTrack.CAT_AXE;
+        }
+        return n.equals("SHIELD") ? PlayerTrack.CAT_SHIELD : 0;
+    }
+
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
+    public void onDamage(org.bukkit.event.entity.EntityDamageEvent e) {
+        if (!(e.getEntity() instanceof Player victim)) {
+            return;
+        }
+        PlayerTrack t = tracks.get(victim.getUniqueId());
+        if (t == null) {
+            return;
+        }
+        t.lastHurtNanos = System.nanoTime();
+        if (e instanceof org.bukkit.event.entity.EntityDamageByEntityEvent be && be.getDamager() instanceof Player attacker) {
+            t.lastAttackerEntityId = attacker.getEntityId();
+        }
+    }
+
+    /** Grim consumes its transaction replies before other listeners see them: take the pong from Grim's event. */
+    private void hookGrimTransactions() {
+        try {
+            var api = ac.grim.grimac.api.GrimAPIProvider.get();
+            api.getEventBus().get(ac.grim.grimac.api.event.events.GrimTransactionReceivedEvent.class)
+                    .onTransactionReceived(api.getGrimPlugin(this), (user, id, flag, time) -> {
+                        PlayerTrack t = tracks.get(user.getUniqueId());
+                        if (t != null) {
+                            t.pong(tick, System.nanoTime(), id);
+                        }
+                    });
+        } catch (Throwable t) {
+            getLogger().warning("could not hook Grim transactions (backtrack and jump-reset features will be empty): " + t);
+        }
     }
 
     private boolean isExempt(Player p) {

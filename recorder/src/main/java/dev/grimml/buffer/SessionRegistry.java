@@ -28,6 +28,7 @@ public final class SessionRegistry {
             int entityId = player.getEntityId();
             PlayerRingBuffer buf = new PlayerRingBuffer(sessionId, anonId, entityId, config.ringCapacity(), config.eventRingCapacity(), clock);
             buf.markOnly = config.markOnly();
+            buf.peers = this::byEntityId;
             entities.put(entityId, u, anonId);
             return buf;
         });

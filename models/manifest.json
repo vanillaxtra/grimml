@@ -1,7 +1,7 @@
 {
-  "version": 1,
-  "published": "2026-11-14 00:59 UTC",
-  "source_run": "20261114_003501",
+  "version": 2,
+  "published": "2026-11-14 21:54 UTC",
+  "source_run": "20261114_215415",
   "models": [
     {
       "module": "Aim Assist",
@@ -9,12 +9,25 @@
       "description": "ML model for Aim Assist (experimental)",
       "model": "aim_assist.txt",
       "meta": "aim_assist.json",
-      "enabled": false,
+      "enabled": true,
+      "alert_share": 0.38,
+      "held_out_core_auc": 0.968,
+      "cheat_sessions_caught": "4/4",
+      "model_sha256": "2d35dd39b6e48c9a48452a77cb123f2ea45db3ad9f49ac08f7136fba99ed475b",
+      "meta_sha256": "6ba4601f564dc75ed1a389015716be903b106932e0027c230e2072c1b7b7a6a5"
+    },
+    {
+      "module": "Triggerbot",
+      "check": "MLTriggerbot",
+      "description": "ML model for Triggerbot (experimental)",
+      "model": "triggerbot.txt",
+      "meta": "triggerbot.json",
+      "enabled": true,
       "alert_share": 0.21,
-      "held_out_core_auc": 0.519,
-      "cheat_sessions_caught": "0/2",
-      "model_sha256": "5bed3071485801b6f24a7ffa2206e0acde51d24d381b2213f8ab1922888470b6",
-      "meta_sha256": "8c006081c4dd1828c68c595589191aa267a0dee21be5c9c7ae4780ddeca3441c"
+      "held_out_core_auc": 0.919,
+      "cheat_sessions_caught": "4/4",
+      "model_sha256": "42c18756ebf2d7b06d50e61980d1b7ec7b8267512e3414f7634216f6751cba1b",
+      "meta_sha256": "7a3e7097066c2e253102e041b482b763bfb4fe7007dac042a27eb9950ae85704"
     },
     {
       "module": "Kill Aura",
@@ -41,19 +54,6 @@
       "cheat_sessions_caught": "3/4",
       "model_sha256": "af8419a77655806f6ef9a71767aea85bc66db248ccd450ef50a8de49b9650cf7",
       "meta_sha256": "d003c9e57a96272b5026f6ac3385718ed2dcfeeeb4c95be9169ea5f70a3db29c"
-    },
-    {
-      "module": "Triggerbot",
-      "check": "MLTriggerbot",
-      "description": "ML model for Triggerbot (experimental)",
-      "model": "triggerbot.txt",
-      "meta": "triggerbot.json",
-      "enabled": false,
-      "alert_share": 0.22,
-      "held_out_core_auc": 0.629,
-      "cheat_sessions_caught": "0/4",
-      "model_sha256": "af446ba5fee4056e8204197f5d89082a244b59c8474b95f9ee46cb4b35ec3e3a",
-      "meta_sha256": "2d7e24528e5de5df2adaea2592a6ed23c91bf74a73f24379abac51187159c299"
     }
   ]
 }

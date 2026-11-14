@@ -14,6 +14,7 @@ import pandas as pd
 from grimml_train.config import TrainConfig
 from grimml_train.decode.reader import decode_file
 from grimml_train.features.extract import features_from_decoded
+from grimml_train.features.schema4 import schema4_features
 
 LEGACY_INGEST = Path(__file__).resolve().parents[1] / "out" / "ingest"
 
@@ -127,6 +128,7 @@ def _process_path(args: tuple[str, bool, str]) -> dict:
     if "label_source" in win:
         win["header_label_source"] = win.pop("label_source")
     win.update(feat)
+    win.update(schema4_features(decoded))  # NaN on schema 1-3 except the click_* timing features
     win["path"] = path_str
     tag, folder = path_meta_str(path_str, os.path.normcase(os.path.abspath(root)))
     win["server_tag"] = tag

@@ -24,8 +24,29 @@ BUCKET = 23
 ELYTRA = 24
 STATUS = 25
 MARKER_KV = 26
+# schema 4 (docs/schema4.md)
+INPUT = 27
+MOVE_STATE = 28
+ENTITY_SENT = 29
+RTT_SENT = 30
+ENTITY_SPAWN = 31
 
-KNOWN = frozenset(range(1, 27))
+KNOWN = frozenset(range(1, 32))
+
+# schema 4 extension tags
+FX_ROT_EXACT = 1
+FX_CLIENT_TICK = 2
+FX_OPPONENT = 3
+FX_PACKET_TIMING = 4
+EX_CLIENT_TICK = 1
+EX_EXTRA = 2
+
+OPP_ON_GROUND = 1
+OPP_SPRINT = 1 << 1
+OPP_SNEAK = 1 << 2
+OPP_BLOCKING = 1 << 3
+OPP_GLIDING = 1 << 4
+OPP_USING = 1 << 5
 
 EVENT_NAMES = {
     ROTATION: "rotation",
@@ -54,6 +75,11 @@ EVENT_NAMES = {
     ELYTRA: "elytra",
     STATUS: "status",
     MARKER_KV: "marker_kv",
+    INPUT: "input",
+    MOVE_STATE: "move_state",
+    ENTITY_SENT: "entity_sent",
+    RTT_SENT: "rtt_sent",
+    ENTITY_SPAWN: "entity_spawn",
 }
 
 F_ON_GROUND = 1

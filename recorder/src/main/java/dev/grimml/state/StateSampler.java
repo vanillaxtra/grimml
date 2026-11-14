@@ -163,6 +163,49 @@ public final class StateSampler {
         buf.attrGravity = attr(player, attrGravity);
         packEffects(player, buf);
         sampleGrim(player, buf);
+        selectOpponent(player, buf);
+    }
+
+    private static final long OPPONENT_MEMORY_NANOS = 5_000_000_000L;
+    private static final double NEARBY_RANGE = 6.0;
+
+    /**
+     * Schema 4 OPPONENT tag: the player this one hit in the last 5 s, else the one who hit them, else the nearest
+     * player within 6 blocks. Main thread, staggered like the rest of the sampler.
+     */
+    private void selectOpponent(Player player, PlayerRingBuffer buf) {
+        long now = System.nanoTime();
+        int opp = 0;
+        int hit = buf.lastTargetEntityId;
+        if (hit != 0 && now - buf.lastHitPacketNanos < OPPONENT_MEMORY_NANOS && registry.byEntityId(hit) != null) {
+            opp = hit;
+        }
+        int by = buf.lastAttackerEntityId;
+        if (opp == 0 && by != 0 && now - buf.lastHurtNanos < OPPONENT_MEMORY_NANOS && registry.byEntityId(by) != null) {
+            opp = by;
+        }
+        int nearby = 0;
+        double best = Double.MAX_VALUE;
+        int nearest = 0;
+        var loc = player.getLocation();
+        for (Player other : player.getWorld().getPlayers()) {
+            if (other == player || other.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
+                continue;
+            }
+            double d = other.getLocation().distanceSquared(loc);
+            if (d <= NEARBY_RANGE * NEARBY_RANGE) {
+                nearby++;
+                if (d < best) {
+                    best = d;
+                    nearest = other.getEntityId();
+                }
+            }
+        }
+        if (opp == 0) {
+            opp = nearest;
+        }
+        buf.opponentEntityId = opp;
+        buf.nearbyPlayers = nearby;
     }
 
     private void sampleGrim(Player player, PlayerRingBuffer buf) {
@@ -174,6 +217,7 @@ public final class StateSampler {
             if (user == null) {
                 return;
             }
+            buf.grimUser = user;
             buf.lastAckTx = user.getLastTransactionReceived();
             buf.lastRttMs = user.getTransactionPing();
         } catch (Throwable t) {

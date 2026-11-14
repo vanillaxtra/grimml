@@ -25,6 +25,7 @@ public final class HeldSlotCapture {
         buf.inv.setHeld(to);
         int tick = clock.tick();
         int ord = buf.nextOrder(tick);
+        buf.resetCooldown(tick);
         int scroll = Math.abs(to - from) == 1 || (from == 0 && to == 8) || (from == 8 && to == 0) ? 1 : 0;
         buf.writeEvent(RecordTypes.HELD_SLOT, tick, clock.nsOffset(nanos), ord, nanos,
                 from, to | (scroll << 8), fromCat | (buf.inv.heldCat() << 8), fromId, buf.inv.heldId(), 0);

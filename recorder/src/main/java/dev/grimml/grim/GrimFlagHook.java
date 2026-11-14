@@ -37,6 +37,22 @@ public final class GrimFlagHook {
             api = GrimAPIProvider.get();
             grim = api.getGrimPlugin(plugin);
             EventBus bus = api.getEventBus();
+            // schema 4: Grim consumes its transaction replies before our PacketEvents listener sees them, so the
+            // pong half of each round trip comes from Grim. Fired on the player's netty thread (the ring's writer).
+            // No nextOrder: pongs never opened frame ticks in schema 3 recordings either.
+            bus.get(ac.grim.grimac.api.event.events.GrimTransactionReceivedEvent.class).onTransactionReceived(grim, (user, id, flag, time) -> {
+                try {
+                    PlayerRingBuffer buf = plugin.registry().get(user.getUniqueId());
+                    if (buf != null) {
+                        long nanos = System.nanoTime();
+                        int tick = clock.tick();
+                        buf.writeEvent(RecordTypes.RTT, tick, clock.nsOffset(nanos), buf.peekOrder(), nanos,
+                                id, buf.lastRttMs, 1, flag ? 1 : 0, 0, 0);
+                    }
+                } catch (Throwable ignored) {
+                    // never break Grim's packet handling
+                }
+            });
             bus.get(FlagEvent.class).onFlag(grim, (user, check, verbose, cancelled) -> {
                 try {
                     String name = check.getCheckName();

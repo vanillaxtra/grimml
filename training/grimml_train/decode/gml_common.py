@@ -10,12 +10,60 @@ from grimml_train.decode.varint import (
     read_i64,
     read_u16,
     read_u8,
+    read_uvarint,
     read_varint,
 )
 
 
 class UnknownRecordTypeError(ValueError):
     pass
+
+
+def read_ext(stream: BytesIO) -> dict[int, BytesIO]:
+    """Schema 4 extension block: uvarint byte length, then (u8 tag, uvarint len, payload) entries.
+    Unknown tags are kept but never required, so newer recorders stay readable."""
+    n = read_uvarint(stream)
+    if n > 65536:
+        raise TruncatedFileError(f"extension block of {n} bytes")
+    block = BytesIO(stream.read(n))
+    if len(block.getbuffer()) != n:
+        raise TruncatedFileError("extension block cut short")
+    out: dict[int, BytesIO] = {}
+    while block.tell() < n:
+        tag = read_u8(block)
+        ln = read_uvarint(block)
+        payload = block.read(ln)
+        if len(payload) != ln:
+            raise TruncatedFileError("extension entry cut short")
+        out[tag] = BytesIO(payload)
+    return out
+
+
+def _frame_ext(row: dict, ext: dict[int, BytesIO]) -> None:
+    rot = ext.get(R.FX_ROT_EXACT)
+    row["yaw_exact"] = read_f32(rot) if rot else None
+    row["pitch_exact"] = read_f32(rot) if rot else None
+    ct = ext.get(R.FX_CLIENT_TICK)
+    row["client_tick"] = read_varint(ct) if ct else None
+    opp = ext.get(R.FX_OPPONENT)
+    if opp:
+        row["opp_anon"] = read_i64(opp)
+        row["opp_dx_milli"] = read_varint(opp)
+        row["opp_dy_milli"] = read_varint(opp)
+        row["opp_dz_milli"] = read_varint(opp)
+        row["opp_yaw_centi"] = read_varint(opp)
+        row["opp_pose"] = read_u8(opp)
+        row["opp_state"] = read_u8(opp)
+        row["opp_block_ago_ms"] = read_varint(opp)
+        row["opp_hurt_ago_ms"] = read_varint(opp)
+        row["nearby_players"] = read_u8(opp)
+    else:
+        for k in ("opp_anon", "opp_dx_milli", "opp_dy_milli", "opp_dz_milli", "opp_yaw_centi", "opp_pose",
+                  "opp_state", "opp_block_ago_ms", "opp_hurt_ago_ms", "nearby_players"):
+            row[k] = None
+    pt = ext.get(R.FX_PACKET_TIMING)
+    row["max_gap_ms"] = read_varint(pt) if pt else None
+    row["burst"] = read_u8(pt) if pt else None
 
 
 def read_frames_v2(rec: BytesIO, window_key: str, schema_version: int) -> list[dict]:
@@ -60,6 +108,7 @@ def read_frames_v2(rec: BytesIO, window_key: str, schema_version: int) -> list[d
         fall = read_i32(rec)
         veh_type = read_i32(rec)
         veh_id = read_i32(rec)
+        ext = read_ext(rec) if schema_version >= 4 else None
         out.append(
             {
                 "window_key": window_key,
@@ -97,6 +146,8 @@ def read_frames_v2(rec: BytesIO, window_key: str, schema_version: int) -> list[d
                 "vehicle_id": veh_id,
             }
         )
+        if ext is not None:
+            _frame_ext(out[-1], ext)
     return out
 
 
@@ -104,11 +155,12 @@ def read_events_v2(rec: BytesIO, window_key: str, schema_version: int) -> tuple[
     events: list[dict] = []
     markers: list[dict] = []
     event_count = read_u16(rec)
-    if event_count > 8192:
+    if event_count > (65535 if schema_version >= 4 else 8192):
         raise TruncatedFileError(f"event_count {event_count} exceeds 8192")
     for _ in range(event_count):
         etype = read_u8(rec)
-        if etype not in R.KNOWN:
+        # schema 4 events all share one layout, so a type added later is read as "type_N" instead of failing
+        if etype not in R.KNOWN and schema_version < 4:
             raise UnknownRecordTypeError(f"unknown record type {etype}")
         tick = read_i32(rec)
         ns_off = read_i32(rec)
@@ -121,6 +173,7 @@ def read_events_v2(rec: BytesIO, window_key: str, schema_version: int) -> tuple[
         ee = read_i32(rec)
         ef = read_i32(rec)
         eping = read_u16(rec)
+        ext = read_ext(rec) if schema_version >= 4 else None
         name = R.EVENT_NAMES.get(etype, f"type_{etype}")
         row = {
             "window_key": window_key,
@@ -139,6 +192,13 @@ def read_events_v2(rec: BytesIO, window_key: str, schema_version: int) -> tuple[
             "f": ef,
             "ping_ms": eping,
         }
+        if ext is not None:
+            ct = ext.get(R.EX_CLIENT_TICK)
+            row["client_tick"] = read_varint(ct) if ct else None
+            x = ext.get(R.EX_EXTRA)
+            row["g"], row["h"], row["i"], row["j"] = (
+                (read_varint(x), read_varint(x), read_varint(x), read_varint(x)) if x else (0, 0, 0, 0)
+            )
         if etype == R.MARKER:
             action = eb & 0xFF
             source = (eb >> 8) & 0xFF

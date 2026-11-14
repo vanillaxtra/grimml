@@ -27,8 +27,30 @@ public final class RecordTypes {
     public static final byte ELYTRA = 24;
     public static final byte STATUS = 25;
     public static final byte MARKER_KV = 26;
+    // schema 4 (docs/schema4.md)
+    public static final byte INPUT = 27;
+    public static final byte MOVE_STATE = 28;
+    public static final byte ENTITY_SENT = 29;
+    public static final byte RTT_SENT = 30;
+    public static final byte ENTITY_SPAWN = 31;
 
-    public static final int TYPE_COUNT = 27;
+    public static final int TYPE_COUNT = 32;
+
+    // schema 4 extension tags
+    public static final int FX_ROT_EXACT = 1;
+    public static final int FX_CLIENT_TICK = 2;
+    public static final int FX_OPPONENT = 3;
+    public static final int FX_PACKET_TIMING = 4;
+    public static final int EX_CLIENT_TICK = 1;
+    public static final int EX_EXTRA = 2;
+
+    // OPPONENT state bits
+    public static final int OPP_ON_GROUND = 1;
+    public static final int OPP_SPRINT = 1 << 1;
+    public static final int OPP_SNEAK = 1 << 2;
+    public static final int OPP_BLOCKING = 1 << 3;
+    public static final int OPP_GLIDING = 1 << 4;
+    public static final int OPP_USING = 1 << 5;
 
     public static final int FLAG_SPRINT = 1;
     public static final int FLAG_SNEAK = 1 << 1;

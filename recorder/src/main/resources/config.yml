@@ -22,8 +22,10 @@ ring-capacity: 160
 
 # Per-player event ring (attacks flags clicks etc). Must hold every event of one window (~8s).
 # 128 was too small: busy fights filled it and the oldest events of the window were overwritten.
-# A window that still overflows is marked PARTIAL. Costs about 50 bytes per slot per online player.
-event-ring-capacity: 512
+# A window that still overflows is marked PARTIAL. Costs about 70 bytes per slot per online player.
+# Schema 4 records opponent movement, transactions and inputs too (~60-80 events/s in a fight), so values
+# below 1536 are raised to 1536.
+event-ring-capacity: 2048
 
 # Auto-pause recording when average MSPT exceeds this (0 = disabled).
 mspt-pause-threshold: 50.0

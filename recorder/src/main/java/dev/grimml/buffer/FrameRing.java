@@ -44,6 +44,14 @@ public final class FrameRing {
     public final int[] fallMilli;
     public final int[] vehicleType;
     public final int[] vehicleId;
+    // schema 4 extension fields (docs/schema4.md)
+    public final float[] yawExact;
+    public final float[] pitchExact;
+    public final boolean[] hasExactRot;
+    public final int[] clientTick;
+    public final long[] oppAnon;
+    public final int[] oppDx, oppDy, oppDz, oppYaw, oppBlockAgo, oppHurtAgo, maxGapMs;
+    public final byte[] oppPose, oppState, nearby, burst;
 
     private int write;
     private int count;
@@ -76,6 +84,22 @@ public final class FrameRing {
         this.fallMilli = new int[cap];
         this.vehicleType = new int[cap];
         this.vehicleId = new int[cap];
+        this.yawExact = new float[cap];
+        this.pitchExact = new float[cap];
+        this.hasExactRot = new boolean[cap];
+        this.clientTick = new int[cap];
+        this.oppAnon = new long[cap];
+        this.oppDx = new int[cap];
+        this.oppDy = new int[cap];
+        this.oppDz = new int[cap];
+        this.oppYaw = new int[cap];
+        this.oppBlockAgo = new int[cap];
+        this.oppHurtAgo = new int[cap];
+        this.maxGapMs = new int[cap];
+        this.oppPose = new byte[cap];
+        this.oppState = new byte[cap];
+        this.nearby = new byte[cap];
+        this.burst = new byte[cap];
     }
 
     public void write(
@@ -84,7 +108,8 @@ public final class FrameRing {
             int fl, int poseVal,
             int slot, int hCat, int hId, int oCat, int oId,
             int pktCount, int pingMs, int jitterMs, int ack,
-            int groundY, int fall, int vehType, int vehId
+            int groundY, int fall, int vehType, int vehId,
+            Ext ext
     ) {
         int i = write;
         int s = seq.get(i);
@@ -113,6 +138,22 @@ public final class FrameRing {
         fallMilli[i] = fall;
         vehicleType[i] = vehType;
         vehicleId[i] = vehId;
+        yawExact[i] = ext.yawExact;
+        pitchExact[i] = ext.pitchExact;
+        hasExactRot[i] = ext.hasExactRot;
+        clientTick[i] = ext.clientTick;
+        oppAnon[i] = ext.oppAnon;
+        oppDx[i] = ext.oppDx;
+        oppDy[i] = ext.oppDy;
+        oppDz[i] = ext.oppDz;
+        oppYaw[i] = ext.oppYaw;
+        oppBlockAgo[i] = ext.oppBlockAgo;
+        oppHurtAgo[i] = ext.oppHurtAgo;
+        maxGapMs[i] = ext.maxGapMs;
+        oppPose[i] = (byte) ext.oppPose;
+        oppState[i] = (byte) ext.oppState;
+        nearby[i] = (byte) Math.min(ext.nearby, 127);
+        burst[i] = (byte) Math.min(ext.burst, 127);
         seq.set(i, (s | 1) + 1);
         write = (i + 1) % cap;
         if (count < cap) {
@@ -163,6 +204,22 @@ public final class FrameRing {
         out.fallMilli = fallMilli[i];
         out.vehicleType = vehicleType[i];
         out.vehicleId = vehicleId[i];
+        out.x.yawExact = yawExact[i];
+        out.x.pitchExact = pitchExact[i];
+        out.x.hasExactRot = hasExactRot[i];
+        out.x.clientTick = clientTick[i];
+        out.x.oppAnon = oppAnon[i];
+        out.x.oppDx = oppDx[i];
+        out.x.oppDy = oppDy[i];
+        out.x.oppDz = oppDz[i];
+        out.x.oppYaw = oppYaw[i];
+        out.x.oppBlockAgo = oppBlockAgo[i];
+        out.x.oppHurtAgo = oppHurtAgo[i];
+        out.x.maxGapMs = maxGapMs[i];
+        out.x.oppPose = oppPose[i];
+        out.x.oppState = oppState[i];
+        out.x.nearby = nearby[i];
+        out.x.burst = burst[i];
         int s2 = seq.get(i);
         return s1 == s2 && (s2 & 1) == 0;
     }
@@ -172,5 +229,35 @@ public final class FrameRing {
         public int xMilli, yMilli, zMilli, yawCenti, pitchCenti;
         public short tickDur, ping, jitter;
         public byte order, pose, heldSlot, heldCat, offCat, packets;
+        public final Ext x = new Ext();
+    }
+
+    /** Schema 4 frame fields; one instance per writer, reused. oppAnon 0 = no opponent. */
+    public static final class Ext {
+        public float yawExact, pitchExact;
+        public boolean hasExactRot;
+        public int clientTick;
+        public long oppAnon;
+        public int oppDx, oppDy, oppDz, oppYaw, oppPose, oppState, oppBlockAgo = -1, oppHurtAgo = -1, nearby;
+        public int maxGapMs, burst;
+
+        public void copyFrom(Ext o) {
+            yawExact = o.yawExact;
+            pitchExact = o.pitchExact;
+            hasExactRot = o.hasExactRot;
+            clientTick = o.clientTick;
+            oppAnon = o.oppAnon;
+            oppDx = o.oppDx;
+            oppDy = o.oppDy;
+            oppDz = o.oppDz;
+            oppYaw = o.oppYaw;
+            oppPose = o.oppPose;
+            oppState = o.oppState;
+            oppBlockAgo = o.oppBlockAgo;
+            oppHurtAgo = o.oppHurtAgo;
+            nearby = o.nearby;
+            maxGapMs = o.maxGapMs;
+            burst = o.burst;
+        }
     }
 }

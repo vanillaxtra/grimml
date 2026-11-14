@@ -57,6 +57,13 @@ The main pipeline (`ingest`, `exclude_flagged_from_train`) does **not** have thi
 - `--match-activity` subsamples cheat and legit to equal window counts per (attack_count x event_count) cell, so "how busy the window was" cannot separate them (`--match-cols` changes the columns). Cheat test sessions are mostly continuous hitting, so unmatched shortcut-only scores are inflated by activity, not just by setup.
 - Read order: shortcut-only first. If it is high, the core number is not trustworthy. A held-out client with 1-3 segments is a hint, not a result.
 
+### Schema 4 recordings
+
+- The recorder now writes schema 4 (`GML4`, see `../docs/schema4.md`): exact rotation, the opponent's position and state every tick, client ticks, inputs, sprint toggles, transactions, opponent movement as sent to the client, crystal spawns and more, in extension blocks the decoder skips when it does not know a tag.
+- The 13 core features are identical on schema 3 and 4 windows, so old and new recordings train together.
+- `grimml_train/features/schema4.py` adds 44 features (aim assist, triggerbot, backtrack, jump reset, W-tap, autoclicker, crystal/anchor, shield breaker). They are NaN on old windows. Use them with `python prestige_quick.py --schema4-features`. The detector computes the same 44 features live (Java port checked against Python on real windows every build), so these models publish like any other.
+- With `--schema4-features` only schema 4 windows are used (cheat and legit), and each module only sees its own feature family (`S4_FAMILIES` in `prestige_quick.py`: Aim Assist gets `aim_*`, Triggerbot `trig_*`/`click_*`, Backtrack `bt_*`, ...). Connection features (`S4_NETWORK`: transaction RTT, packet gaps, bursts) measure ping, not the player, so they are never in core and join the shortcut-only set.
+
 ### Publishing to the detector
 
 - `python publish_models.py out_quick/<run> --enable "Kill Aura,Silent Aim"` copies that run's models into `../models`, sets each module's fight alert line above every held-out legit fight, writes `manifest.json` (version +1, sha256 sums), and switches on only the listed modules.

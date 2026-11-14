@@ -23,6 +23,17 @@ public final class DamageListener implements Listener {
         this.clock = clock;
     }
 
+    // schema 4: any damage starts hurt time (opponent hurtAgoMs), not only damage from players
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onAnyDamage(EntityDamageEvent event) {
+        if (event.getEntity() instanceof Player victim) {
+            PlayerRingBuffer b = plugin.registry().get(victim.getUniqueId());
+            if (b != null) {
+                b.lastHurtNanos = System.nanoTime();
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
         if (!(event.getEntity() instanceof Player victim)) {
@@ -40,6 +51,9 @@ public final class DamageListener implements Listener {
         boolean crit = event.isCritical();
         boolean blocked = event.getFinalDamage() < event.getDamage() && victim.isBlocking();
         Player attacker = event.getDamager() instanceof Player p ? p : null;
+        if (attacker != null) {
+            vbuf.lastAttackerEntityId = attacker.getEntityId();
+        }
         long attackerAnon = 0L;
         int weapon = ItemCategories.FIST;
         int fall = 0;

@@ -52,12 +52,14 @@ public final class CombatSnapshot {
     public final int[] fX, fY, fZ, fYaw, fPitch;
     public final short[] fDur, fPing, fJitter;
     public final byte[] fOrder, fPose, fSlot, fHeldCat, fOffCat, fPackets;
+    public final FrameRing.Ext[] fExt; // schema 4
 
     public int eventCount;
     public final byte[] eType, eOrder;
     public final int[] eTick, eNsOff, eB, eC, eD, eE, eF;
     public final long[] eNanos, eA;
     public final short[] ePing;
+    public final int[] eClientTick, eG, eH, eI, eJ; // schema 4
 
     private final FrameRing.FrameOut frameTmp = new FrameRing.FrameOut();
     private final EventRing.EventOut eventTmp = new EventRing.EventOut();
@@ -87,6 +89,10 @@ public final class CombatSnapshot {
         fHeldCat = new byte[frameCap];
         fOffCat = new byte[frameCap];
         fPackets = new byte[frameCap];
+        fExt = new FrameRing.Ext[frameCap];
+        for (int i = 0; i < frameCap; i++) {
+            fExt[i] = new FrameRing.Ext();
+        }
         eType = new byte[eventCap];
         eOrder = new byte[eventCap];
         eTick = new int[eventCap];
@@ -99,6 +105,11 @@ public final class CombatSnapshot {
         eNanos = new long[eventCap];
         eA = new long[eventCap];
         ePing = new short[eventCap];
+        eClientTick = new int[eventCap];
+        eG = new int[eventCap];
+        eH = new int[eventCap];
+        eI = new int[eventCap];
+        eJ = new int[eventCap];
     }
 
     public void reset() {
@@ -153,6 +164,7 @@ public final class CombatSnapshot {
             fFall[k] = frameTmp.fallMilli;
             fVehType[k] = frameTmp.vehicleType;
             fVehId[k] = frameTmp.vehicleId;
+            fExt[k].copyFrom(frameTmp.x);
         }
         EventRing er = buf.events;
         int ec = er.count();
@@ -191,6 +203,11 @@ public final class CombatSnapshot {
             eE[k] = eventTmp.e;
             eF[k] = eventTmp.f;
             ePing[k] = eventTmp.ping;
+            eClientTick[k] = eventTmp.clientTick;
+            eG[k] = eventTmp.g;
+            eH[k] = eventTmp.h;
+            eI[k] = eventTmp.i;
+            eJ[k] = eventTmp.j;
         }
         if (torn > 0 || eventsLost) {
             validity |= dev.grimml.format.RecordTypes.VALID_PARTIAL;

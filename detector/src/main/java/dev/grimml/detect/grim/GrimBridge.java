@@ -8,7 +8,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -98,14 +97,16 @@ public final class GrimBridge {
         double vl = check.flag(System.currentTimeMillis());
         int vlInt = (int) Math.round(vl);
         String format = s.alertFormat().isBlank() ? grimString(api, "alerts-format", FALLBACK_FORMAT) : s.alertFormat();
+        // inserted values are escaped so they can never open a tag of their own
+        MiniMessage mm = MiniMessage.miniMessage();
         String text = format
                 .replace("%prefix%", grimString(api, "prefix", FALLBACK_PREFIX))
-                .replace("%player%", playerName)
-                .replace("%check_name%", checkName)
-                .replace("%description%", description)
+                .replace("%player%", mm.escapeTags(playerName))
+                .replace("%check_name%", mm.escapeTags(checkName))
+                .replace("%description%", mm.escapeTags(description))
                 .replace("%experimental%", "*")
                 .replace("%vl%", Integer.toString(vlInt))
-                .replace("%verbose%", verbose);
+                .replace("%verbose%", mm.escapeTags(verbose));
         Component msg = colour(text);
 
         Bukkit.getScheduler().runTask(plugin, () -> {
@@ -145,11 +146,47 @@ public final class GrimBridge {
         }
     }
 
-    private static Component colour(String text) {
-        if (text.indexOf('<') >= 0 && text.indexOf('>') > text.indexOf('<') && text.indexOf('&') < 0) {
-            return MiniMessage.miniMessage().deserialize(text);
+    private static final String[] LEGACY_TAGS = new String[128];
+
+    static {
+        String[] colours = {"black", "dark_blue", "dark_green", "dark_aqua", "dark_red", "dark_purple", "gold", "gray",
+                "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white"};
+        for (int i = 0; i < 16; i++) {
+            LEGACY_TAGS["0123456789abcdef".charAt(i)] = "<" + colours[i] + ">";
         }
-        return LegacyComponentSerializer.legacyAmpersand().deserialize(text);
+        LEGACY_TAGS['k'] = "<obfuscated>";
+        LEGACY_TAGS['l'] = "<bold>";
+        LEGACY_TAGS['m'] = "<strikethrough>";
+        LEGACY_TAGS['n'] = "<underlined>";
+        LEGACY_TAGS['o'] = "<italic>";
+        LEGACY_TAGS['r'] = "<reset>";
+    }
+
+    /** Grim formats mix legacy '&' codes and MiniMessage tags (hover etc.): turn the codes into tags, then parse once. */
+    static Component colour(String text) {
+        return MiniMessage.miniMessage().deserialize(legacyToMini(text));
+    }
+
+    static String legacyToMini(String s) {
+        StringBuilder out = new StringBuilder(s.length() + 32);
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if ((c == '&' || c == '§') && i + 1 < s.length()) {
+                char k = Character.toLowerCase(s.charAt(i + 1));
+                if (k == '#' && i + 7 < s.length() && s.substring(i + 2, i + 8).matches("[0-9a-fA-F]{6}")) {
+                    out.append("<#").append(s, i + 2, i + 8).append('>');
+                    i += 7;
+                    continue;
+                }
+                if (k < 128 && LEGACY_TAGS[k] != null) {
+                    out.append(LEGACY_TAGS[k]);
+                    i++;
+                    continue;
+                }
+            }
+            out.append(c);
+        }
+        return out.toString();
     }
 
     // Grim-style embed; only to the url the server owner configured (theirs or Grim's)

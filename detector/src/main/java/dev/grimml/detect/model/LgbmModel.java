@@ -191,8 +191,18 @@ public final class LgbmModel {
         String[] p = s.trim().split(" ");
         double[] out = new double[p.length];
         for (int i = 0; i < p.length; i++) {
-            out[i] = Double.parseDouble(p[i]);
+            out[i] = number(p[i]);
         }
         return out;
+    }
+
+    /** LightGBM writes C-style "inf", "-inf" and "nan" (e.g. a split threshold on a feature that was infinite in training). */
+    static double number(String s) {
+        return switch (s.toLowerCase(java.util.Locale.ROOT)) {
+            case "inf", "+inf", "infinity" -> Double.POSITIVE_INFINITY;
+            case "-inf", "-infinity" -> Double.NEGATIVE_INFINITY;
+            case "nan", "-nan" -> Double.NaN;
+            default -> Double.parseDouble(s);
+        };
     }
 }
