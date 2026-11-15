@@ -19,13 +19,15 @@ public final class PlayerTrack {
     // live flags
     public static final int L_SPRINT = 1, L_SNEAK = 2, L_BLOCKING = 4, L_GLIDING = 8, L_USING = 16;
     // item categories (the recorder's ItemCategories numbers that the features look at)
-    public static final int CAT_AXE = 2, CAT_SHIELD = 8;
+    public static final int CAT_AXE = 2, CAT_MACE = 3, CAT_SPEAR = 4, CAT_SHIELD = 8;
+    /** Digging action STAB (spear jab), written as a BREAK event like the recorder does. */
+    public static final int DIG_STAB = 8;
 
     public final int entityId;
     private final int cap;
 
     // ---- frames
-    private final int[] fYaw, fPitch, fX, fZ, fFlags, fTick, fClientTick;
+    private final int[] fYaw, fPitch, fX, fY, fZ, fFlags, fTick, fClientTick;
     private final boolean[] fHasRot, fHasOpp;
     private final float[] fYawExact, fPitchExact;
     private final int[] fOppDx, fOppDy, fOppDz, fOppState, fOppBlockAgo, fOppHurtAgo, fMaxGap, fBurst;
@@ -72,6 +74,7 @@ public final class PlayerTrack {
         fPitch = new int[frameCap];
         fX = new int[frameCap];
         fZ = new int[frameCap];
+        fY = new int[frameCap];
         fFlags = new int[frameCap];
         fTick = new int[frameCap];
         fClientTick = new int[frameCap];
@@ -180,7 +183,8 @@ public final class PlayerTrack {
         int g = kind | (cooldownTicks(tick) << 8);
         lastTargetEntityId = targetId;
         lastHitPacketNanos = nanos;
-        event(Window4.ATTACK, tick, nanos, 0, targetId, 0, 0, g);
+        // c: held category << 8, as the recorder writes it (spear-mace features read the weapon from it)
+        event(Window4.ATTACK, tick, nanos, 0, targetId, cat(hotbarCats, heldSlot) << 8, 0, g);
         lastAttackNanos = nanos;
     }
 
@@ -213,9 +217,13 @@ public final class PlayerTrack {
         live(L_USING, true);
     }
 
-    /** Digging packet: RELEASE ends item use; SWAP_ITEM_WITH_OFFHAND is a hotbar_swap with c = held category. */
-    public synchronized void dig(int tick, long nanos, boolean release, boolean swap) {
+    /** Digging packet: RELEASE ends item use; SWAP_ITEM_WITH_OFFHAND is a hotbar_swap with c = held category;
+     *  STAB (1.21.11 spear jab, not an attack packet) is a BREAK event with a = 8. */
+    public synchronized void dig(int tick, long nanos, boolean release, boolean swap, boolean stab) {
         packet(tick);
+        if (stab) {
+            event(Window4.BREAK, tick, nanos, DIG_STAB, 0, 0, 0, 0);
+        }
         if (release) {
             live(L_USING | L_BLOCKING, false);
         }
@@ -323,6 +331,7 @@ public final class PlayerTrack {
         fPitch[i] = pitchCenti;
         fX[i] = xMilli;
         fZ[i] = zMilli;
+        fY[i] = yMilli;
         fFlags[i] = fl;
         fTick[i] = openTick;
         fClientTick[i] = clientTick;
@@ -386,6 +395,7 @@ public final class PlayerTrack {
             w4.tick[k] = fTick[i];
             w4.flags[k] = fFlags[i];
             w4.clientTick[k] = fClientTick[i];
+            w4.yMilli[k] = fY[i];
             w4.hasRot[k] = fHasRot[i];
             w4.yawExact[k] = fYawExact[i];
             w4.pitchExact[k] = fPitchExact[i];

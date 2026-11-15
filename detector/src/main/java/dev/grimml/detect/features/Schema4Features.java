@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public final class Schema4Features {
 
-    public static final String[] NAMES = {
+    private static final String[] BASE_NAMES = {
             "aim_err_yaw_abs_mean", "aim_err_yaw_abs_median", "aim_err_pitch_abs_mean", "aim_pull_share", "aim_pull_corr",
             "aim_track_lag_ticks", "aim_rot_step", "aim_offgrid_frac",
             "trig_on_target_frac", "trig_entry_to_click_ticks_mean", "trig_entry_to_click_ticks_std",
@@ -26,7 +26,10 @@ public final class Schema4Features {
             "click_gap_kurtosis", "click_gap_entropy", "click_double_frac",
             "crystal_breaks", "crystal_break_ms_mean", "crystal_break_ms_std", "anchor_clicks", "anchor_gap_ms_std",
             "shield_axe_swaps", "shield_axe_reaction_ms_mean", "shield_axe_reaction_ms_std",
+            "grid_off_frac", "grid_off_toward", "grid_off_away", "grid_toward_minus_away",
     };
+    // spear-mace family (SpearMace.java / spearmace.py), appended last so the indices above never move
+    public static final String[] NAMES = concat(BASE_NAMES, SpearMace.NAMES);
     private static final Map<String, Integer> INDEX = new HashMap<>();
 
     static {
@@ -40,6 +43,12 @@ public final class Schema4Features {
     static final double MIN_MOUSE_STEP = 0.2 * 0.2 * 0.2 * 8 * 0.15;
 
     private Schema4Features() {
+    }
+
+    private static String[] concat(String[] a, String[] b) {
+        String[] out = Arrays.copyOf(a, a.length + b.length);
+        System.arraycopy(b, 0, out, a.length, b.length);
+        return out;
     }
 
     public static int indexOf(String name) {
@@ -61,17 +70,23 @@ public final class Schema4Features {
         Arrays.fill(f.row, Double.NaN);
         f.w = w;
         f.click();
+        double[] sm = SpearMace.features(w);   // schema 3 carries these too (like click)
+        for (int k = 0; k < sm.length; k++) {
+            f.set(SpearMace.NAMES[k], sm[k]);
+        }
         if (!schema4) {
             return f.row;
         }
         f.aim = f.aimTrack();
         f.aimFeatures();
+        f.grid();
         f.trigger();
         f.backtrack();
         f.jumpReset();
         f.wtap();
         f.crystalAnchor();
         f.shield();
+        f.maceAim();
         return f.row;
     }
 
@@ -194,6 +209,49 @@ public final class Schema4Features {
             out[i] = a;
         }
         return out;
+    }
+
+    // ---------------------------------------------------------------- mouse grid (AimGrid)
+
+    private void grid() {
+        boolean[] has = new boolean[w.n];
+        double[] err = new double[w.n];
+        for (int i = 0; i < w.n; i++) {
+            if (aim[i] != null) {
+                has[i] = true;
+                err[i] = aim[i].errYaw;
+            }
+        }
+        double[] g = AimGrid.features(w, has, err);
+        for (int k = 0; k < AimGrid.NAMES.length; k++) {
+            set(AimGrid.NAMES[k], g[k]);
+        }
+    }
+
+    /** Aim error (yaw - the opponent's bearing) per frame, for the live AimGrid check. */
+    public static void aimErrors(Window4 w, boolean[] has, double[] err) {
+        Schema4Features f = new Schema4Features();
+        f.w = w;
+        Aim[] a = f.aimTrack();
+        for (int i = 0; i < w.n; i++) {
+            has[i] = a[i] != null;
+            err[i] = a[i] != null ? a[i].errYaw : Double.NaN;
+        }
+    }
+
+    private void maceAim() {
+        boolean[] has = new boolean[w.n];
+        double[] err = new double[w.n];
+        for (int i = 0; i < w.n; i++) {
+            if (aim[i] != null) {
+                has[i] = true;
+                err[i] = aim[i].errYaw;
+            }
+        }
+        double[] v = SpearMace.maceAim(w, has, err);
+        set("mace_snap_deg_mean", v[0]);
+        set("mace_snapback_frac", v[1]);
+        set("mace_aim_err_mean", v[2]);
     }
 
     // ---------------------------------------------------------------- aim

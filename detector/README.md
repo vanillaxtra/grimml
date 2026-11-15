@@ -68,3 +68,17 @@ Then commit and push `models/` (and the fixture). Servers pick it up on their ne
 `publish_models.py` only switches on the modules you list; the rest are published switched off.
 
 The repo is public, so anyone can read the published models and thresholds.
+
+## AimGrid check (no model needed)
+
+Real mouse rotation is a whole number of sensitivity steps (`(sens*0.6+0.2)^3 * 8 * 0.15` degrees, yaw and pitch).
+`AimGrid` learns each player's step from their own rotation (outside fights too), then runs a sequential test
+(CUSUM) on off-grid rotation while they fight. It alerts when the score reaches `aim-grid.alert-score` and the
+off-grid rotation leans toward the opponent, so zoom, cinematic camera and unusual mice (off-grid both ways)
+do not flag. Players whose rotation fits no grid (controllers, cinematic camera) are skipped. Settings: the
+`aim-grid` section of `config.yml`. `/gmld status <player>` shows a player's learned step and current score.
+
+Calibrated on recorded fights (training `aimgrid.py`, same code): legit fights never scored above 2.3; aim
+assist sessions reached 20 within 1.5-6 s once the step was known. The Java port is checked against Python on
+every build (`live_grid.txt`). The same grid measurement feeds the ML models as `grid_off_frac`,
+`grid_off_toward`, `grid_off_away`, `grid_toward_minus_away`.

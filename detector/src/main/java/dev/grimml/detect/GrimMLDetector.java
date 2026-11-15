@@ -65,8 +65,8 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
         store.loadLocal();
         grim = new GrimBridge(this, bridgeSettings());
         scanner = new Scanner(tracks, exempt, store::current,
-                (id, m, verbose) -> grim.flag(id, names.getOrDefault(id, id.toString()), m.checkName(), m.description(), verbose),
-                scanSettings(), ATTACK_CAP);
+                (id, check, description, verbose) -> grim.flag(id, names.getOrDefault(id, id.toString()), check, description, verbose),
+                scanSettings(), gridSettings(), ATTACK_CAP);
 
         getServer().getPluginManager().registerEvents(this, this);
         for (Player p : Bukkit.getOnlinePlayers()) {
@@ -115,6 +115,14 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
     private void checkForModels() {
         store.update(getConfig().getString("models.manifest-url", ""), set ->
                 Bukkit.getScheduler().runTask(this, () -> getLogger().info("Now detecting with models v" + set.version())));
+    }
+
+    private Scanner.GridSettings gridSettings() {
+        var c = getConfig();
+        return new Scanner.GridSettings(c.getBoolean("aim-grid.enabled", true),
+                c.getDouble("aim-grid.legit-off-rate", 0.01), c.getDouble("aim-grid.cheat-off-rate", 0.10),
+                c.getDouble("aim-grid.alert-score", 20.0), c.getDouble("aim-grid.min-toward-bias", 0.05),
+                c.getLong("aim-grid.alert-cooldown-ms", 15_000L));
     }
 
     private Scanner.Settings scanSettings() {
@@ -240,6 +248,12 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
         if (n.endsWith("_AXE")) {
             return PlayerTrack.CAT_AXE;
         }
+        if (n.endsWith("_SPEAR")) {
+            return PlayerTrack.CAT_SPEAR;
+        }
+        if (n.equals("MACE")) {
+            return PlayerTrack.CAT_MACE;
+        }
         return n.equals("SHIELD") ? PlayerTrack.CAT_SHIELD : 0;
     }
 
@@ -305,6 +319,14 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
                     sender.sendMessage("§7 - §f" + m.checkName() + (m.enabled() ? " §aon" : " §coff")
                             + String.format(" §7window>=%.2f, alert at %.0f%% of %d+ windows", m.windowThreshold(), m.alertShare() * 100, m.minWindows()));
                 }
+                Scanner.GridSettings g = gridSettings();
+                sender.sendMessage("§7 - §f" + Scanner.GridSettings.CHECK + (g.enabled() ? " §aon" : " §coff")
+                        + String.format(" §7alert at score %.0f, toward bias >= %.2f", g.h(), g.minBias()));
+                if (args.length > 1) {
+                    Player target = Bukkit.getPlayerExact(args[1]);
+                    String st = target == null ? null : scanner.gridStatus(target.getUniqueId());
+                    sender.sendMessage("§7   " + args[1] + ": " + (st == null ? "no data yet" : st));
+                }
                 sender.sendMessage(String.format("§7tracked %d, windows scored %d, flags %d, last scan %.2f ms",
                         tracks.size(), scanner.windowsScored.get(), scanner.flagsRaised.get(), scanner.lastRunMs));
                 if (!store.lastError().isEmpty()) {
@@ -314,7 +336,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
             case "reload" -> {
                 reloadConfig();
                 grim.settings(bridgeSettings());
-                scanner.settings(scanSettings());
+                scanner.settings(scanSettings(), gridSettings());
                 sender.sendMessage("§bGrimML §7config reloaded (window size and scan interval need a restart).");
             }
             case "update" -> {

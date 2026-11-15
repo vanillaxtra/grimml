@@ -1,5 +1,6 @@
 package dev.grimml.detect.scan;
 
+import dev.grimml.detect.features.AimGrid;
 import dev.grimml.detect.features.Features;
 import dev.grimml.detect.features.Schema4Features;
 import dev.grimml.detect.features.Window4;
@@ -25,10 +26,25 @@ import java.util.function.Supplier;
 public final class Scanner implements Runnable {
 
     public interface Sink {
-        void flag(UUID player, ModuleModel module, String verbose);
+        void flag(UUID player, String checkName, String description, String verbose);
     }
 
     public record Settings(int frameCap, int minAttacks, int minFrames, long fightGapMs) {
+    }
+
+    /** The AimGrid check (features/AimGrid.Live): a fight-level sequential test on off-grid mouse rotation. */
+    public record GridSettings(boolean enabled, double p0, double p1, double h, double minBias, long cooldownMs) {
+        public static final String CHECK = "AimGrid";
+        public static final String DESCRIPTION = "Rotation off the player's mouse sensitivity grid, pulling toward the opponent";
+    }
+
+    private static final class Grid {
+        final AimGrid.Live live;
+        long lastAlertNanos;
+
+        Grid(GridSettings g) {
+            live = new AimGrid.Live(g.p0(), g.p1(), g.h(), g.minBias());
+        }
     }
 
     private static final class Fight {
@@ -46,14 +62,19 @@ public final class Scanner implements Runnable {
     private final Window4 w4;
     private final double[] combined = new double[Features.NAMES.length + Schema4Features.NAMES.length];
     private final Map<UUID, Map<String, Fight>> fights = new HashMap<>();
+    private final Map<UUID, Grid> grids = new java.util.concurrent.ConcurrentHashMap<>();
+    private boolean[] hasAim;
+    private double[] errYaw;
     private volatile Settings settings;
+    private volatile GridSettings gridSettings;
 
     public final AtomicLong windowsScored = new AtomicLong();
     public final AtomicLong flagsRaised = new AtomicLong();
     public volatile double lastRunMs;
 
     public Scanner(Map<UUID, PlayerTrack> tracks, Map<UUID, Boolean> exempt, Supplier<ModelSet> models, Sink sink,
-                   Settings settings, int attackCap) {
+                   Settings settings, GridSettings gridSettings, int attackCap) {
+        this.gridSettings = gridSettings;
         this.tracks = tracks;
         this.exempt = exempt;
         this.models = models;
@@ -61,10 +82,20 @@ public final class Scanner implements Runnable {
         this.settings = settings;
         this.w = new PlayerTrack.Window(settings.frameCap(), attackCap);
         this.w4 = new Window4(settings.frameCap(), attackCap);
+        this.hasAim = new boolean[settings.frameCap()];
+        this.errYaw = new double[settings.frameCap()];
     }
 
-    public void settings(Settings s) {
+    public void settings(Settings s, GridSettings g) {
+        if (s.frameCap() != settings.frameCap()) {
+            throw new IllegalArgumentException("window.frames needs a restart");
+        }
+        boolean changed = !g.equals(gridSettings);
         this.settings = s;
+        this.gridSettings = g;
+        if (changed) {
+            grids.clear(); // relearn with the new parameters (next scan, on the scan thread)
+        }
     }
 
     @Override
@@ -83,17 +114,26 @@ public final class Scanner implements Runnable {
         ModelSet set = models.get();
         long windowNs = s.frameCap() * 50_000_000L;
         long gapNs = s.fightGapMs() * 1_000_000L;
+        GridSettings g = gridSettings;
         fights.keySet().removeIf(id -> !tracks.containsKey(id));
+        grids.keySet().removeIf(id -> !tracks.containsKey(id));
 
         for (var e : tracks.entrySet()) {
             UUID id = e.getKey();
             PlayerTrack t = e.getValue();
+            if (Boolean.TRUE.equals(exempt.get(id))) {
+                continue;
+            }
             long last = t.lastAttackNanos();
-            if (last == 0 || now - last > windowNs || Boolean.TRUE.equals(exempt.get(id))) {
+            boolean attacked = last != 0 && now - last <= windowNs;
+            if (!attacked && !g.enabled()) {
                 continue;
             }
             t.snapshot(w, w4, now - windowNs, now);
-            if (w.m < s.minAttacks() || w.n < s.minFrames()) {
+            if (g.enabled()) {
+                grid(id, g, now);   // every player: the step is learned before the first fight
+            }
+            if (!attacked || w.m < s.minAttacks() || w.n < s.minFrames()) {
                 continue;
             }
             double[] core = Features.compute(w.yaw, w.pitch, w.x, w.z, w.flags, w.n, w.attacks, w.m);
@@ -132,12 +172,38 @@ public final class Scanner implements Runnable {
                     String verbose = String.format("%d/%d windows (%.0f%%, line %.0f%%) avg %.2f",
                             fight.flagged, fight.windows, share * 100, m.alertShare() * 100, fight.scoreSum / fight.windows);
                     flagsRaised.incrementAndGet();
-                    sink.flag(id, m, verbose);
+                    sink.flag(id, m.checkName(), m.description(), verbose);
                     fight.windows = 0;
                     fight.flagged = 0;
                     fight.scoreSum = 0;
                 }
             }
         }
+    }
+
+    /** Feeds the frames this player made since the last scan (the ring holds 8 s, scans run every 2 s). */
+    private void grid(UUID id, GridSettings g, long now) {
+        Grid gr = grids.computeIfAbsent(id, k -> new Grid(g));
+        Schema4Features.aimErrors(w4, hasAim, errYaw);
+        boolean alert = false;
+        for (int i = 0; i < w4.n; i++) {
+            if (w4.tick[i] <= gr.live.lastTick) {
+                continue;
+            }
+            alert |= gr.live.feed(w4.tick[i], w4.hasRot[i], w4.yawExact[i], w4.pitchExact[i], w4.hasOpp[i], hasAim[i], errYaw[i]);
+        }
+        if (alert && now - gr.lastAlertNanos >= g.cooldownMs() * 1_000_000L) {
+            gr.lastAlertNanos = now;
+            flagsRaised.incrementAndGet();
+            sink.flag(id, GridSettings.CHECK, GridSettings.DESCRIPTION, String.format(
+                    "off-grid %.0f%% of recent rotation, toward-away %+.0f%%, step %.5f",
+                    gr.live.offShare() * 100, gr.live.bias() * 100, gr.live.step()));
+        }
+    }
+
+    /** Learned step and current score per player, for /gmld status. */
+    public String gridStatus(UUID id) {
+        Grid gr = grids.get(id);
+        return gr == null ? null : String.format("step %.5f score %.1f", gr.live.step(), gr.live.score());
     }
 }

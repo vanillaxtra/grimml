@@ -21,6 +21,20 @@ scan:
   fight-gap-ms: 20000    # this long without attacking starts a new fight
   skip-bedrock: true     # Floodgate players are never scanned
 
+# AimGrid: real mouse rotation is a whole number of sensitivity steps; aim assist adds rotation that is not.
+# Each player's step is learned from their own rotation (also outside fights), then a running score adds up
+# off-grid rotation while they fight. It alerts when the score reaches alert-score AND the off-grid rotation leans
+# toward the opponent (zoom, cinematic camera and odd mice are off-grid in both directions). Players whose rotation
+# fits no mouse grid (controllers, cinematic camera) are skipped. Calibrated on recorded fights: legit never
+# passed 2.3, aim assist reached 20 within 1.5-6 s once the step was known.
+aim-grid:
+  enabled: true
+  legit-off-rate: 0.01     # expected off-grid share for a legit player (measured 0.0-0.2%)
+  cheat-off-rate: 0.10     # off-grid share the test is tuned to catch (measured aim assist 19-26%)
+  alert-score: 20.0
+  min-toward-bias: 0.05
+  alert-cooldown-ms: 15000
+
 alerts:
   # empty = Grim's own alerts-format and prefix, so ML flags look like any Grim flag.
   # placeholders: %prefix% %player% %check_name% %description% %vl% %verbose% %experimental%

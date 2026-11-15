@@ -91,6 +91,7 @@ public final class ParitySelfCheck {
             throw new AssertionError("bundled models did not load: " + store.lastError());
         }
         schema4(fixture.resolveSibling("windows4.txt"), byCheck);
+        live(fixture.resolveSibling("live_grid.txt"));
         System.out.printf("parity: %d windows, %d scores match Python (worst feature diff %.1e, worst score diff %.1e)%n",
                 windows, scores, worstFeat, worstScore);
     }
@@ -106,9 +107,11 @@ public final class ParitySelfCheck {
         int windows = 0;
         int compared = 0;
         int scores4 = 0;
+        int spearMace = 0;
         double worst = 0;
         for (String line : lines) {
-            if (!line.startsWith("W4|")) {
+            boolean w3 = line.startsWith("W3|");   // schema 3 spear-mace window: compute(w, false)
+            if (!line.startsWith("W4|") && !w3) {
                 continue;
             }
             String[] part = line.split("\\|", -1);
@@ -139,6 +142,7 @@ public final class ParitySelfCheck {
                 pc[k] = Integer.parseInt(v[16]);
                 xs[k] = Integer.parseInt(v[17]);
                 zs[k] = Integer.parseInt(v[18]);
+                w.yMilli[k] = Integer.parseInt(v[19]);
             }
             for (String es : events) {
                 String[] v = es.split(",");
@@ -153,7 +157,7 @@ public final class ParitySelfCheck {
                 w.eG[k] = Integer.parseInt(v[7]);
                 w.eClientTick[k] = Integer.parseInt(v[8]);
             }
-            double[] got = dev.grimml.detect.features.Schema4Features.compute(w, true);
+            double[] got = dev.grimml.detect.features.Schema4Features.compute(w, !w3);
             // model scores on the combined vector (13 core + 44 schema 4), as the Scanner builds it
             java.util.List<Long> att = new java.util.ArrayList<>();
             for (int e = 0; e < w.m; e++) if (w.eType[e] == dev.grimml.detect.features.Window4.ATTACK) att.add(w.eNanos[e]);
@@ -186,12 +190,51 @@ public final class ParitySelfCheck {
                         throw new AssertionError("schema4 window " + windows + " " + names[i] + ": python " + e + " java " + g);
                     }
                     compared++;
+                    if (i >= names.length - dev.grimml.detect.features.SpearMace.NAMES.length) spearMace++;
                 }
             }
             windows++;
         }
-        System.out.printf("parity: schema 4 features match Python on %d windows (%d values, worst diff %.1e), %d model scores match%n",
-                windows, compared, worst, scores4);
+        System.out.printf("parity: schema 4 features match Python on %d windows (%d values, worst diff %.1e), %d model scores match, "
+                + "%d spear-mace values%n", windows, compared, worst, scores4, spearMace);
+    }
+
+    /** Live AimGrid check: the same frame streams must alert on the same ticks and learn the same step. */
+    private static void live(Path file) throws Exception {
+        if (!Files.exists(file)) {
+            System.out.println("parity: no live AimGrid fixture; skipped");
+            return;
+        }
+        List<String> lines = Files.readAllLines(file);
+        int streams = 0, alerts = 0, frames = 0;
+        for (int li = 0; li < lines.size(); li++) {
+            if (!lines.get(li).startsWith("F|")) {
+                continue;
+            }
+            String[] fs = lines.get(li).substring(2).split(";");
+            String exp = lines.get(li + 1).substring(2);
+            double expStep = lines.get(li + 2).substring(2).equals("nan") ? Double.NaN : Double.parseDouble(lines.get(li + 2).substring(2));
+            var g = new dev.grimml.detect.features.AimGrid.Live(0.01, 0.10, 20.0, 0.05);
+            StringBuilder got = new StringBuilder();
+            for (String f : fs) {
+                String[] v = f.split(",");
+                int tick = Integer.parseInt(v[0]);
+                if (g.feed(tick, v[1].equals("1"), (float) Double.parseDouble(v[2]), (float) Double.parseDouble(v[3]),
+                        v[4].equals("1"), v[5].equals("1"), Double.parseDouble(v[6]))) {
+                    got.append(got.length() == 0 ? "" : ",").append(tick);
+                    alerts++;
+                }
+                frames++;
+            }
+            if (!got.toString().equals(exp)) {
+                throw new AssertionError("live AimGrid stream " + streams + " alerts differ: python [" + exp + "] java [" + got + "]");
+            }
+            if (Double.isNaN(expStep) != Double.isNaN(g.step()) || (!Double.isNaN(expStep) && Math.abs(expStep - g.step()) > 1e-12)) {
+                throw new AssertionError("live AimGrid stream " + streams + " step: python " + expStep + " java " + g.step());
+            }
+            streams++;
+        }
+        System.out.printf("parity: live AimGrid matches Python on %d streams (%d frames, %d alerts)%n", streams, frames, alerts);
     }
 
     private static int[] ints(String s) {

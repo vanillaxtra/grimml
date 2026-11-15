@@ -60,6 +60,16 @@ same id.
 | attack | target kind (0 unknown, 1 player, 2 end crystal) + 256 × attack-cooldown ticks (server ticks since the last swing or hotbar change, capped at 255) | hit point on the target's hitbox × 1,000,000 (only when the client sent one) |
 | block_place | clicked block: 0 unknown, 1 respawn anchor, 2 obsidian, 3 bedrock, 4 glowstone, 5 other; + 256 × anchor charges | |
 
+## Spear jabs and spear categories (no format change)
+
+- A 1.21.11 spear jab is **not** an attack packet: the client sends a digging packet with action STAB, written as a
+  `break` event with **a = 8** (PacketEvents `DiggingAction` ordinal), followed by a swing. A Lunge jab's forward
+  push arrives as a `knockback` event on the next tick.
+- Recorders before the `ItemCategories` spear fix wrote spears (`wooden_spear` ... `netherite_spear`) as category 0;
+  their item ids (`held_id`, hotbar_swap d/e, attack e) still identify them (`spearmace.py` resolves them).
+- `fall_milli` is the drop below the last ground y, not the fall from the apex (it stays 0 after a wind-charge launch);
+  mace features measure the fall from `y_milli` and `on_ground`.
+
 ## What it enables
 
 - **Aim assist / triggerbot**: exact rotation, opponent position and pose every tick (aim error, pull toward target, crosshair-on-target timing), attack cooldown at each hit.
@@ -67,3 +77,5 @@ same id.
 - **Auto jump reset / auto W-tap**: every input change and sprint toggle with its client tick, knockback arrival = first transaction sent after the `knockback` event, answered on a known client tick.
 - **Crystal / anchor macros**: crystal spawns, attack target kind, clicked block and anchor charges.
 - **Shield breaker / stun slam**: opponent shield state and how long ago it changed.
+- **Instant Lunge / Auto Mace / Auto Stun Slam**: hotbar swap -> hit/stab -> swap back timing on client ticks, mace fall
+  from the apex, rotation snap on the mace hit (`swap_*`, `lunge_*`, `mace_*`, `stun_*`).

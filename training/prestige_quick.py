@@ -141,6 +141,7 @@ IDS = [
     {'mark_id': 'm39bac321', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794606916259, 'end_ms': 1794607433259, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP vs the mineflayer pvp bot (8:37)'},
     {'mark_id': 'm0dfe272f', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794608176235, 'end_ms': 1794608776235, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP vs the mineflayer pvp bot (10:00)'},
     {'mark_id': 'mb1f0f01e', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794613672156, 'end_ms': 1794614293156, 'interrupted': False, 'multi_module': False, 'note': 'duel DiamondSMP vs the mineflayer pvp bot (10:21)'},
+    {'mark_id': 'm0ee3763e', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Aim Assist', 'settings': 'FOV:90 SPEED:20 SMOOTHING:50 RANDOMNESS:0 ONLY_ON_ROTATE:TRUE', 'start_ms': 1794702030278, 'end_ms': 1794702528023, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, vs the pvp bot (8:27), only on rotate; no end marker, end = last window; in-game module id 5 (other sessions said 21)'},
     {'mark_id': 'm4ca53577', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Kill Aura', 'settings': 'HUMANIZED:TRUE REACH:2.9 MISS_CHANCE:3 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100', 'start_ms': 1794689593622, 'end_ms': 1794690206620, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, vs the pvp bot (10:22), realistic; no end marker, end = last window'},
     {'mark_id': 'm051a9a47', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Triggerbot', 'settings': 'DELAY_MIN_MS:30 DELAY_MAX_MS:80 MISS_CHANCE:5 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100', 'start_ms': 1794686607799, 'end_ms': 1794687248620, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, vs the pvp bot (10:49), subtle; no end marker, end = last window'},
     {'mark_id': 'm4f107966', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Triggerbot', 'settings': 'DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100', 'start_ms': 1794687381968, 'end_ms': 1794687890620, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, vs the pvp bot (8:38), blatant; no end marker, end = last window'},
@@ -642,11 +643,14 @@ S4_NETWORK = ["bt_rtt_mean", "bt_rtt_std", "bt_pong_burst_frac", "bt_gap_p95_ms"
 # Each module only sees the schema 4 families that describe it. Otherwise it learns whatever else differed
 # between its sessions and the legit ones (e.g. shield-axe swaps because one legit bot spammed shield).
 S4_FAMILIES = {
-    "aim assist": ("aim_",), "silent aim": ("aim_",), "kill aura": ("aim_", "trig_", "click_"),
+    "aim assist": ("aim_", "grid_"), "silent aim": ("aim_", "grid_"), "kill aura": ("aim_", "grid_", "trig_", "click_"),
     "triggerbot": ("trig_", "click_"), "backtrack": ("bt_",), "jump reset": ("jr_",), "auto jump reset": ("jr_",),
     "auto w tap": ("wtap_",), "auto w-tap": ("wtap_",), "autoclicker": ("click_",), "criticals": ("jr_", "click_"),
     "auto crystal": ("crystal_",), "anchor macro": ("anchor_",),
     "auto shield breaker": ("shield_",), "auto shield break": ("shield_",),
+    # spear-mace (features/spearmace.py)
+    "instant lunge": ("lunge_", "swap_"), "auto lunge": ("lunge_", "swap_"),
+    "auto mace": ("mace_", "swap_"), "auto stun slam": ("stun_", "swap_"), "stun slam": ("stun_", "swap_"),
 }
 
 

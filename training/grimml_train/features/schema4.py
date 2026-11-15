@@ -1,5 +1,5 @@
-"""Features that need schema 4 data (docs/schema4.md). Every value is NaN on schema 1-3 windows and whenever a window
-has too little of the relevant data, so these columns can sit next to the 13 core features without changing them.
+"""Features that need schema 4 data (docs/schema4.md). Every value is NaN on schema 1-3 windows (except click_* and the
+spear-mace timing family, which schema 3 already carries) and whenever a window has too little of the relevant data, so these columns can sit next to the 13 core features without changing them.
 
 Families:
   aim_*        aim assist / silent aim: aim error to the opponent, pull toward them, tracking lag, off-grid rotation
@@ -9,6 +9,7 @@ Families:
   wtap_*       auto W-tap: forward/sprint release after own hits
   click_*      autoclicker: swing timing distribution (works on schema 3 too, but listed here with the new set)
   crystal_* / anchor_* / shield_*   crystal and anchor macros, auto shield breaker
+  swap_* / lunge_* / mace_* / stun_* Instant Lunge, Auto Mace, Auto Stun Slam (spearmace.py)
 
 Geometry: Minecraft yaw 0 looks toward +z, yaw 90 toward -x; pitch is positive looking down. Eye height 1.62
 (1.27 sneaking), aim point = opponent chest (0.9 of a 1.8 hitbox), hitbox half-width 0.3.
@@ -16,6 +17,9 @@ Geometry: Minecraft yaw 0 looks toward +z, yaw 90 toward -x; pitch is positive l
 from __future__ import annotations
 
 import math
+
+from grimml_train.features.aimgrid import grid_features
+from grimml_train.features.spearmace import SPEAR_MACE_FEATURES, mace_aim_features, spear_mace_features
 
 import numpy as np
 
@@ -41,6 +45,10 @@ SCHEMA4_FEATURES = [
     "click_gap_kurtosis", "click_gap_entropy", "click_double_frac",
     "crystal_breaks", "crystal_break_ms_mean", "crystal_break_ms_std", "anchor_clicks", "anchor_gap_ms_std",
     "shield_axe_swaps", "shield_axe_reaction_ms_mean", "shield_axe_reaction_ms_std",
+    # mouse grid against a step learned with the sensitivity formula (aimgrid.py), appended last
+    "grid_off_frac", "grid_off_toward", "grid_off_away", "grid_toward_minus_away",
+    # spear-mace (spearmace.py): swap_* / lunge_* / mace_* / stun_*, appended last
+    *SPEAR_MACE_FEATURES,
 ]
 
 
@@ -87,16 +95,21 @@ def schema4_features(decoded: dict) -> dict:
     frames = decoded.get("frames") or []
     events = [e for e in (decoded.get("events") or []) if e.get("event_type") not in ("marker", "marker_kv")]
     _click(row, events)
-    if (decoded.get("window", {}).get("schema_version") or 0) < 4:
+    schema = decoded.get("window", {}).get("schema_version") or 0
+    if schema >= 3:
+        row.update(spear_mace_features(frames, events))
+    if schema < 4:
         return row
     aim = _aim_track(frames)
     _aim(row, frames, aim)
+    row.update(grid_features(frames, aim))
     _trigger(row, frames, events, aim)
     _backtrack(row, frames, events, aim)
     _jump_reset(row, frames, events)
     _wtap(row, events)
     _crystal_anchor(row, events)
     _shield(row, frames, events)
+    row.update(mace_aim_features(frames, events, aim))
     return row
 
 

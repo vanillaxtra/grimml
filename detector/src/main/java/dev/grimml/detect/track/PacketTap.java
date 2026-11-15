@@ -82,7 +82,7 @@ public final class PacketTap extends PacketListenerAbstract {
         } else if (type == PacketType.Play.Client.PLAYER_DIGGING) {
             var a = new WrapperPlayClientPlayerDigging(event).getAction();
             String n = a == null ? "" : a.name();
-            t.dig(now, nanos, n.contains("RELEASE"), n.contains("SWAP"));
+            t.dig(now, nanos, n.contains("RELEASE"), n.contains("SWAP"), n.equals("STAB"));
         } else if (type == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) {
             var pos = new WrapperPlayClientPlayerBlockPlacement(event).getBlockPosition();
             t.place(now, nanos, ClickedBlock.category(t.grimUser, pos.getX(), pos.getY(), pos.getZ()));

@@ -1,7 +1,7 @@
 {
-  "version": 2,
-  "published": "2026-11-14 21:54 UTC",
-  "source_run": "20261114_215415",
+  "version": 3,
+  "published": "2026-11-15 00:38 UTC",
+  "source_run": "20261115_003825",
   "models": [
     {
       "module": "Aim Assist",
@@ -10,11 +10,11 @@
       "model": "aim_assist.txt",
       "meta": "aim_assist.json",
       "enabled": true,
-      "alert_share": 0.38,
-      "held_out_core_auc": 0.968,
+      "alert_share": 0.16,
+      "held_out_core_auc": 0.999,
       "cheat_sessions_caught": "4/4",
-      "model_sha256": "2d35dd39b6e48c9a48452a77cb123f2ea45db3ad9f49ac08f7136fba99ed475b",
-      "meta_sha256": "6ba4601f564dc75ed1a389015716be903b106932e0027c230e2072c1b7b7a6a5"
+      "model_sha256": "7f5e6dc2c293bb54b2cf1cd23e1dd78b8ebc8373791ed6e86223b0837aad02cd",
+      "meta_sha256": "fd9236afc5914d4bf0ad9df1333d95441497559bf531bf3fab2e4d9a17001d01"
     },
     {
       "module": "Triggerbot",

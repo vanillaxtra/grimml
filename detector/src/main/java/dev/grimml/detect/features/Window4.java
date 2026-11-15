@@ -8,7 +8,7 @@ public final class Window4 {
 
     // event types: the recorder's RecordTypes numbers
     public static final int ATTACK = 2, SWING = 7, HOTBAR_SWAP = 9, BLOCK_PLACE = 11, KNOCKBACK = 12, RTT = 21,
-            INPUT = 27, MOVE_STATE = 28, ENTITY_SENT = 29, RTT_SENT = 30, ENTITY_SPAWN = 31;
+            BREAK = 22, INPUT = 27, MOVE_STATE = 28, ENTITY_SENT = 29, RTT_SENT = 30, ENTITY_SPAWN = 31;
     public static final int F_ON_GROUND = 1, F_SNEAK = 1 << 7, F_SPRINT = 1 << 8;
     public static final int OPP_BLOCKING = 1 << 3;
 
@@ -18,8 +18,9 @@ public final class Window4 {
     public final boolean[] hasRot, hasOpp;
     public final float[] yawExact, pitchExact;
     public final int[] oppDx, oppDy, oppDz, oppState, oppBlockAgo, oppHurtAgo, maxGap, burst;
+    public final int[] yMilli;   // player y in mm (spear-mace fall from the apex)
 
-    // events (only the types above are needed)
+    // events (only the types above are needed; BREAK a = digging action, 8 = spear STAB)
     public int m;
     public final int[] eType, eTick, eB, eC, eD, eG, eClientTick;
     public final long[] eNanos, eA;
@@ -40,6 +41,7 @@ public final class Window4 {
         oppHurtAgo = new int[frameCap];
         maxGap = new int[frameCap];
         burst = new int[frameCap];
+        yMilli = new int[frameCap];
         eType = new int[eventCap];
         eTick = new int[eventCap];
         eB = new int[eventCap];
