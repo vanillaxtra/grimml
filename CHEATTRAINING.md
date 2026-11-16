@@ -1,4 +1,4 @@
-# grimml
+m n# grimml
 
 This is where i can keep track of the different clients i have run cheats on and what settings so that when i eventually get through to training the data, i can find them from file name if there are any issues. i will be able to tell exactly what cheat / module is the issue. I plan in the future for this to fill up with lots of different modules and clients as you can see i added a few for the moment and am testing prestige client currently.
 
@@ -87,6 +87,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:16.5 HIT_DELAY_MAX_MS:42 BREAK_COOLDOWN_MAX_MS:570 BREAK_COOLDOWN_MIN_MS:270 | 8:37 | m1dff7271 | notauthorised | amariia | 3 |
 | 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:16.5 HIT_DELAY_MAX_MS:42 BREAK_COOLDOWN_MAX_MS:570 BREAK_COOLDOWN_MIN_MS:270 | 10:53 | m3367bfcd | notauthorised | amariia | 3 |
 | 16/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:0 BREAK_COOLDOWN_MIN_MS:0 | 7:01 | mc653123f | notauthorised | bot | 4 |
+| 16/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:15 HIT_DELAY_MAX_MS:40 BREAK_COOLDOWN_MAX_MS:500 BREAK_COOLDOWN_MIN_MS:250 | 5:32 | m88e02374 | notauthorised | bot | 4 |
 
 ## Grim
 | Date | Module | Settings | Duration | ID | By | Opponent | Schema Version |
