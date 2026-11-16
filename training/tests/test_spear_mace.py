@@ -161,14 +161,17 @@ def test_schema3_gets_timing_but_no_aim_or_ticks():
 
 # ---------------------------------------------------------------- live LungeRate check
 
-def _chain(gap_ms, n, start=1000.0):
-    """n macro swap-lunges gap_ms apart: swap to the spear, STAB 10 ms later, swap back 50 ms after the STAB."""
+def _chain(gap_ms, n, start=1000.0, hold_ticks=None, back_same_tick=False, ct0=100):
+    """n macro swap-lunges gap_ms apart: swap to the spear, STAB 10 ms later, swap back 50 ms after the STAB.
+    hold_ticks gives client ticks (swap back hold_ticks after the swap in); back_same_tick swaps back in the STAB's tick."""
     acts = []
     for i in range(n):
         t = start + i * gap_ms
-        acts.append({"k": 1, "n": int(t * MS), "to": SPEAR})
-        acts.append({"k": 3, "n": int((t + 10) * MS)})
-        acts.append({"k": 1, "n": int((t + 60) * MS), "to": SWORD})
+        ct = 0 if hold_ticks is None and not back_same_tick else ct0 + i * 20
+        back = ct if back_same_tick else (ct + hold_ticks if hold_ticks is not None else 0)
+        acts.append({"k": 1, "n": int(t * MS), "to": SPEAR, "from": SWORD, "ct": ct})
+        acts.append({"k": 3, "n": int((t + 10) * MS), "ct": ct})
+        acts.append({"k": 1, "n": int((t + 60) * MS), "to": SWORD, "from": SPEAR, "ct": back})
     return acts
 
 
@@ -197,7 +200,7 @@ def test_live_lunge_bunched_and_slow_gaps_do_not_count():
 def test_live_lunge_needs_a_fresh_swap_to_the_spear():
     acts = []
     for i in range(20):  # holding the spear, jabbing, no swaps
-        acts.append({"k": 3, "n": int((1000 + i * 200) * MS)})
+        acts.append({"k": 3, "n": int((1000 + i * 200) * MS), "ct": 0})
     assert _replay(acts)[0] == []
     late = [a if a["k"] != 3 else {"k": 3, "n": a["n"] + 200 * MS} for a in _chain(400, 10)]  # STAB 210 ms after swap
     assert _replay(late)[1].lunges == 0
@@ -206,3 +209,42 @@ def test_live_lunge_needs_a_fresh_swap_to_the_spear():
 def test_live_lunge_window_expires_old_fast_gaps():
     acts = _chain(200, 4) + _chain(200, 4, start=40_000.0)  # 3 + 3 fast gaps, 39 s apart
     assert _replay(acts)[0] == []
+
+
+def test_live_lunge_one_tick_holds_alert_even_when_slow():
+    from grimml_train.features.spearmace import HOLD
+    alerts, g = _replay(_chain(600, 10, hold_ticks=1))
+    assert len(alerts) == 2 and g.recent_fast == 0          # slow chain: no LungeRate; LungeHold on the 5th and 10th
+    from grimml_train.features.spearmace import LiveLunge
+    g = LiveLunge()
+    bits = [g.feed(a) for a in _chain(600, 10, hold_ticks=1)]
+    assert [b for b in bits if b] == [HOLD, HOLD]
+
+
+def test_live_lunge_hand_holds_and_mixed_holds_do_not_alert():
+    assert _replay(_chain(600, 50, hold_ticks=2))[0] == []
+    acts = []
+    for i in range(50):  # one in ten held for one tick (the legit rate is ~1 in 90)
+        acts += _chain(600, 1, start=1000.0 + i * 600, hold_ticks=1 if i % 10 == 0 else 2, ct0=100 + i * 20)
+    assert _replay(acts)[0] == []
+
+
+def test_live_lunge_hold_needs_client_ticks():
+    assert _replay([dict(a, ct=0) for a in _chain(600, 20, hold_ticks=1)])[0] == []
+
+
+def test_live_lunge_swap_after_stab_in_same_tick_is_order():
+    from grimml_train.features.spearmace import ORDER, LiveLunge
+    g = LiveLunge()
+    bits = [g.feed(a) for a in _chain(600, 4, back_same_tick=True)]
+    assert [b for b in bits if b] == [ORDER, ORDER]          # order_count 2: alerts on the 2nd and 4th
+    g = LiveLunge()
+    hit_then_swap = [{"k": 2, "n": 1000 * MS, "ct": 50}, {"k": 1, "n": 1001 * MS, "to": SWORD, "from": AXE, "ct": 50},
+                     {"k": 2, "n": 9000 * MS, "ct": 210}, {"k": 1, "n": 9001 * MS, "to": SWORD, "from": AXE, "ct": 210}]
+    assert [g.feed(a) for a in hit_then_swap] == [0, 0, 0, ORDER]
+    g = LiveLunge()
+    swap_then_hit = []
+    for i in range(3):  # vanilla order: swap before the attack in the same tick
+        swap_then_hit += [{"k": 1, "n": (1000 + i * 500) * MS, "to": SWORD, "from": AXE, "ct": 50 + i * 10},
+                          {"k": 2, "n": (1001 + i * 500) * MS, "ct": 50 + i * 10}]
+    assert [g.feed(a) for a in swap_then_hit] == [0] * 6

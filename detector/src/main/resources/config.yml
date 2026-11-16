@@ -46,7 +46,24 @@ lunge-rate:
   min-ms: 75               # gaps under this are packets bunched by lag and do not count
   count: 6                 # fast gaps needed ...
   window-ms: 30000         # ... within this long
-  alert-cooldown-ms: 15000
+  alert-cooldown-ms: 15000 # per check, shared by lunge-rate, lunge-hold and swap-order
+
+# LungeHold: the spear held for exactly one client tick (swap in, jab, swap back on the next tick). By hand this is
+# rare (2 of 182 swap-lunges in a legit spear-mace fight); Instant Lunge does it on 34-100% at 0-90 ms delay, however
+# slowly the lunges are chained. Needs 1.21.2+ clients (client ticks).
+lunge-hold:
+  enabled: true
+  count: 5                 # one-tick holds ...
+  of: 10                   # ... among this many latest swap-lunges
+
+# SwapOrder: a hotbar swap sent after an attack or spear jab in the same client tick. The vanilla client sends hotbar
+# changes before attacks inside one tick, so this never happens by hand (0 in ~1400 recorded legit hits and swaps);
+# a client that swaps, hits and swaps back inside one tick (any swap macro, any client) does it every time.
+# Needs 1.21.2+ clients (client ticks).
+swap-order:
+  enabled: true
+  count: 2                 # same-tick swaps after an attack ...
+  window-ms: 60000         # ... within this long
 
 alerts:
   # empty = Grim's own alerts-format and prefix, so ML flags look like any Grim flag.

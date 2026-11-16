@@ -1,0 +1,52 @@
+PIPELINE TEST ONLY: one operator, legit = a few recordings, cheat and legit may come from different accounts. These numbers say whether features/labels work, not how it performs live.
+
+folder: prestige temp test
+windows_used: 14684
+legit_windows: 4891
+cheat_windows: 9793
+chunk_gap_dropped: 71
+trim_s: 3.0
+chunk_min: 4.0
+roles: [1, 2]
+
+== Kill Aura ==  cheat 988 windows / 5 segments, legit 988 windows / 29 chunks
+   activity-matched (equal counts per ['attack_count', 'event_count'] cell, 15 cells)
+   all       AUC 0.83  95% CI [0.78, 0.88]  (18 features)
+   core      AUC 0.85  95% CI [0.80, 0.89]  (13 features)
+   shortcut  AUC 0.36  95% CI [0.17, 0.56]  (6 features)
+   core recall @5% legit-window FPR 42%   @1% 19%
+   verdict: separates on held-out segments; single operator
+   top features: yaw_jerk_mean, yaw_vel_abs_mean, pitch_range, click_gap_cv, yaw_vel_std
+     m1900082b   131 win  @5% 50%  @1% 21%  HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:8
+     m1cde4c02   177 win  @5% 26%  @1% 14%  HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:8
+     m42852fa8   239 win  @5% 34%  @1% 16%  HUMANIZED:TRUE REACH:2.8 MISS_CHANCE:5 COOLDOWN_RANGE_MIN:88
+     m4ca53577   299 win  @5% 51%  @1% 21%  HUMANIZED:TRUE REACH:2.9 MISS_CHANCE:3 COOLDOWN_RANGE_MIN:88
+     m98f0b9c2   142 win  @5% 51%  @1% 26%  HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:8
+   per FIGHT (flag share = windows above the 5% line; 29 legit units, 5 cheat segments):
+     legit fights: median 2%, 95th pct 20%, max 30%  -> decision line 20% (flags ~5% of legit fights)
+     cheat segments above the line: 5/5   m1900082b=50%  m1cde4c02=26%  m42852fa8=34%  m4ca53577=51%  m98f0b9c2=51%
+     top legit fights: mb1f0f01e:1=30% (23 win)  md3d2f5e7:0=22% (45 win)  m39bac321:0=16% (43 win)
+
+== Silent Aim ==  cheat 605 windows / 4 segments, legit 605 windows / 29 chunks
+   activity-matched (equal counts per ['attack_count', 'event_count'] cell, 12 cells)
+   all       AUC 0.66  95% CI [0.43, 0.92]  (18 features)
+   core      AUC 0.71  95% CI [0.46, 0.89]  (13 features)
+   shortcut  AUC 0.56  95% CI [0.36, 0.81]  (6 features)
+   core recall @5% legit-window FPR 34%   @1% 19%
+   verdict: separates on held-out segments; single operator
+   top features: pitch_range, speed_mean, yaw_jerk_mean, click_gap_cv, yaw_vel_abs_mean
+     m8a278525   120 win  @5% 35%  @1% 16%  CONTINOUS_TRACKING:TRUE
+     m96dd5b71   169 win  @5% 56%  @1% 28%  CONTINOUS_TRACKING:TRUE
+     mc723710d   190 win  @5% 3%  @1% 1%  CONTINOUS_TRACKING:FALSE
+     mcd7a19cf   126 win  @5% 52%  @1% 35%  CONTINOUS_TRACKING:TRUE
+   per FIGHT (flag share = windows above the 5% line; 23 legit units, 4 cheat segments):
+     legit fights: median 4%, 95th pct 19%, max 30%  -> decision line 19% (flags ~5% of legit fights)
+     cheat segments above the line: 3/4   m8a278525=35%  m96dd5b71=56%  mc723710d=3%  mcd7a19cf=52%
+     top legit fights: ma90a44db:1=30% (10 win)  m69a17c52:0=19% (21 win)  m7f9d360a:0=16% (19 win)
+
+Warnings:
+  - hard-validity filter applied to 0/22063 windows; the rest come from the old recorder (sticky validity bits) or no fixed-build time is set, so their validity flags are ignored.
+  - Activity matching is on: windows were subsampled to equal counts per (attack_count x event_count) cell; the old transfer line is skipped, use --loco for unseen clients.
+  - Cheat comes from one operator's test sessions. The activity/setup confound is only partly controlled (see the shortcut-only line); legit now includes the same account plus a second account and bulk players.
+  - legit comes from 22 recording(s); chunk-level CIs are wide and only describe those chunks.
+  - Setting values come from your log; where marker and log disagreed the log was used (see the IDS table notes).

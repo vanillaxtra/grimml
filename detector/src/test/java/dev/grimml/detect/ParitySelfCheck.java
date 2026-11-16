@@ -238,10 +238,10 @@ public final class ParitySelfCheck {
         System.out.printf("parity: live AimGrid matches Python on %d streams (%d frames, %d alerts)%n", streams, frames, alerts);
     }
 
-    /** Live LungeRate check: the same swap / STAB streams must alert on the same events. */
+    /** Live lunge checks: the same swap / attack / STAB streams must return the same alert bits on the same events. */
     private static void lunge(Path file) throws Exception {
         if (!Files.exists(file)) {
-            System.out.println("parity: no live LungeRate fixture; skipped");
+            System.out.println("parity: no live lunge fixture; skipped");
             return;
         }
         List<String> lines = Files.readAllLines(file);
@@ -251,27 +251,32 @@ public final class ParitySelfCheck {
                 continue;
             }
             String exp = lines.get(li + 1).substring(2);
-            int expLunges = Integer.parseInt(lines.get(li + 2).substring(2));
-            var r = new dev.grimml.detect.features.LungeRate(300.0, 75.0, 6, 30000.0, 150.0);
+            String expN = lines.get(li + 2).substring(2);
+            var r = new dev.grimml.detect.features.LungeRate();
             StringBuilder got = new StringBuilder();
             for (String e : lines.get(li).substring(2).split(";")) {
                 String[] v = e.split(",");
                 long n = Long.parseLong(v[1]);
-                if (v[0].equals("1")) {
-                    r.swap(n, Integer.parseInt(v[2]));
-                } else if (r.stab(n)) {
-                    got.append(got.length() == 0 ? "" : ",").append(n);
+                int ct = Integer.parseInt(v[4]);
+                int bits = switch (v[0]) {
+                    case "1" -> r.swap(n, Integer.parseInt(v[2]), Integer.parseInt(v[3]), ct);
+                    case "2" -> r.hit(n, ct);
+                    default -> r.stab(n, ct);
+                };
+                if (bits != 0) {
+                    got.append(got.length() == 0 ? "" : ",").append(n).append(':').append(bits);
                     alerts++;
                 }
                 events++;
             }
-            if (!got.toString().equals(exp) || r.lunges() != expLunges) {
-                throw new AssertionError("live LungeRate stream " + streams + " differs: python [" + exp + "] " + expLunges
-                        + " java [" + got + "] " + r.lunges());
+            String gotN = r.lunges() + "," + r.orderTotal();
+            if (!got.toString().equals(exp) || !gotN.equals(expN)) {
+                throw new AssertionError("live lunge stream " + streams + " differs: python [" + exp + "] " + expN
+                        + " java [" + got + "] " + gotN);
             }
             streams++;
         }
-        System.out.printf("parity: live LungeRate matches Python on %d streams (%d events, %d alerts)%n", streams, events, alerts);
+        System.out.printf("parity: live lunge checks match Python on %d streams (%d events, %d alerts)%n", streams, events, alerts);
     }
 
     private static int[] ints(String s) {

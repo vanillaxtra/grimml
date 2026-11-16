@@ -252,31 +252,38 @@ def export_live() -> None:
     (OUT / "live_grid.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-# live LungeRate check: swap / STAB streams (deduplicated across overlapping windows) replayed through Python
-# LiveLunge; the detector replays the same events through LungeRate and must alert on the same events.
-LUNGE_MARKS = ["m040a616d", "ma8352fe2", "mee87b920", "m69a17c52", "m6013e9ff"]
+# live lunge checks (LungeRate, LungeHold, SwapOrder): swap / attack / STAB streams (deduplicated across overlapping
+# windows) replayed through Python LiveLunge; the detector replays the same events through LungeRate and must return
+# the same alert bits on the same events.
+LUNGE_MARKS = ["m040a616d", "m54e35fb3", "ma8352fe2", "mee87b920", "m69a17c52", "m6013e9ff", "m2538fffc", "ma90a44db"]
 LUNGE_ACTIONS = 3000
 
 
 def export_lunge() -> None:
-    from grimml_train.features.spearmace import STAB_ACT, SWAP, LiveLunge, actions
+    from grimml_train.features.spearmace import HIT, STAB_ACT, SWAP, LiveLunge, actions
 
-    lines = ["# live LungeRate streams: E|kind,nanos,toCat (1 swap, 3 stab) ... then A|alert nanos and N|swap-lunges"]
+    lines = ["# live lunge streams: E|kind,nanos,toCat,fromCat,clientTick (1 swap, 2 hit, 3 stab) ... "
+             "then A|nanos:bits per alert, N|swap-lunges,same-tick swaps"]
     for m in LUNGE_MARKS:
         seen: dict[tuple, dict] = {}
         for p in sorted(f.path for f in os.scandir(FOLDER) if f"_{m}_" in f.name):
             for a in actions(decode_file(Path(p))["events"]):
-                if a["k"] in (SWAP, STAB_ACT):
+                if a["k"] in (SWAP, HIT, STAB_ACT):
                     seen[(a["n"], a["k"], a.get("to"))] = a
         seq = [seen[k] for k in sorted(seen, key=lambda k: k[0])][:LUNGE_ACTIONS]
         if not seq:
             continue
         g = LiveLunge()
-        alerts = [a["n"] for a in seq if g.feed(a)]
-        lines.append("E|" + ";".join(f"{a['k']},{a['n']},{a.get('to', 0)}" for a in seq))
-        lines.append("A|" + ",".join(map(str, alerts)))
-        lines.append(f"N|{g.lunges}")
-        print(f"lunge stream: {len(seq)} events, {g.lunges} swap-lunges, {len(alerts)} alerts")
+        alerts = []
+        for a in seq:
+            bits = g.feed(a)
+            if bits:
+                alerts.append(f"{a['n']}:{bits}")
+        lines.append("E|" + ";".join(f"{a['k']},{a['n']},{a.get('to', 0)},{a.get('from', 0)},{a.get('ct') or 0}"
+                                     for a in seq))
+        lines.append("A|" + ",".join(alerts))
+        lines.append(f"N|{g.lunges},{g.order_total}")
+        print(f"lunge stream {m}: {len(seq)} events, {g.lunges} swap-lunges, {len(alerts)} alerts")
     (OUT / "live_lunge.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

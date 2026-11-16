@@ -154,6 +154,19 @@ IDS = [
     {'mark_id': 'm61b69c50', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Triggerbot', 'settings': 'DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100', 'start_ms': 1794688929672, 'end_ms': 1794689370620, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, vs the pvp bot (7:30), realistic; no end marker, end = last window'},
     {'mark_id': 'm1c38d70b', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794660227452, 'end_ms': 1794660746203, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (8:46); no end marker, end = last window'},
     {'mark_id': 'ma90a44db', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794660900922, 'end_ms': 1794661484203, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot, bot spams shield (9:51); no end marker, end = last window'},
+    {'mark_id': 'm2538fffc', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794791861789, 'end_ms': 1794792202227, 'interrupted': False, 'multi_module': False, 'note': 'one-sided spear-mace fight vs afk (5:50), schema 4; maces, gaps, food, pearls, wind charges'},
+    # 2026-11-16 Doomsday Free Aim Assist vs the pvp bot, schema 4; start = in-file marker, no end marker, end = last window epoch
+    {'mark_id': 'm5a6d93c9', 'label': 'CHEAT', 'client': 'doomsday', 'module': 'Aim Assist|Triggerbot', 'settings': 'SPEED:8 SENSITIVITY:8 PREDICTION:0 AIM_POSITION:CENTER VERTICAL_AIM:FALSE', 'start_ms': 1794830655346, 'end_ms': 1794831043182, 'interrupted': False, 'multi_module': True, 'note': 'logged twice (Triggerbot and Aim Assist, same id and length); in-game module id 18, the other Aim Assist sessions say 15'},
+    {'mark_id': 'm5e1b5c35', 'label': 'CHEAT', 'client': 'doomsday', 'module': 'Aim Assist', 'settings': 'SPEED:1 SENSITIVITY:1 PREDICTION:0 AIM_POSITION:RANDOM VERTICAL_AIM:FALSE', 'start_ms': 1794833216292, 'end_ms': 1794833627182, 'interrupted': False, 'multi_module': False, 'note': 'doomsday, subtle (6:59)'},
+    {'mark_id': 'mb913f5ca', 'label': 'CHEAT', 'client': 'doomsday', 'module': 'Aim Assist', 'settings': 'SPEED:2 SENSITIVITY:2 PREDICTION:0 AIM_POSITION:RANDOM VERTICAL_AIM:FALSE', 'start_ms': 1794833996103, 'end_ms': 1794834271182, 'interrupted': False, 'multi_module': False, 'note': 'doomsday (4:44)'},
+    {'mark_id': 'mff3508c5', 'label': 'CHEAT', 'client': 'doomsday', 'module': 'Aim Assist', 'settings': 'SPEED:2 SENSITIVITY:2 PREDICTION:1 AIM_POSITION:RANDOM VERTICAL_AIM:FALSE', 'start_ms': 1794834492582, 'end_ms': 1794834843182, 'interrupted': False, 'multi_module': False, 'note': 'doomsday (5:59)'},
+    {'mark_id': 'mde682af5', 'label': 'CHEAT', 'client': 'doomsday', 'module': 'Aim Assist', 'settings': 'SPEED:3 SENSITIVITY:3 PREDICTION:1 AIM_POSITION:RANDOM VERTICAL_AIM:FALSE', 'start_ms': 1794834990225, 'end_ms': 1794835305182, 'interrupted': False, 'multi_module': False, 'note': 'doomsday (5:23)'},
+    {'mark_id': 'mcf36f647', 'label': 'CHEAT', 'client': 'doomsday', 'module': 'Aim Assist', 'settings': 'SPEED:3 SENSITIVITY:3 PREDICTION:1 AIM_POSITION:RANDOM VERTICAL_AIM:TRUE', 'start_ms': 1794835400045, 'end_ms': 1794835693182, 'interrupted': False, 'multi_module': False, 'note': 'doomsday (5:02)'},
+    {'mark_id': 'mac127aec', 'label': 'CHEAT', 'client': 'doomsday', 'module': 'Aim Assist', 'settings': 'SPEED:5 SENSITIVITY:4 PREDICTION:1 AIM_POSITION:CENTER VERTICAL_AIM:FALSE', 'start_ms': 1794835752910, 'end_ms': 1794836077182, 'interrupted': False, 'multi_module': False, 'note': 'doomsday (5:34)'},
+    # 2026-11-16 legit duels vs the pvp bot, same day and setup as the Doomsday sessions
+    {'mark_id': 'm67d3e2b3', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794831163325, 'end_ms': 1794831619182, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (7:45); no end marker, end = last window'},
+    {'mark_id': 'mc8ae64ed', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794832772234, 'end_ms': 1794833135182, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (6:11); no end marker, end = last window'},
+    {'mark_id': 'm45b396e6', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794836125760, 'end_ms': 1794836459182, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (5:42); no end marker, end = last window'},
 ]
 
 SELECTED_DEFAULT = ["Aim Assist", "Silent Aim", "Kill Aura", "Triggerbot"]
@@ -185,11 +198,13 @@ EXCLUDE_IDS = {
     # legit vs afk alt
     "med3d6926": _AFK, "m3ab6bfb8": _AFK, "m6013e9ff": _AFK, "m24d6d071": _AFK,
     "m5c84ea76": _AFK, "m9e797b92": _AFK,  # interrupted legit from the same 06/11 afk-alt session
+    "m2538fffc": _AFK,  # 15/11 one-sided spear-mace fight vs afk (used only to check the live lunge rules)
     # cheat vs afk alt
     "me9b0dc92": _AFK, "ma2e0fb94": _AFK, "m9ec7d620": _AFK, "m0a6016b0": _AFK, "m4108b362": _AFK,  # Aim Assist
     "m22700b10": _AFK, "mf2dd0754": _AFK,  # Kill Aura
     "mb1f6fa34": _AFK, "md5e8301b": _AFK,  # Silent Aim
     "m12b44916": _AFK, "m109c3312": _AFK, "m70c1ef87": _AFK,  # Triggerbot
+    "m3f63358f": _AFK,  # Doomsday Triggerbot (10/11, afk alt); matters once doomsday is a --train-client
 }
 
 def id_table(args) -> pd.DataFrame:
@@ -807,7 +822,7 @@ def parse_args(argv=None):
     p.add_argument("--out", default="out_quick")
     p.add_argument("--list", action="store_true", help="show pre-entered ids and file counts, then exit")
     p.add_argument("--modules", default=",".join(SELECTED_DEFAULT), help="comma list, or 'all'")
-    p.add_argument("--train-client", default="Prestige")
+    p.add_argument("--train-client", default="Prestige", help="client(s) whose cheat sessions train the models, comma list")
     p.add_argument("--trim-s", type=float, default=3.0, help="seconds dropped at each end of a segment")
     p.add_argument("--min-secs", type=float, default=60.0)
     p.add_argument("--chunk-min", type=float, default=4.0, help="legit recording is split into chunks of this many minutes")
@@ -947,11 +962,12 @@ def main(argv=None) -> int:
         notes.append("legit/cheat files have no wall-clock time (old GML1): edge trimming was skipped")
 
     wanted = None if args.modules.strip().lower() == "all" else {m.strip().lower() for m in args.modules.split(",") if m.strip()}
-    cheat_all = d[(d["label"] == CHEAT) & (d["id_client"].str.lower() == args.train_client.lower())]
+    tclients = {c.strip().lower() for c in args.train_client.split(",") if c.strip()}
+    cheat_all = d[(d["label"] == CHEAT) & (d["id_client"].str.lower().isin(tclients))]
     modules = sorted(cheat_all["id_module"].dropna().unique())
     if wanted is not None:
         modules = [m for m in modules if m.lower() in wanted]
-    other = d[(d["label"] == CHEAT) & (d["id_client"].str.lower() != args.train_client.lower())]
+    other = d[(d["label"] == CHEAT) & ~(d["id_client"].str.lower().isin(tclients))]
 
     results = []
     if args.loco:

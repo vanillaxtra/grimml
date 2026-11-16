@@ -313,49 +313,100 @@ def _wrap(deg: float) -> float:
     return (float(deg) + 180.0) % 360.0 - 180.0
 
 
-# ---------------------------------------------------------------- live LungeRate check
+# ---------------------------------------------------------------- live lunge checks (LungeRate, LungeHold, SwapOrder)
+
+RATE, HOLD, ORDER = 1, 2, 4  # alert bits returned by LiveLunge
+
 
 class LiveLunge:
-    """The detector's LungeRate check, event by event (Java: dev.grimml.detect.features.LungeRate).
+    """The detector's three live lunge checks, event by event (Java: dev.grimml.detect.features.LungeRate).
 
-    A swap-lunge is a spear STAB whose last hotbar swap went to the spear at most `swap_in_ms` earlier (each swap
-    counts once). By hand the chain swap -> jab -> swap back takes time: ~700 legit swap-lunges (a spear-mace duel
-    from both sides and a deliberate "as fast as possible" session) were never under 345 ms apart. Prestige / Grim
-    Instant Lunge chains them 100-250 ms apart. The check counts gaps in [min_ms, fast_ms) between consecutive
-    swap-lunges and alerts when `count` of them fall inside `window_ms`; gaps under min_ms are packets bunched by
-    lag, not a hand or a macro, and do not count. Holding the spear and jabbing without swaps never counts.
-    All times are integer nanoseconds, so Python and Java agree exactly.
+    A swap-lunge is a spear STAB whose last hotbar swap went to the spear at most `swap_in_ms` earlier (each swap counts
+    once). Holding the spear and jabbing without swaps never counts.
+
+    RATE (LungeRate): by hand the chain swap -> jab -> swap back takes time: legit swap-lunges were never under 345 ms
+    apart (3 sessions, 2 players). Gaps in [min_ms, fast_ms) between consecutive swap-lunges are counted; `count` of
+    them inside `window_ms` alert. Gaps under min_ms are packets bunched by lag and do not count.
+
+    HOLD (LungeHold): the spear held for exactly one client tick (swap in, jab, swap back on the next tick). Legit 1.1%
+    of swap-lunges, Instant Lunge 34-100% at 0-90 ms delay. `hold_count` one-tick holds among the last `hold_of`
+    swap-lunges alert. Works however slowly the lunges are chained.
+
+    ORDER (SwapOrder): a hotbar swap in the same client tick after an attack or STAB. Vanilla sends hotbar changes
+    before attacks inside one client tick, so this never happens by hand (0 in ~1400 legit hits and swaps); a client
+    doing the whole chain in one tick does it on every lunge. `order_count` inside `order_window_ms` alert.
+
+    The tick rules need client ticks (1.21.2+ clients, ct > 0). All times are integer nanoseconds, so Python and Java
+    agree exactly. Each feed returns the alert bits (0 = none); a check's counter restarts when it alerts.
     """
 
     def __init__(self, fast_ms: float = 300.0, min_ms: float = 75.0, count: int = 6, window_ms: float = 30000.0,
-                 swap_in_ms: float = LUNGE_SWAP_IN_MS):
+                 swap_in_ms: float = LUNGE_SWAP_IN_MS, hold_count: int = 5, hold_of: int = 10, order_count: int = 2,
+                 order_window_ms: float = 60000.0):
         self.fast_ns = int(fast_ms * 1e6)
         self.min_ns = int(min_ms * 1e6)
         self.count = int(count)
         self.window_ns = int(window_ms * 1e6)
         self.swap_in_ns = int(swap_in_ms * 1e6)
+        self.hold_count = int(hold_count)
+        self.hold_of = max(1, int(hold_of))
+        self.order_count = int(order_count)
+        self.order_window_ns = int(order_window_ms * 1e6)
         self.swap_to = -1
         self.swap_ns = 0
+        self.swap_ct = 0
         self.swap_used = True
         self.last_lunge = None
         self.fast: list[int] = []
         self.lunges = 0
+        self.pending_hold_ct = -1      # client tick of the swap-in of the last swap-lunge, until the next swap
+        self.holds: list[int] = []     # last hold_of swap-lunges: 1 = held one client tick
+        self.hit_ct = 0                # client tick of the last attack / STAB
+        self.order: list[int] = []
+        self.order_total = 0
 
-    def swap(self, nanos: int, to_cat: int) -> None:
+    def swap(self, nanos: int, to_cat: int, from_cat: int = -1, ct: int = 0) -> int:
+        nanos, ct = int(nanos), int(ct)
+        out = 0
+        if ct > 0 and self.hit_ct == ct:
+            self.order_total += 1
+            self.order.append(nanos)
+            while self.order and nanos - self.order[0] > self.order_window_ns:
+                self.order.pop(0)
+            if len(self.order) >= self.order_count:
+                self.order.clear()
+                out |= ORDER
+        if self.pending_hold_ct >= 0:
+            if from_cat == SPEAR and ct > 0 and self.pending_hold_ct > 0:
+                self.holds.append(1 if ct - self.pending_hold_ct == 1 else 0)
+                if len(self.holds) > self.hold_of:
+                    self.holds.pop(0)
+                if sum(self.holds) >= self.hold_count:
+                    self.holds.clear()
+                    out |= HOLD
+            self.pending_hold_ct = -1
         self.swap_to = int(to_cat)
-        self.swap_ns = int(nanos)
+        self.swap_ns = nanos
+        self.swap_ct = ct
         self.swap_used = False
+        return out
 
-    def stab(self, nanos: int) -> bool:
-        """Feeds one STAB; True when the check alerts (the fast-gap count then restarts)."""
+    def hit(self, nanos: int, ct: int = 0) -> int:
+        self.hit_ct = int(ct)
+        return 0
+
+    def stab(self, nanos: int, ct: int = 0) -> int:
+        """Feeds one STAB; returns RATE when LungeRate alerts."""
         nanos = int(nanos)
+        self.hit_ct = int(ct)
         if self.swap_used or self.swap_to != SPEAR or nanos - self.swap_ns > self.swap_in_ns:
-            return False
+            return 0
         self.swap_used = True
         self.lunges += 1
+        self.pending_hold_ct = self.swap_ct
         prev, self.last_lunge = self.last_lunge, nanos
         if prev is None:
-            return False
+            return 0
         gap = nanos - prev
         if self.min_ns <= gap < self.fast_ns:
             self.fast.append(nanos)
@@ -363,17 +414,19 @@ class LiveLunge:
             self.fast.pop(0)
         if len(self.fast) >= self.count:
             self.fast.clear()
-            return True
-        return False
+            return RATE
+        return 0
 
-    def feed(self, a: dict) -> bool:
-        """Feeds one action from actions(); hits are ignored."""
+    def feed(self, a: dict) -> int:
+        """Feeds one action from actions()."""
+        ct = a.get("ct") or 0
         if a["k"] == SWAP:
-            self.swap(a["n"], a["to"])
-            return False
+            return self.swap(a["n"], a["to"], a["from"], ct)
         if a["k"] == STAB_ACT:
-            return self.stab(a["n"])
-        return False
+            return self.stab(a["n"], ct)
+        if a["k"] == HIT:
+            return self.hit(a["n"], ct)
+        return 0
 
     @property
     def recent_fast(self) -> int:

@@ -83,17 +83,22 @@ assist sessions reached 20 within 1.5-6 s once the step was known. The Java port
 every build (`live_grid.txt`). The same grid measurement feeds the ML models as `grid_off_frac`,
 `grid_off_toward`, `grid_off_away`, `grid_toward_minus_away`.
 
-## LungeRate check (no model needed)
+## Lunge checks: LungeRate, LungeHold, SwapOrder (no model needed)
 
 Instant Lunge swaps to the spear, jabs and swaps back as one macro. A swap-lunge is a spear jab (a digging STAB
 packet, not an attack) within 150 ms of a hotbar swap to the spear; each swap counts once, and jabbing while holding
-the spear never counts. `LungeRate` counts gaps between consecutive swap-lunges in [`min-ms`, `fast-ms`) and alerts
-when `count` of them fall inside `window-ms` (defaults: 75-300 ms, 6 within 30 s). It runs on every player, not only
-those who attacked, because a lunge-only player never sends an attack. Settings: the `lunge-rate` section of
-`config.yml`.
+the spear never counts. The three checks measure what a hand or the vanilla client cannot do, not how one cheat
+client does it, so they apply to clients never recorded. They run on every player, not only those who attacked,
+because a lunge-only player never sends an attack. One `LungeRate` object per player feeds all three
+(`features/LungeRate.java`).
 
-Calibrated on recorded sessions (training `spearmace.LiveLunge`, same code): ~700 legit swap-lunges (a spear-mace
-duel from both sides and a deliberate "as fast as possible" session) were never under 345 ms apart and never alerted;
-every legit session in the recordings stays at 0. Prestige Instant Lunge at 0-0, 20-70 and 30-90 ms delay and Grim
-Auto Lunge chained them 100-250 ms apart and alerted in all 7 sessions. The Java port is checked against Python on
-every build (`live_lunge.txt`).
+| check | flags | default | legit (recorded) | Instant Lunge (recorded) |
+|---|---|---|---|---|
+| `LungeRate` | gaps between swap-lunges in [`min-ms`, `fast-ms`) | 6 within 30 s, 75-300 ms | fastest gap 345 ms (3 sessions, 2 players), 0 alerts | 100-250 ms apart, alerted in all 7 sessions |
+| `LungeHold` | spear held exactly one client tick | 5 of the last 10 swap-lunges | 2 of 182 (1.1%), 0 alerts | 0-0: 100%, 20-70: 63%, 30-90: 34% / 0% |
+| `SwapOrder` | a hotbar swap after an attack or STAB in the same client tick (vanilla sends hotbar changes first) | 2 within 60 s | 0 in ~1400 hits and swaps | rare for Prestige; any client doing the chain inside one tick does it every lunge |
+
+LungeHold and SwapOrder need client ticks (1.21.2+ clients); older clients are skipped by those two. Settings: the
+`lunge-rate`, `lunge-hold` and `swap-order` sections of `config.yml`. Calibrated with training `spearmace.LiveLunge`
+(same code) replayed over every recorded session; the Java port is checked against Python on every build
+(`live_lunge.txt`).

@@ -39,18 +39,36 @@ public final class Scanner implements Runnable {
         public static final String DESCRIPTION = "Rotation off the player's mouse sensitivity grid, pulling toward the opponent";
     }
 
-    /** The LungeRate check (features/LungeRate): spear swap-lunges chained faster than a hand can. */
-    public record LungeSettings(boolean enabled, double fastMs, double minMs, int count, double windowMs, long cooldownMs) {
-        public static final String CHECK = "LungeRate";
-        public static final String DESCRIPTION = "Spear swap-lunges chained faster than a hand can (Instant Lunge)";
+    /**
+     * The live lunge checks (features/LungeRate): LungeRate (swap-lunges chained faster than a hand can), LungeHold
+     * (the spear held for exactly one client tick, again and again) and SwapOrder (a hotbar swap after an attack in the
+     * same client tick, which vanilla never sends).
+     */
+    public record LungeSettings(boolean rateEnabled, double fastMs, double minMs, int count, double windowMs,
+                                boolean holdEnabled, int holdCount, int holdOf,
+                                boolean orderEnabled, int orderCount, double orderWindowMs, long cooldownMs) {
+        public static final String[] CHECKS = {"LungeRate", "LungeHold", "SwapOrder"};
+        public static final String[] DESCRIPTIONS = {
+                "Spear swap-lunges chained faster than a hand can (Instant Lunge)",
+                "Spear swapped in, jabbed and swapped out within one client tick, again and again (Instant Lunge)",
+                "Hotbar swap sent after an attack in the same client tick, which the vanilla client never does"};
+
+        public boolean enabled() {
+            return rateEnabled || holdEnabled || orderEnabled;
+        }
+
+        boolean on(int check) {
+            return check == 0 ? rateEnabled : check == 1 ? holdEnabled : orderEnabled;
+        }
     }
 
     private static final class Lunge {
         final LungeRate rate;
-        long lastAlertNanos;
+        final long[] lastAlertNanos = new long[3];
 
         Lunge(LungeSettings l) {
-            rate = new LungeRate(l.fastMs(), l.minMs(), l.count(), l.windowMs(), 150.0);
+            rate = new LungeRate(l.fastMs(), l.minMs(), l.count(), l.windowMs(), 150.0,
+                    l.holdCount(), l.holdOf(), l.orderCount(), l.orderWindowMs());
         }
     }
 
@@ -229,11 +247,11 @@ public final class Scanner implements Runnable {
         }
     }
 
-    /** Feeds the swaps and spear STABs this player sent since the last scan. */
+    /** Feeds the swaps, attacks and spear STABs this player sent since the last scan. */
     private void lunge(UUID id, LungeSettings l, long now) {
         Lunge lu = lunges.computeIfAbsent(id, k -> new Lunge(l));
         LungeRate r = lu.rate;
-        boolean alert = false;
+        int alerts = 0;
         long last = r.lastNanos;
         for (int i = 0; i < w4.m; i++) {
             long n = w4.eNanos[i];
@@ -241,20 +259,33 @@ public final class Scanner implements Runnable {
                 continue;
             }
             int type = w4.eType[i];
+            int ct = w4.eClientTick[i];
             if (type == Window4.HOTBAR_SWAP && w4.eA[i] != 40) {
-                r.swap(n, (w4.eC[i] >> 8) & 0xFF);
+                alerts |= r.swap(n, (w4.eC[i] >> 8) & 0xFF, w4.eC[i] & 0xFF, ct);
                 r.lastNanos = n;
             } else if (type == Window4.BREAK && w4.eA[i] == 8) {
-                alert |= r.stab(n);
+                alerts |= r.stab(n, ct);
+                r.lastNanos = n;
+            } else if (type == Window4.ATTACK && ((w4.eG[i] & 0xFF) == 1 || (w4.eG[i] == 0 && w4.eA[i] != 0))) {
+                r.hit(n, ct);
                 r.lastNanos = n;
             }
         }
-        if (alert && now - lu.lastAlertNanos >= l.cooldownMs() * 1_000_000L) {
-            lu.lastAlertNanos = now;
+        for (int c = 0; c < 3; c++) {
+            if ((alerts & (1 << c)) == 0 || !l.on(c) || now - lu.lastAlertNanos[c] < l.cooldownMs() * 1_000_000L) {
+                continue;
+            }
+            lu.lastAlertNanos[c] = now;
             flagsRaised.incrementAndGet();
-            sink.flag(id, LungeSettings.CHECK, LungeSettings.DESCRIPTION, String.format(
-                    "%d swap-lunges under %.0f ms apart within %.0f s (%d swap-lunges seen)",
-                    l.count(), l.fastMs(), l.windowMs() / 1000, r.lunges()));
+            String verbose = switch (c) {
+                case 0 -> String.format("%d swap-lunges under %.0f ms apart within %.0f s (%d swap-lunges seen)",
+                        l.count(), l.fastMs(), l.windowMs() / 1000, r.lunges());
+                case 1 -> String.format("spear held one client tick on %d of the last %d swap-lunges (%d seen)",
+                        l.holdCount(), l.holdOf(), r.lunges());
+                default -> String.format("%d swaps after an attack in the same client tick within %.0f s (%d total)",
+                        l.orderCount(), l.orderWindowMs() / 1000, r.orderTotal());
+            };
+            sink.flag(id, LungeSettings.CHECKS[c], LungeSettings.DESCRIPTIONS[c], verbose);
         }
     }
 

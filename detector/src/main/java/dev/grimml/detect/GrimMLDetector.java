@@ -130,6 +130,9 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
         return new Scanner.LungeSettings(c.getBoolean("lunge-rate.enabled", true),
                 c.getDouble("lunge-rate.fast-ms", 300.0), c.getDouble("lunge-rate.min-ms", 75.0),
                 c.getInt("lunge-rate.count", 6), c.getDouble("lunge-rate.window-ms", 30_000.0),
+                c.getBoolean("lunge-hold.enabled", true), c.getInt("lunge-hold.count", 5), c.getInt("lunge-hold.of", 10),
+                c.getBoolean("swap-order.enabled", true), c.getInt("swap-order.count", 2),
+                c.getDouble("swap-order.window-ms", 60_000.0),
                 c.getLong("lunge-rate.alert-cooldown-ms", 15_000L));
     }
 
@@ -331,8 +334,12 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
                 sender.sendMessage("§7 - §f" + Scanner.GridSettings.CHECK + (g.enabled() ? " §aon" : " §coff")
                         + String.format(" §7alert at score %.0f, toward bias >= %.2f", g.h(), g.minBias()));
                 Scanner.LungeSettings l = lungeSettings();
-                sender.sendMessage("§7 - §f" + Scanner.LungeSettings.CHECK + (l.enabled() ? " §aon" : " §coff")
+                sender.sendMessage("§7 - §fLungeRate" + (l.rateEnabled() ? " §aon" : " §coff")
                         + String.format(" §7alert at %d swap-lunges under %.0f ms apart within %.0f s", l.count(), l.fastMs(), l.windowMs() / 1000));
+                sender.sendMessage("§7 - §fLungeHold" + (l.holdEnabled() ? " §aon" : " §coff")
+                        + String.format(" §7alert at %d one-tick spear holds in %d swap-lunges", l.holdCount(), l.holdOf()));
+                sender.sendMessage("§7 - §fSwapOrder" + (l.orderEnabled() ? " §aon" : " §coff")
+                        + String.format(" §7alert at %d same-tick swaps after an attack within %.0f s", l.orderCount(), l.orderWindowMs() / 1000));
                 if (args.length > 1) {
                     Player target = Bukkit.getPlayerExact(args[1]);
                     String st = target == null ? null : scanner.gridStatus(target.getUniqueId());

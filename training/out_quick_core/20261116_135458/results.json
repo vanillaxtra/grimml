@@ -1,0 +1,355 @@
+{
+  "header": {
+    "folder": "prestige temp test",
+    "windows_used": 14684,
+    "legit_windows": 4891,
+    "cheat_windows": 9793,
+    "chunk_gap_dropped": 71,
+    "trim_s": 3.0,
+    "chunk_min": 4.0,
+    "roles": [
+      1,
+      2
+    ]
+  },
+  "results": [
+    {
+      "module": "Kill Aura",
+      "cheat_windows": 988,
+      "cheat_segments": 5,
+      "legit_windows": 988,
+      "legit_chunks": 29,
+      "all": {
+        "auc": 0.8340880034093332,
+        "ci": [
+          0.7808501600752011,
+          0.882395321128522
+        ],
+        "n_features": 18
+      },
+      "core": {
+        "auc": 0.8495406415446901,
+        "ci": [
+          0.8037115469856309,
+          0.8915548837783416
+        ],
+        "n_features": 13
+      },
+      "shortcut": {
+        "auc": 0.361294030388959,
+        "ci": [
+          0.16950880992806053,
+          0.5591305579202046
+        ],
+        "n_features": 6
+      },
+      "core_operating_points": {
+        "fpr5": {
+          "thr": 0.7319022666845157,
+          "recall": 0.42206477732793524
+        },
+        "fpr1": {
+          "thr": 0.8665208913618724,
+          "recall": 0.19230769230769232
+        }
+      },
+      "segments": [
+        {
+          "mark_id": "m1900082b",
+          "settings": "HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100",
+          "windows": 131,
+          "recall_at_5pct_fpr": 0.4961832061068702,
+          "recall_at_1pct_fpr": 0.21374045801526717,
+          "median_score": 0.7254061337395843
+        },
+        {
+          "mark_id": "m1cde4c02",
+          "settings": "HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 ROTATIONS:SNAP",
+          "windows": 177,
+          "recall_at_5pct_fpr": 0.2598870056497175,
+          "recall_at_1pct_fpr": 0.13559322033898305,
+          "median_score": 0.49683987717770783
+        },
+        {
+          "mark_id": "m42852fa8",
+          "settings": "HUMANIZED:TRUE REACH:2.8 MISS_CHANCE:5 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 ROTATIONS:SNAP",
+          "windows": 239,
+          "recall_at_5pct_fpr": 0.34309623430962344,
+          "recall_at_1pct_fpr": 0.16317991631799164,
+          "median_score": 0.6346525918520115
+        },
+        {
+          "mark_id": "m4ca53577",
+          "settings": "HUMANIZED:TRUE REACH:2.9 MISS_CHANCE:3 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100",
+          "windows": 299,
+          "recall_at_5pct_fpr": 0.5050167224080268,
+          "recall_at_1pct_fpr": 0.20735785953177258,
+          "median_score": 0.7358689107739513
+        },
+        {
+          "mark_id": "m98f0b9c2",
+          "settings": "HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100",
+          "windows": 142,
+          "recall_at_5pct_fpr": 0.5140845070422535,
+          "recall_at_1pct_fpr": 0.2605633802816901,
+          "median_score": 0.7518488188179482
+        }
+      ],
+      "fights": {
+        "legit_units": 29,
+        "legit_share_median": 0.022727272727272728,
+        "legit_share_p95": 0.19844961240310063,
+        "legit_share_max": 0.30434782608695654,
+        "cheat_units": 5,
+        "cheat_caught": 5,
+        "cheat": [
+          {
+            "mark_id": "m1900082b",
+            "windows": 131,
+            "share": 0.4961832061068702
+          },
+          {
+            "mark_id": "m1cde4c02",
+            "windows": 177,
+            "share": 0.2598870056497175
+          },
+          {
+            "mark_id": "m42852fa8",
+            "windows": 239,
+            "share": 0.34309623430962344
+          },
+          {
+            "mark_id": "m4ca53577",
+            "windows": 299,
+            "share": 0.5050167224080268
+          },
+          {
+            "mark_id": "m98f0b9c2",
+            "windows": 142,
+            "share": 0.5140845070422535
+          }
+        ],
+        "legit_top": [
+          {
+            "unit": "mb1f0f01e:1",
+            "mark_id": "mb1f0f01e",
+            "windows": 23,
+            "share": 0.30434782608695654
+          },
+          {
+            "unit": "md3d2f5e7:0",
+            "mark_id": "md3d2f5e7",
+            "windows": 45,
+            "share": 0.2222222222222222
+          },
+          {
+            "unit": "m39bac321:0",
+            "mark_id": "m39bac321",
+            "windows": 43,
+            "share": 0.16279069767441862
+          }
+        ]
+      },
+      "top_core_features": [
+        [
+          "yaw_jerk_mean",
+          5326.3577580451965
+        ],
+        [
+          "yaw_vel_abs_mean",
+          2885.845442056656
+        ],
+        [
+          "pitch_range",
+          1251.0896382331848
+        ],
+        [
+          "click_gap_cv",
+          985.960601568222
+        ],
+        [
+          "yaw_vel_std",
+          836.9425330162048
+        ]
+      ],
+      "verdict": "separates on held-out segments; single operator",
+      "matched": {
+        "cells": 15,
+        "cols": [
+          "attack_count",
+          "event_count"
+        ],
+        "cheat_before": 1031,
+        "cheat_after": 988,
+        "legit_before": 4891,
+        "legit_after": 988
+      }
+    },
+    {
+      "module": "Silent Aim",
+      "cheat_windows": 605,
+      "cheat_segments": 4,
+      "legit_windows": 605,
+      "legit_chunks": 29,
+      "all": {
+        "auc": 0.6579960385219589,
+        "ci": [
+          0.42965044497953214,
+          0.9245822909531307
+        ],
+        "n_features": 18
+      },
+      "core": {
+        "auc": 0.711161805887576,
+        "ci": [
+          0.45739588844769674,
+          0.8890059049570491
+        ],
+        "n_features": 13
+      },
+      "shortcut": {
+        "auc": 0.5631391298408579,
+        "ci": [
+          0.3599476487277352,
+          0.8089073983230081
+        ],
+        "n_features": 6
+      },
+      "core_operating_points": {
+        "fpr5": {
+          "thr": 0.7904753163725003,
+          "recall": 0.343801652892562
+        },
+        "fpr1": {
+          "thr": 0.8811888920363061,
+          "recall": 0.18512396694214875
+        }
+      },
+      "segments": [
+        {
+          "mark_id": "m8a278525",
+          "settings": "CONTINOUS_TRACKING:TRUE",
+          "windows": 120,
+          "recall_at_5pct_fpr": 0.35,
+          "recall_at_1pct_fpr": 0.15833333333333333,
+          "median_score": 0.7235196775811166
+        },
+        {
+          "mark_id": "m96dd5b71",
+          "settings": "CONTINOUS_TRACKING:TRUE",
+          "windows": 169,
+          "recall_at_5pct_fpr": 0.5562130177514792,
+          "recall_at_1pct_fpr": 0.28402366863905326,
+          "median_score": 0.811668177445566
+        },
+        {
+          "mark_id": "mc723710d",
+          "settings": "CONTINOUS_TRACKING:FALSE",
+          "windows": 190,
+          "recall_at_5pct_fpr": 0.031578947368421054,
+          "recall_at_1pct_fpr": 0.005263157894736842,
+          "median_score": 0.05911594392614938
+        },
+        {
+          "mark_id": "mcd7a19cf",
+          "settings": "CONTINOUS_TRACKING:TRUE",
+          "windows": 126,
+          "recall_at_5pct_fpr": 0.5238095238095238,
+          "recall_at_1pct_fpr": 0.3492063492063492,
+          "median_score": 0.7992968233553144
+        }
+      ],
+      "fights": {
+        "legit_units": 23,
+        "legit_share_median": 0.04,
+        "legit_share_p95": 0.1872180451127819,
+        "legit_share_max": 0.3,
+        "cheat_units": 4,
+        "cheat_caught": 3,
+        "cheat": [
+          {
+            "mark_id": "m8a278525",
+            "windows": 120,
+            "share": 0.35
+          },
+          {
+            "mark_id": "m96dd5b71",
+            "windows": 169,
+            "share": 0.5562130177514792
+          },
+          {
+            "mark_id": "mc723710d",
+            "windows": 190,
+            "share": 0.031578947368421054
+          },
+          {
+            "mark_id": "mcd7a19cf",
+            "windows": 126,
+            "share": 0.5238095238095238
+          }
+        ],
+        "legit_top": [
+          {
+            "unit": "ma90a44db:1",
+            "mark_id": "ma90a44db",
+            "windows": 10,
+            "share": 0.3
+          },
+          {
+            "unit": "m69a17c52:0",
+            "mark_id": "m69a17c52",
+            "windows": 21,
+            "share": 0.19047619047619047
+          },
+          {
+            "unit": "m7f9d360a:0",
+            "mark_id": "m7f9d360a",
+            "windows": 19,
+            "share": 0.15789473684210525
+          }
+        ]
+      },
+      "top_core_features": [
+        [
+          "pitch_range",
+          2507.3584856987
+        ],
+        [
+          "speed_mean",
+          1370.4634470939636
+        ],
+        [
+          "yaw_jerk_mean",
+          1088.9462523460388
+        ],
+        [
+          "click_gap_cv",
+          751.7706050872803
+        ],
+        [
+          "yaw_vel_abs_mean",
+          639.682719707489
+        ]
+      ],
+      "verdict": "separates on held-out segments; single operator",
+      "matched": {
+        "cells": 12,
+        "cols": [
+          "attack_count",
+          "event_count"
+        ],
+        "cheat_before": 623,
+        "cheat_after": 605,
+        "legit_before": 4891,
+        "legit_after": 605
+      }
+    }
+  ],
+  "notes": [
+    "hard-validity filter applied to 0/22063 windows; the rest come from the old recorder (sticky validity bits) or no fixed-build time is set, so their validity flags are ignored.",
+    "Activity matching is on: windows were subsampled to equal counts per (attack_count x event_count) cell; the old transfer line is skipped, use --loco for unseen clients.",
+    "Cheat comes from one operator's test sessions. The activity/setup confound is only partly controlled (see the shortcut-only line); legit now includes the same account plus a second account and bulk players.",
+    "legit comes from 22 recording(s); chunk-level CIs are wide and only describe those chunks.",
+    "Setting values come from your log; where marker and log disagreed the log was used (see the IDS table notes)."
+  ]
+}
