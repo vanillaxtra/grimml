@@ -120,6 +120,8 @@ This is where i can keep track of the different clients i have run cheats on and
 | 10/11/26 | Triggerbot | COOLDOWN_MAX_PERCENT:100 COOLDOWN_MIN_PERCENT:90 DELAY_MAX_MS:0 DELAY_MIN_MS:0 MISS_CHANCE:0 | 4:43 | m3f63358f | notauthorised | afk alt | 3 |
 | 16/11/26 | Triggerbot | COOLDOWN_MAX_PERCENT:100 COOLDOWN_MIN_PERCENT:90 DELAY_MAX_MS:0 DELAY_MIN_MS:0 MISS_CHANCE:0 | 6:35 | m5a6d93c9 | notauthorised | bot | 4 |
 |  |  |  |  |  |  |  |  |
+| 16/11/26 | Aim Assist | SPEED:8 SENSITIVITY:8 PREDICTION:0 AIM_POSITION:CENTER VERTICAL_AIM:FALSE | 6:35 | m5a6d93c9 | notauthorised | bot | 4 |
+|  |  |  |  |  |  |  |  |
 
 ## Meteor
 | Date | Module | Settings | Duration | ID | By | Opponent | Schema Version |
