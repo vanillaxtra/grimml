@@ -91,6 +91,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 16/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:1200 BREAK_COOLDOWN_MIN_MS:900 | 2:52 | meef9a752 | notauthorised | bot | 4 |
 | 16/11/26 | Auto Shield Breaker | ON_HIT:TRUE | 5:32 | m2ebed745 | notauthorised | bot | 4 |
 | 16/11/26 | Auto Shield Breaker | ON_HIT:TRUE | 7:08 | m5d184039 | notauthorised | bot | 4 |
+| 16/11/26 | Auto Shield Breaker | ON_HIT:TRUE | 5:47 | mc6c469ee | notauthorised | bot | 4 |
 
 ## Grim
 | Date | Module | Settings | Duration | ID | By | Opponent | Schema Version |
