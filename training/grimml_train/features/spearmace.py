@@ -311,3 +311,70 @@ def mace_aim_features(frames: list[dict], events: list[dict], aim: list) -> dict
 
 def _wrap(deg: float) -> float:
     return (float(deg) + 180.0) % 360.0 - 180.0
+
+
+# ---------------------------------------------------------------- live LungeRate check
+
+class LiveLunge:
+    """The detector's LungeRate check, event by event (Java: dev.grimml.detect.features.LungeRate).
+
+    A swap-lunge is a spear STAB whose last hotbar swap went to the spear at most `swap_in_ms` earlier (each swap
+    counts once). By hand the chain swap -> jab -> swap back takes time: ~700 legit swap-lunges (a spear-mace duel
+    from both sides and a deliberate "as fast as possible" session) were never under 345 ms apart. Prestige / Grim
+    Instant Lunge chains them 100-250 ms apart. The check counts gaps in [min_ms, fast_ms) between consecutive
+    swap-lunges and alerts when `count` of them fall inside `window_ms`; gaps under min_ms are packets bunched by
+    lag, not a hand or a macro, and do not count. Holding the spear and jabbing without swaps never counts.
+    All times are integer nanoseconds, so Python and Java agree exactly.
+    """
+
+    def __init__(self, fast_ms: float = 300.0, min_ms: float = 75.0, count: int = 6, window_ms: float = 30000.0,
+                 swap_in_ms: float = LUNGE_SWAP_IN_MS):
+        self.fast_ns = int(fast_ms * 1e6)
+        self.min_ns = int(min_ms * 1e6)
+        self.count = int(count)
+        self.window_ns = int(window_ms * 1e6)
+        self.swap_in_ns = int(swap_in_ms * 1e6)
+        self.swap_to = -1
+        self.swap_ns = 0
+        self.swap_used = True
+        self.last_lunge = None
+        self.fast: list[int] = []
+        self.lunges = 0
+
+    def swap(self, nanos: int, to_cat: int) -> None:
+        self.swap_to = int(to_cat)
+        self.swap_ns = int(nanos)
+        self.swap_used = False
+
+    def stab(self, nanos: int) -> bool:
+        """Feeds one STAB; True when the check alerts (the fast-gap count then restarts)."""
+        nanos = int(nanos)
+        if self.swap_used or self.swap_to != SPEAR or nanos - self.swap_ns > self.swap_in_ns:
+            return False
+        self.swap_used = True
+        self.lunges += 1
+        prev, self.last_lunge = self.last_lunge, nanos
+        if prev is None:
+            return False
+        gap = nanos - prev
+        if self.min_ns <= gap < self.fast_ns:
+            self.fast.append(nanos)
+        while self.fast and nanos - self.fast[0] > self.window_ns:
+            self.fast.pop(0)
+        if len(self.fast) >= self.count:
+            self.fast.clear()
+            return True
+        return False
+
+    def feed(self, a: dict) -> bool:
+        """Feeds one action from actions(); hits are ignored."""
+        if a["k"] == SWAP:
+            self.swap(a["n"], a["to"])
+            return False
+        if a["k"] == STAB_ACT:
+            return self.stab(a["n"])
+        return False
+
+    @property
+    def recent_fast(self) -> int:
+        return len(self.fast)

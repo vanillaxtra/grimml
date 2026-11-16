@@ -66,7 +66,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
         grim = new GrimBridge(this, bridgeSettings());
         scanner = new Scanner(tracks, exempt, store::current,
                 (id, check, description, verbose) -> grim.flag(id, names.getOrDefault(id, id.toString()), check, description, verbose),
-                scanSettings(), gridSettings(), ATTACK_CAP);
+                scanSettings(), gridSettings(), lungeSettings(), ATTACK_CAP);
 
         getServer().getPluginManager().registerEvents(this, this);
         for (Player p : Bukkit.getOnlinePlayers()) {
@@ -123,6 +123,14 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
                 c.getDouble("aim-grid.legit-off-rate", 0.01), c.getDouble("aim-grid.cheat-off-rate", 0.10),
                 c.getDouble("aim-grid.alert-score", 20.0), c.getDouble("aim-grid.min-toward-bias", 0.05),
                 c.getLong("aim-grid.alert-cooldown-ms", 15_000L));
+    }
+
+    private Scanner.LungeSettings lungeSettings() {
+        var c = getConfig();
+        return new Scanner.LungeSettings(c.getBoolean("lunge-rate.enabled", true),
+                c.getDouble("lunge-rate.fast-ms", 300.0), c.getDouble("lunge-rate.min-ms", 75.0),
+                c.getInt("lunge-rate.count", 6), c.getDouble("lunge-rate.window-ms", 30_000.0),
+                c.getLong("lunge-rate.alert-cooldown-ms", 15_000L));
     }
 
     private Scanner.Settings scanSettings() {
@@ -322,6 +330,9 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
                 Scanner.GridSettings g = gridSettings();
                 sender.sendMessage("§7 - §f" + Scanner.GridSettings.CHECK + (g.enabled() ? " §aon" : " §coff")
                         + String.format(" §7alert at score %.0f, toward bias >= %.2f", g.h(), g.minBias()));
+                Scanner.LungeSettings l = lungeSettings();
+                sender.sendMessage("§7 - §f" + Scanner.LungeSettings.CHECK + (l.enabled() ? " §aon" : " §coff")
+                        + String.format(" §7alert at %d swap-lunges under %.0f ms apart within %.0f s", l.count(), l.fastMs(), l.windowMs() / 1000));
                 if (args.length > 1) {
                     Player target = Bukkit.getPlayerExact(args[1]);
                     String st = target == null ? null : scanner.gridStatus(target.getUniqueId());
@@ -336,7 +347,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
             case "reload" -> {
                 reloadConfig();
                 grim.settings(bridgeSettings());
-                scanner.settings(scanSettings(), gridSettings());
+                scanner.settings(scanSettings(), gridSettings(), lungeSettings());
                 sender.sendMessage("§bGrimML §7config reloaded (window size and scan interval need a restart).");
             }
             case "update" -> {

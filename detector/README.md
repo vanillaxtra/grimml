@@ -82,3 +82,18 @@ Calibrated on recorded fights (training `aimgrid.py`, same code): legit fights n
 assist sessions reached 20 within 1.5-6 s once the step was known. The Java port is checked against Python on
 every build (`live_grid.txt`). The same grid measurement feeds the ML models as `grid_off_frac`,
 `grid_off_toward`, `grid_off_away`, `grid_toward_minus_away`.
+
+## LungeRate check (no model needed)
+
+Instant Lunge swaps to the spear, jabs and swaps back as one macro. A swap-lunge is a spear jab (a digging STAB
+packet, not an attack) within 150 ms of a hotbar swap to the spear; each swap counts once, and jabbing while holding
+the spear never counts. `LungeRate` counts gaps between consecutive swap-lunges in [`min-ms`, `fast-ms`) and alerts
+when `count` of them fall inside `window-ms` (defaults: 75-300 ms, 6 within 30 s). It runs on every player, not only
+those who attacked, because a lunge-only player never sends an attack. Settings: the `lunge-rate` section of
+`config.yml`.
+
+Calibrated on recorded sessions (training `spearmace.LiveLunge`, same code): ~700 legit swap-lunges (a spear-mace
+duel from both sides and a deliberate "as fast as possible" session) were never under 345 ms apart and never alerted;
+every legit session in the recordings stays at 0. Prestige Instant Lunge at 0-0, 20-70 and 30-90 ms delay and Grim
+Auto Lunge chained them 100-250 ms apart and alerted in all 7 sessions. The Java port is checked against Python on
+every build (`live_lunge.txt`).

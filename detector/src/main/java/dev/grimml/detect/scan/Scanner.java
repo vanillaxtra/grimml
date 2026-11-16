@@ -2,6 +2,7 @@ package dev.grimml.detect.scan;
 
 import dev.grimml.detect.features.AimGrid;
 import dev.grimml.detect.features.Features;
+import dev.grimml.detect.features.LungeRate;
 import dev.grimml.detect.features.Schema4Features;
 import dev.grimml.detect.features.Window4;
 import dev.grimml.detect.model.ModelSet;
@@ -38,6 +39,21 @@ public final class Scanner implements Runnable {
         public static final String DESCRIPTION = "Rotation off the player's mouse sensitivity grid, pulling toward the opponent";
     }
 
+    /** The LungeRate check (features/LungeRate): spear swap-lunges chained faster than a hand can. */
+    public record LungeSettings(boolean enabled, double fastMs, double minMs, int count, double windowMs, long cooldownMs) {
+        public static final String CHECK = "LungeRate";
+        public static final String DESCRIPTION = "Spear swap-lunges chained faster than a hand can (Instant Lunge)";
+    }
+
+    private static final class Lunge {
+        final LungeRate rate;
+        long lastAlertNanos;
+
+        Lunge(LungeSettings l) {
+            rate = new LungeRate(l.fastMs(), l.minMs(), l.count(), l.windowMs(), 150.0);
+        }
+    }
+
     private static final class Grid {
         final AimGrid.Live live;
         long lastAlertNanos;
@@ -63,18 +79,21 @@ public final class Scanner implements Runnable {
     private final double[] combined = new double[Features.NAMES.length + Schema4Features.NAMES.length];
     private final Map<UUID, Map<String, Fight>> fights = new HashMap<>();
     private final Map<UUID, Grid> grids = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<UUID, Lunge> lunges = new java.util.concurrent.ConcurrentHashMap<>();
     private boolean[] hasAim;
     private double[] errYaw;
     private volatile Settings settings;
     private volatile GridSettings gridSettings;
+    private volatile LungeSettings lungeSettings;
 
     public final AtomicLong windowsScored = new AtomicLong();
     public final AtomicLong flagsRaised = new AtomicLong();
     public volatile double lastRunMs;
 
     public Scanner(Map<UUID, PlayerTrack> tracks, Map<UUID, Boolean> exempt, Supplier<ModelSet> models, Sink sink,
-                   Settings settings, GridSettings gridSettings, int attackCap) {
+                   Settings settings, GridSettings gridSettings, LungeSettings lungeSettings, int attackCap) {
         this.gridSettings = gridSettings;
+        this.lungeSettings = lungeSettings;
         this.tracks = tracks;
         this.exempt = exempt;
         this.models = models;
@@ -86,7 +105,7 @@ public final class Scanner implements Runnable {
         this.errYaw = new double[settings.frameCap()];
     }
 
-    public void settings(Settings s, GridSettings g) {
+    public void settings(Settings s, GridSettings g, LungeSettings l) {
         if (s.frameCap() != settings.frameCap()) {
             throw new IllegalArgumentException("window.frames needs a restart");
         }
@@ -96,6 +115,10 @@ public final class Scanner implements Runnable {
         if (changed) {
             grids.clear(); // relearn with the new parameters (next scan, on the scan thread)
         }
+        if (!l.equals(lungeSettings)) {
+            lunges.clear();
+        }
+        this.lungeSettings = l;
     }
 
     @Override
@@ -115,8 +138,10 @@ public final class Scanner implements Runnable {
         long windowNs = s.frameCap() * 50_000_000L;
         long gapNs = s.fightGapMs() * 1_000_000L;
         GridSettings g = gridSettings;
+        LungeSettings ls = lungeSettings;
         fights.keySet().removeIf(id -> !tracks.containsKey(id));
         grids.keySet().removeIf(id -> !tracks.containsKey(id));
+        lunges.keySet().removeIf(id -> !tracks.containsKey(id));
 
         for (var e : tracks.entrySet()) {
             UUID id = e.getKey();
@@ -126,12 +151,15 @@ public final class Scanner implements Runnable {
             }
             long last = t.lastAttackNanos();
             boolean attacked = last != 0 && now - last <= windowNs;
-            if (!attacked && !g.enabled()) {
+            if (!attacked && !g.enabled() && !ls.enabled()) {
                 continue;
             }
             t.snapshot(w, w4, now - windowNs, now);
             if (g.enabled()) {
                 grid(id, g, now);   // every player: the step is learned before the first fight
+            }
+            if (ls.enabled()) {
+                lunge(id, ls, now); // every player: a spear jab is not an attack, lunge-only players never "attack"
             }
             if (!attacked || w.m < s.minAttacks() || w.n < s.minFrames()) {
                 continue;
@@ -198,6 +226,35 @@ public final class Scanner implements Runnable {
             sink.flag(id, GridSettings.CHECK, GridSettings.DESCRIPTION, String.format(
                     "off-grid %.0f%% of recent rotation, toward-away %+.0f%%, step %.5f",
                     gr.live.offShare() * 100, gr.live.bias() * 100, gr.live.step()));
+        }
+    }
+
+    /** Feeds the swaps and spear STABs this player sent since the last scan. */
+    private void lunge(UUID id, LungeSettings l, long now) {
+        Lunge lu = lunges.computeIfAbsent(id, k -> new Lunge(l));
+        LungeRate r = lu.rate;
+        boolean alert = false;
+        long last = r.lastNanos;
+        for (int i = 0; i < w4.m; i++) {
+            long n = w4.eNanos[i];
+            if (n <= last) {
+                continue;
+            }
+            int type = w4.eType[i];
+            if (type == Window4.HOTBAR_SWAP && w4.eA[i] != 40) {
+                r.swap(n, (w4.eC[i] >> 8) & 0xFF);
+                r.lastNanos = n;
+            } else if (type == Window4.BREAK && w4.eA[i] == 8) {
+                alert |= r.stab(n);
+                r.lastNanos = n;
+            }
+        }
+        if (alert && now - lu.lastAlertNanos >= l.cooldownMs() * 1_000_000L) {
+            lu.lastAlertNanos = now;
+            flagsRaised.incrementAndGet();
+            sink.flag(id, LungeSettings.CHECK, LungeSettings.DESCRIPTION, String.format(
+                    "%d swap-lunges under %.0f ms apart within %.0f s (%d swap-lunges seen)",
+                    l.count(), l.fastMs(), l.windowMs() / 1000, r.lunges()));
         }
     }
 

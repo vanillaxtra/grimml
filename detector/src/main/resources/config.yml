@@ -35,6 +35,19 @@ aim-grid:
   min-toward-bias: 0.05
   alert-cooldown-ms: 15000
 
+# LungeRate: Instant Lunge (Prestige, Grim) swaps to the spear, jabs and swaps back as one macro. A swap-lunge is a
+# spear jab within 150 ms of a hotbar swap to the spear. By hand the swap -> jab -> swap back chain takes time:
+# ~700 recorded legit swap-lunges (spear-mace duel, a deliberate "as fast as possible" session) were never under
+# 345 ms apart; Instant Lunge at 0-0, 20-70 and 30-90 ms delay chained them 100-250 ms apart and alerted in every
+# session. Holding the spear and jabbing without swapping never counts, so players who never lunge cannot flag.
+lunge-rate:
+  enabled: true
+  fast-ms: 300             # a gap between swap-lunges under this counts as fast
+  min-ms: 75               # gaps under this are packets bunched by lag and do not count
+  count: 6                 # fast gaps needed ...
+  window-ms: 30000         # ... within this long
+  alert-cooldown-ms: 15000
+
 alerts:
   # empty = Grim's own alerts-format and prefix, so ML flags look like any Grim flag.
   # placeholders: %prefix% %player% %check_name% %description% %vl% %verbose% %experimental%

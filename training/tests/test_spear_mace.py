@@ -157,3 +157,52 @@ def test_schema3_gets_timing_but_no_aim_or_ticks():
     assert out["lunge_stabs"] == 6 and not math.isnan(out["lunge_back_ms_mean"])
     assert math.isnan(out["mace_snap_deg_mean"]) and math.isnan(out["aim_err_yaw_abs_mean"])
     assert math.isnan(run([], schema=2)["lunge_stabs"])
+
+
+# ---------------------------------------------------------------- live LungeRate check
+
+def _chain(gap_ms, n, start=1000.0):
+    """n macro swap-lunges gap_ms apart: swap to the spear, STAB 10 ms later, swap back 50 ms after the STAB."""
+    acts = []
+    for i in range(n):
+        t = start + i * gap_ms
+        acts.append({"k": 1, "n": int(t * MS), "to": SPEAR})
+        acts.append({"k": 3, "n": int((t + 10) * MS)})
+        acts.append({"k": 1, "n": int((t + 60) * MS), "to": SWORD})
+    return acts
+
+
+def _replay(acts, **kw):
+    from grimml_train.features.spearmace import LiveLunge
+    g = LiveLunge(**kw)
+    return [a["n"] for a in acts if g.feed(a)], g
+
+
+def test_live_lunge_macro_alerts_after_count_fast_gaps():
+    alerts, g = _replay(_chain(200, 7))
+    assert g.lunges == 7
+    assert alerts == [int((1000 + 6 * 200 + 10) * MS)]  # 6 fast gaps -> alert on the 7th lunge
+
+
+def test_live_lunge_hand_speed_never_alerts():
+    alerts, _ = _replay(_chain(350, 200))
+    assert alerts == []
+
+
+def test_live_lunge_bunched_and_slow_gaps_do_not_count():
+    assert _replay(_chain(50, 20))[0] == []          # lag bunching (< 75 ms)
+    assert _replay(_chain(200, 6))[0] == []          # only 5 fast gaps
+
+
+def test_live_lunge_needs_a_fresh_swap_to_the_spear():
+    acts = []
+    for i in range(20):  # holding the spear, jabbing, no swaps
+        acts.append({"k": 3, "n": int((1000 + i * 200) * MS)})
+    assert _replay(acts)[0] == []
+    late = [a if a["k"] != 3 else {"k": 3, "n": a["n"] + 200 * MS} for a in _chain(400, 10)]  # STAB 210 ms after swap
+    assert _replay(late)[1].lunges == 0
+
+
+def test_live_lunge_window_expires_old_fast_gaps():
+    acts = _chain(200, 4) + _chain(200, 4, start=40_000.0)  # 3 + 3 fast gaps, 39 s apart
+    assert _replay(acts)[0] == []

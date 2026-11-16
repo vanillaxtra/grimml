@@ -92,6 +92,7 @@ public final class ParitySelfCheck {
         }
         schema4(fixture.resolveSibling("windows4.txt"), byCheck);
         live(fixture.resolveSibling("live_grid.txt"));
+        lunge(fixture.resolveSibling("live_lunge.txt"));
         System.out.printf("parity: %d windows, %d scores match Python (worst feature diff %.1e, worst score diff %.1e)%n",
                 windows, scores, worstFeat, worstScore);
     }
@@ -235,6 +236,42 @@ public final class ParitySelfCheck {
             streams++;
         }
         System.out.printf("parity: live AimGrid matches Python on %d streams (%d frames, %d alerts)%n", streams, frames, alerts);
+    }
+
+    /** Live LungeRate check: the same swap / STAB streams must alert on the same events. */
+    private static void lunge(Path file) throws Exception {
+        if (!Files.exists(file)) {
+            System.out.println("parity: no live LungeRate fixture; skipped");
+            return;
+        }
+        List<String> lines = Files.readAllLines(file);
+        int streams = 0, alerts = 0, events = 0;
+        for (int li = 0; li < lines.size(); li++) {
+            if (!lines.get(li).startsWith("E|")) {
+                continue;
+            }
+            String exp = lines.get(li + 1).substring(2);
+            int expLunges = Integer.parseInt(lines.get(li + 2).substring(2));
+            var r = new dev.grimml.detect.features.LungeRate(300.0, 75.0, 6, 30000.0, 150.0);
+            StringBuilder got = new StringBuilder();
+            for (String e : lines.get(li).substring(2).split(";")) {
+                String[] v = e.split(",");
+                long n = Long.parseLong(v[1]);
+                if (v[0].equals("1")) {
+                    r.swap(n, Integer.parseInt(v[2]));
+                } else if (r.stab(n)) {
+                    got.append(got.length() == 0 ? "" : ",").append(n);
+                    alerts++;
+                }
+                events++;
+            }
+            if (!got.toString().equals(exp) || r.lunges() != expLunges) {
+                throw new AssertionError("live LungeRate stream " + streams + " differs: python [" + exp + "] " + expLunges
+                        + " java [" + got + "] " + r.lunges());
+            }
+            streams++;
+        }
+        System.out.printf("parity: live LungeRate matches Python on %d streams (%d events, %d alerts)%n", streams, events, alerts);
     }
 
     private static int[] ints(String s) {

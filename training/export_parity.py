@@ -68,6 +68,7 @@ def main() -> None:
     print(f"wrote {len(lines) - 1} windows to {OUT / 'windows.txt'}")
     export_schema4()
     export_live()
+    export_lunge()
 
 
 # schema 4 sessions for the schema 4 feature parity (add legit and other modules here as they are recorded)
@@ -249,6 +250,34 @@ def export_live() -> None:
         lines.append("S|" + num(g.step))
         print(f"live stream: {len(seq)} frames, {len(alerts)} alerts, step {g.step}")
     (OUT / "live_grid.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+# live LungeRate check: swap / STAB streams (deduplicated across overlapping windows) replayed through Python
+# LiveLunge; the detector replays the same events through LungeRate and must alert on the same events.
+LUNGE_MARKS = ["m040a616d", "ma8352fe2", "mee87b920", "m69a17c52", "m6013e9ff"]
+LUNGE_ACTIONS = 3000
+
+
+def export_lunge() -> None:
+    from grimml_train.features.spearmace import STAB_ACT, SWAP, LiveLunge, actions
+
+    lines = ["# live LungeRate streams: E|kind,nanos,toCat (1 swap, 3 stab) ... then A|alert nanos and N|swap-lunges"]
+    for m in LUNGE_MARKS:
+        seen: dict[tuple, dict] = {}
+        for p in sorted(f.path for f in os.scandir(FOLDER) if f"_{m}_" in f.name):
+            for a in actions(decode_file(Path(p))["events"]):
+                if a["k"] in (SWAP, STAB_ACT):
+                    seen[(a["n"], a["k"], a.get("to"))] = a
+        seq = [seen[k] for k in sorted(seen, key=lambda k: k[0])][:LUNGE_ACTIONS]
+        if not seq:
+            continue
+        g = LiveLunge()
+        alerts = [a["n"] for a in seq if g.feed(a)]
+        lines.append("E|" + ";".join(f"{a['k']},{a['n']},{a.get('to', 0)}" for a in seq))
+        lines.append("A|" + ",".join(map(str, alerts)))
+        lines.append(f"N|{g.lunges}")
+        print(f"lunge stream: {len(seq)} events, {g.lunges} swap-lunges, {len(alerts)} alerts")
+    (OUT / "live_lunge.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
