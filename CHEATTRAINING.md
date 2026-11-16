@@ -160,3 +160,4 @@ For this I have also put this on many different servers as to collect legit play
 | 13/11/26 | Dueling diamondsmp | 10:21 | mb1f0f01e | notauthorised | pvp bot | 3 |
 | 14/11/26 | Dueling diamondsmp | 8:46 | m1c38d70b | notauthorised | pvp bot | 4 |
 | 14/11/26 | Dueling diamondsmp but bot spams shield | 9:51 | ma90a44db | notauthorised | pvp bot | 4 |
+| 15/11/26 | Onesided spearmace fight with afk | 5:50 | m2538fffc | notauthorised | afk | 4 |
