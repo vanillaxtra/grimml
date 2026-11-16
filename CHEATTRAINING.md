@@ -32,7 +32,10 @@ This is where i can keep track of the different clients i have run cheats on and
 |  |  |  |  |  |  |  |  |
 | 02/11/26 | Auto Lunge | SWAP_DELAY_MIN:20 SWAP_DELAY_MAX:70 SWAP_BACK:TRUE | 2:18 | m3ddf06f9 | notauthorised | afk alt | 3 |
 | 02/11/26 | Auto Lunge | SWAP_DELAY_MIN:0 SWAP_DELAY_MAX:0 SWAP_BACK:TRUE | 2:13 | mb6a1b94b | notauthorised | afk alt | 3 |
-| 15/11/26 | Auto Lunge | SWAP_DELAY_MIN:20 SWAP_DELAY_MAX:70 SWAP_BACK:TRUE | 1:15 | m97f37d52 | notauthorised | afk alt | 4 |
+| 15/11/26 | Auto Lunge | SWAP_DELAY_MIN:20 SWAP_DELAY_MAX:70 SWAP_BACK:TRUE | 1:40 | m040a616d | notauthorised | | 4 |
+| 15/11/26 | Auto Lunge | SWAP_DELAY_MIN:30 SWAP_DELAY_MAX:90 SWAP_BACK:TRUE | 1:15 | m54e35fb3 | notauthorised | | 4 |
+| 15/11/26 | Auto Lunge | SWAP_DELAY_MIN:30 SWAP_DELAY_MAX:90 SWAP_BACK:TRUE | 1:20 | ma8352fe2 | notauthorised | | 4 |
+| 15/11/26 | Auto Lunge | SWAP_DELAY_MIN:0 SWAP_DELAY_MAX:0 SWAP_BACK:TRUE | 2:50 | mee87b920 | notauthorised | | 4 |
 |  |  |  |  |  |  |  |  |
 | 02/11/26 | Auto Breach Swap | CHANCE:100 | 2:00 | m2fe00ef9 | notauthorised | afk alt | 3 |
 |  |  |  |  |  |  |  |  |
