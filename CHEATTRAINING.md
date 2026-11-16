@@ -86,6 +86,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:0 BREAK_COOLDOWN_MIN_MS:0 | 4:32 | mf97e1a20 | notauthorised | afk alt | 3 |
 | 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:16.5 HIT_DELAY_MAX_MS:42 BREAK_COOLDOWN_MAX_MS:570 BREAK_COOLDOWN_MIN_MS:270 | 8:37 | m1dff7271 | notauthorised | amariia | 3 |
 | 03/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:16.5 HIT_DELAY_MAX_MS:42 BREAK_COOLDOWN_MAX_MS:570 BREAK_COOLDOWN_MIN_MS:270 | 10:53 | m3367bfcd | notauthorised | amariia | 3 |
+| 16/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:0 BREAK_COOLDOWN_MIN_MS:0 | 7:01 | mc653123f | notauthorised | bot | 4 |
 
 ## Grim
 | Date | Module | Settings | Duration | ID | By | Opponent | Schema Version |
