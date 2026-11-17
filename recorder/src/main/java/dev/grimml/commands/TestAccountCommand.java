@@ -28,7 +28,7 @@ public final class TestAccountCommand implements SubCommand {
             target = player;
             on = args.length < 2 || !args[1].equalsIgnoreCase("off");
         } else {
-            GrimMLCommand.msg(sender, "<red>/grimml testaccount <account> [on|off]");
+            GrimMLCommand.msg(sender, "<red>/grimmlrecorder testaccount <account> [on|off]");
             return;
         }
         if (target == null) {

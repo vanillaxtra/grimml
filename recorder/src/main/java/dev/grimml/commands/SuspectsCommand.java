@@ -26,7 +26,7 @@ public final class SuspectsCommand implements SubCommand {
             try {
                 limit = Math.max(1, Math.min(50, Integer.parseInt(args[1])));
             } catch (NumberFormatException e) {
-                GrimMLCommand.msg(sender, "<red>/grimml suspects [limit]");
+                GrimMLCommand.msg(sender, "<red>/grimmlrecorder suspects [limit]");
                 return;
             }
         }

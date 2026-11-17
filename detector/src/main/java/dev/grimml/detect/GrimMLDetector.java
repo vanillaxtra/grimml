@@ -13,6 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,7 +25,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -38,7 +41,7 @@ import java.util.concurrent.TimeUnit;
  *  - "GrimML-update": model downloads,
  *  - main thread: a tick counter, exemption refresh once a second, and sending alerts.
  */
-public final class GrimMLDetector extends JavaPlugin implements Listener {
+public final class GrimMLDetector extends JavaPlugin implements Listener, TabCompleter {
 
     private static final int ATTACK_CAP = 2048; // per-player event ring (schema 4 events, ~60-80/s in a fight)
 
@@ -46,6 +49,10 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
     private final Map<Integer, PlayerTrack> byEntity = new ConcurrentHashMap<>();
     private final Map<UUID, Boolean> exempt = new ConcurrentHashMap<>();
     private final Map<UUID, String> names = new ConcurrentHashMap<>();
+    /** Checks each player bypasses through grimml.bypass.<check> (refreshed once a second on the main thread). */
+    private final Map<UUID, Set<String>> bypass = new ConcurrentHashMap<>();
+    /** Players with grimml.alerts who turned alerts off with /grimml alerts (until they rejoin or turn them on). */
+    private final Set<UUID> alertsOff = ConcurrentHashMap.newKeySet();
     private volatile int tick;
     private int frameCap;
 
@@ -63,10 +70,18 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
 
         store = new ModelStore(getDataFolder().toPath().resolve("models"), getLogger());
         store.loadLocal();
-        grim = new GrimBridge(this, bridgeSettings());
-        scanner = new Scanner(tracks, exempt, store::current,
-                (id, check, description, verbose) -> grim.flag(id, names.getOrDefault(id, id.toString()), check, description, verbose),
-                scanSettings(), gridSettings(), lungeSettings(), ATTACK_CAP);
+        grim = new GrimBridge(this, bridgeSettings(),
+                p -> p.hasPermission("grimml.alerts") && !alertsOff.contains(p.getUniqueId()));
+        scanner = new Scanner(tracks, exempt, store::current, (id, check, description, confidence, verbose) -> {
+            Set<String> b = bypass.get(id);
+            if (b == null || !b.contains(check.toLowerCase(Locale.ROOT))) {
+                grim.flag(id, names.getOrDefault(id, id.toString()), check, description, confidence, verbose);
+            }
+        }, scanSettings(), gridSettings(), lungeSettings(), ATTACK_CAP);
+        var cmd = getCommand("grimml");
+        if (cmd != null) {
+            cmd.setTabCompleter(this);
+        }
 
         getServer().getPluginManager().registerEvents(this, this);
         for (Player p : Bukkit.getOnlinePlayers()) {
@@ -102,6 +117,9 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
         if (updateExec != null) {
             updateExec.shutdownNow();
         }
+        if (grim != null) {
+            grim.shutdown();
+        }
         tracks.clear();
     }
 
@@ -114,7 +132,10 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
 
     private void checkForModels() {
         store.update(getConfig().getString("models.manifest-url", ""), set ->
-                Bukkit.getScheduler().runTask(this, () -> getLogger().info("Now detecting with models v" + set.version())));
+                Bukkit.getScheduler().runTask(this, () -> {
+                    getLogger().info("Now detecting with models v" + set.version());
+                    notifyStaff("&7Now detecting with models &fv" + set.version() + "&7.");
+                }));
     }
 
     private Scanner.GridSettings gridSettings() {
@@ -133,6 +154,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
                 c.getBoolean("lunge-hold.enabled", true), c.getInt("lunge-hold.count", 5), c.getInt("lunge-hold.of", 10),
                 c.getBoolean("swap-order.enabled", true), c.getInt("swap-order.count", 2),
                 c.getDouble("swap-order.window-ms", 60_000.0),
+                c.getBoolean("axe-hold.enabled", true), c.getInt("axe-hold.count", 6), c.getInt("axe-hold.of", 10),
                 c.getLong("lunge-rate.alert-cooldown-ms", 15_000L));
     }
 
@@ -144,8 +166,9 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
     }
 
     private GrimBridge.Settings bridgeSettings() {
+        var c = getConfig();
         Map<Integer, List<String>> punish = new HashMap<>();
-        ConfigurationSection ps = getConfig().getConfigurationSection("punishments");
+        ConfigurationSection ps = c.getConfigurationSection("punishments");
         if (ps != null && ps.getBoolean("enabled", false)) {
             ConfigurationSection at = ps.getConfigurationSection("at-violations");
             if (at != null) {
@@ -158,13 +181,53 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
                 }
             }
         }
+        var webhook = new GrimBridge.Webhook(
+                c.getBoolean("webhook.enabled", true),
+                c.getString("webhook.url", ""),
+                c.getBoolean("webhook.use-grim-webhook", true),
+                c.getString("webhook.embed-title", "**GrimML Alert**"),
+                c.getString("webhook.embed-color", "#00FFFF"),
+                c.getString("webhook.embed-thumbnail-url", "https://crafthead.net/helm/%uuid%"),
+                c.getString("webhook.embed-image-url", ""),
+                c.getString("webhook.embed-footer-text", "GrimML v%grimml_version%"),
+                c.getString("webhook.embed-footer-url", "https://grim.ac/images/grim.png"),
+                c.getBoolean("webhook.include-timestamp", true),
+                c.getBoolean("webhook.include-verbose", true),
+                c.isList("webhook.violation-content") ? c.getStringList("webhook.violation-content") : List.of(
+                        "**Player**: `%player%`", "**Check**: %check_name%", "**Violations**: %violations%",
+                        "**Client Version**: %version%", "**Brand**: `%brand%`", "**Ping**: %ping%", "**TPS**: %tps%"));
         return new GrimBridge.Settings(
-                getConfig().getString("alerts.format", ""),
-                getConfig().getBoolean("alerts.console", true),
-                getConfig().getString("alerts.webhook-url", ""),
-                getConfig().getBoolean("alerts.use-grim-webhook", true),
-                getConfig().getDouble("alerts.decay-per-minute", 0.05),
-                punish);
+                c.getString("alerts.prefix", "&bGrimML &8»"),
+                c.getString("alerts.format", "%prefix% &f%player% &7flagged &b%check% &8(&f%confidence%%&8) &7x%vl%"),
+                c.isList("alerts.hover") ? c.getStringList("alerts.hover") : List.of(),
+                c.getString("alerts.click-command", ""),
+                c.getBoolean("alerts.console", true),
+                c.getString("alerts.sound.name", "block.note_block.pling"),
+                (float) c.getDouble("alerts.sound.volume", 1.0),
+                (float) c.getDouble("alerts.sound.pitch", 1.0),
+                c.getDouble("alerts.decay-per-minute", 0.05),
+                punish, webhook);
+    }
+
+    /** Staff with grimml.notify see model updates. */
+    private void notifyStaff(String text) {
+        var msg = GrimBridge.colour(getConfig().getString("alerts.prefix", "&bGrimML &8»") + " " + text);
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (p.hasPermission("grimml.notify")) {
+                p.sendMessage(msg);
+            }
+        }
+    }
+
+    /** Every check name this server can flag: the loaded models plus the rule checks. */
+    private List<String> allChecks() {
+        List<String> out = new ArrayList<>();
+        for (ModuleModel m : store.current().models()) {
+            out.add(m.checkName());
+        }
+        out.add(Scanner.GridSettings.CHECK);
+        out.addAll(List.of(Scanner.LungeSettings.CHECKS));
+        return out;
     }
 
     // ---- players
@@ -190,6 +253,8 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
         byEntity.remove(e.getPlayer().getEntityId());
         exempt.remove(id);
         names.remove(id);
+        bypass.remove(id);
+        alertsOff.remove(id);
         grim.forget(id);
     }
 
@@ -300,7 +365,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
     }
 
     private boolean isExempt(Player p) {
-        if (p.hasPermission("grimml.detect.bypass")) {
+        if (p.hasPermission("grimml.bypass")) {
             return true;
         }
         GameMode gm = p.getGameMode();
@@ -312,64 +377,154 @@ public final class GrimMLDetector extends JavaPlugin implements Listener {
     }
 
     private void refreshExempt() {
+        List<String> checks = allChecks();
         for (Player p : Bukkit.getOnlinePlayers()) {
             exempt.put(p.getUniqueId(), isExempt(p));
+            Set<String> mine = new java.util.HashSet<>();
+            for (String c : checks) {
+                String key = c.toLowerCase(Locale.ROOT);
+                if (p.hasPermission("grimml.bypass." + key)) {
+                    mine.add(key);
+                }
+            }
+            bypass.put(p.getUniqueId(), mine);
         }
     }
 
-    // ---- /grimmldetector
+    // ---- /grimml
+
+    private static final String P = "&bGrimML &8» ";
+
+    private static void say(CommandSender to, String text) {
+        to.sendMessage(GrimBridge.colour(P + text));
+    }
+
+    private static void line(CommandSender to, String text) {
+        to.sendMessage(GrimBridge.colour(text));
+    }
+
+    private static String onOff(boolean on) {
+        return on ? "&aon" : "&coff";
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        String sub = args.length == 0 ? "status" : args[0].toLowerCase();
+        String sub = args.length == 0 ? "help" : args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
+            case "alerts" -> {
+                if (!(sender instanceof Player p)) {
+                    say(sender, "&7Console alerts are set by &falerts.console &7in config.yml.");
+                } else if (!p.hasPermission("grimml.alerts")) {
+                    say(sender, "&cYou don't have permission to see alerts.");
+                } else if (alertsOff.remove(p.getUniqueId())) {
+                    say(sender, "&7Alerts &aon&7.");
+                } else {
+                    alertsOff.add(p.getUniqueId());
+                    say(sender, "&7Alerts &coff&7.");
+                }
+            }
             case "status" -> {
+                if (!admin(sender)) {
+                    return true;
+                }
                 ModelSet set = store.current();
-                sender.sendMessage("§bGrimML §7models v" + set.version() + (set.published().isEmpty() ? "" : " (" + set.published() + ")"));
+                say(sender, "&7Models &fv" + set.version() + (set.published().isEmpty() ? "" : " &8(" + set.published() + ")"));
                 for (ModuleModel m : set.models()) {
-                    sender.sendMessage("§7 - §f" + m.checkName() + (m.enabled() ? " §aon" : " §coff")
-                            + String.format(" §7window>=%.2f, alert at %.0f%% of %d+ windows", m.windowThreshold(), m.alertShare() * 100, m.minWindows()));
+                    line(sender, String.format("&8 - &f%s &7(%s) %s &8alert at %.0f%% of a fight's windows",
+                            GrimBridge.friendly(m.checkName()), m.checkName(), onOff(m.enabled()), m.alertShare() * 100));
                 }
                 Scanner.GridSettings g = gridSettings();
-                sender.sendMessage("§7 - §f" + Scanner.GridSettings.CHECK + (g.enabled() ? " §aon" : " §coff")
-                        + String.format(" §7alert at score %.0f, toward bias >= %.2f", g.h(), g.minBias()));
                 Scanner.LungeSettings l = lungeSettings();
-                sender.sendMessage("§7 - §fLungeRate" + (l.rateEnabled() ? " §aon" : " §coff")
-                        + String.format(" §7alert at %d swap-lunges under %.0f ms apart within %.0f s", l.count(), l.fastMs(), l.windowMs() / 1000));
-                sender.sendMessage("§7 - §fLungeHold" + (l.holdEnabled() ? " §aon" : " §coff")
-                        + String.format(" §7alert at %d one-tick spear holds in %d swap-lunges", l.holdCount(), l.holdOf()));
-                sender.sendMessage("§7 - §fSwapOrder" + (l.orderEnabled() ? " §aon" : " §coff")
-                        + String.format(" §7alert at %d same-tick swaps after an attack within %.0f s", l.orderCount(), l.orderWindowMs() / 1000));
+                boolean[] on = {g.enabled(), l.rateEnabled(), l.holdEnabled(), l.orderEnabled(), l.axeEnabled()};
+                List<String> rules = new ArrayList<>(List.of(Scanner.GridSettings.CHECK));
+                rules.addAll(List.of(Scanner.LungeSettings.CHECKS));
+                for (int i = 0; i < rules.size(); i++) {
+                    line(sender, "&8 - &f" + GrimBridge.friendly(rules.get(i)) + " &7(" + rules.get(i) + ") " + onOff(on[i]));
+                }
                 if (args.length > 1) {
                     Player target = Bukkit.getPlayerExact(args[1]);
-                    String st = target == null ? null : scanner.gridStatus(target.getUniqueId());
-                    sender.sendMessage("§7   " + args[1] + ": " + (st == null ? "no data yet" : st));
+                    if (target == null) {
+                        say(sender, "&c" + args[1] + " is not online.");
+                    } else {
+                        UUID id = target.getUniqueId();
+                        String st = scanner.gridStatus(id);
+                        Set<String> b = bypass.getOrDefault(id, Set.of());
+                        String state = Boolean.TRUE.equals(exempt.get(id))
+                                ? "&enot scanned &8(grimml.bypass, creative/spectator or Bedrock)"
+                                : "&ascanned" + (b.isEmpty() ? "" : " &7except " + String.join(", ", b));
+                        say(sender, "&f" + target.getName() + "&7: " + state + (st == null ? "" : " &8| aim grid " + st));
+                    }
                 }
-                sender.sendMessage(String.format("§7tracked %d, windows scored %d, flags %d, last scan %.2f ms",
+                line(sender, String.format("&7Tracking &f%d &7players, &f%d &7windows scored, &f%d &7flags, last scan &f%.2f ms",
                         tracks.size(), scanner.windowsScored.get(), scanner.flagsRaised.get(), scanner.lastRunMs));
                 if (!store.lastError().isEmpty()) {
-                    sender.sendMessage("§c" + store.lastError());
+                    say(sender, "&c" + store.lastError());
                 }
             }
             case "reload" -> {
+                if (!admin(sender)) {
+                    return true;
+                }
                 reloadConfig();
                 grim.settings(bridgeSettings());
                 scanner.settings(scanSettings(), gridSettings(), lungeSettings());
-                sender.sendMessage("§bGrimML §7config reloaded (window size and scan interval need a restart).");
+                say(sender, "&7Config reloaded &8(window size and scan interval need a restart)&7.");
             }
             case "update" -> {
-                sender.sendMessage("§bGrimML §7checking for new models...");
+                if (!admin(sender)) {
+                    return true;
+                }
+                say(sender, "&7Checking for new models...");
                 updateExec.execute(() -> {
                     int before = store.current().version();
                     checkForModels();
                     int after = store.current().version();
-                    String msg = after > before ? "§bGrimML §7updated to models v" + after
-                            : (store.lastError().isEmpty() ? "§bGrimML §7already on the newest models (v" + after + ")" : "§c" + store.lastError());
-                    Bukkit.getScheduler().runTask(this, () -> sender.sendMessage(msg));
+                    String msg = after > before ? "&7Updated to models &fv" + after
+                            : (store.lastError().isEmpty() ? "&7Already on the newest models &8(v" + after + ")" : "&c" + store.lastError());
+                    Bukkit.getScheduler().runTask(this, () -> say(sender, msg));
                 });
             }
-            default -> sender.sendMessage("§7/" + label + " status | reload | update");
+            default -> {
+                say(sender, "&fv" + getPluginMeta().getVersion() + " &7- machine-learning checks for Grim");
+                if (sender.hasPermission("grimml.alerts")) {
+                    line(sender, "&8 - &f/" + label + " alerts &7turn your alerts on or off");
+                }
+                if (sender.hasPermission("grimml.admin")) {
+                    line(sender, "&8 - &f/" + label + " status [player] &7checks, models and a player's state");
+                    line(sender, "&8 - &f/" + label + " reload &7reload config.yml");
+                    line(sender, "&8 - &f/" + label + " update &7download newer models now");
+                }
+            }
         }
         return true;
+    }
+
+    private static boolean admin(CommandSender sender) {
+        if (sender.hasPermission("grimml.admin")) {
+            return true;
+        }
+        say(sender, "&cYou don't have permission to do that.");
+        return false;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        List<String> options = new ArrayList<>();
+        if (args.length == 1) {
+            options.add("help");
+            if (sender.hasPermission("grimml.alerts")) {
+                options.add("alerts");
+            }
+            if (sender.hasPermission("grimml.admin")) {
+                options.addAll(List.of("status", "reload", "update"));
+            }
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("status") && sender.hasPermission("grimml.admin")) {
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                options.add(p.getName());
+            }
+        }
+        String typed = args.length == 0 ? "" : args[args.length - 1].toLowerCase(Locale.ROOT);
+        options.removeIf(o -> !o.toLowerCase(Locale.ROOT).startsWith(typed));
+        return options;
     }
 }

@@ -1,7 +1,29 @@
-# grimml
-![license](https://img.shields.io/badge/license-MIT-blue) ![java](https://img.shields.io/badge/java-21%2B-orange) ![paper](https://img.shields.io/badge/paper-1.21.1%20--%2026.x-lightgrey) ![status](https://img.shields.io/badge/phase-recorder%20%2B%20labeling-green)
+# GrimML
+![code](https://img.shields.io/badge/code-MIT-blue) ![models](https://img.shields.io/badge/models-CC%20BY--NC--SA%204.0-lightgrey) ![java](https://img.shields.io/badge/java-21%2B-orange) ![paper](https://img.shields.io/badge/paper-1.21%2B-lightgrey) ![status](https://img.shields.io/badge/status-beta-yellow)
 
-A Paper plugin that records anonymized PvP combat data next to [Grim Anticheat](https://github.com/GrimAnticheat/Grim), to build a dataset for machine-learning cheat detection.
+Machine-learning combat checks for [Grim Anticheat](https://github.com/GrimAnticheat/Grim). GrimML catches
+**Kill Aura, Aim Assist, Triggerbot, Silent Aim, Instant Lunge and Auto Shield Breaker**, and alerts staff with one
+simple line and a confidence %.
+
+**Server owners: install [GrimML](detector/README.md)** (`detector/`): install, commands, permissions and config.
+
+This repo also holds the recorder and training code used to build the models:
+
+| Folder | Plugin / tool | What |
+|---|---|---|
+| `detector/` | **GrimML** | the detection plugin servers install. See [detector/README.md](detector/README.md) |
+| `recorder/` | **grimmlrecorder** | records labelled combat data for training (the rest of this README); not needed to detect |
+| `training/` | Python | decode → features → train → `publish_models.py` |
+| `models/` | data | the published models GrimML downloads (`manifest.json` + one LightGBM model per check) |
+
+`mvn clean package` in the root builds both plugins.
+
+---
+
+# grimmlrecorder
+
+A Paper plugin that records anonymized PvP combat data next to Grim, to build a dataset for machine-learning cheat
+detection.
 
 ## Why
 
@@ -20,12 +42,12 @@ Rule-based anticheats like Grim are good at catching movement and protocol cheat
 
 ## Features
 
-- **Combat windows** with rolling pre/post buffer (configurable). Optional **`recording-mode: mark-only`** so `.gmlml` files are written only for the marked player while `/grimml mark` is open (everyone still buffers packets).
+- **Combat windows** with rolling pre/post buffer (configurable). Optional **`recording-mode: mark-only`** so `.gmlml` files are written only for the marked player while `/grimmlrecorder mark` is open (everyone still buffers packets).
 - **GML4 capture** ([docs/schema4.md](docs/schema4.md)): everything below plus exact rotation, the opponent's position/state every tick, client ticks, every input and sprint toggle, transaction send times, opponent movement as sent to the client, crystal spawns, attack cooldown and clicked block, in skippable extension blocks.
 - **GML3 capture:** per-tick frames (position, rotation, input flags, ping, ack tick), fight-linked attacker/target/bystander snapshots, attacks with target anon ids, damage, swings, use-item, inventory/window, shield/totem/knockback, block place, setbacks, markers, and more.
-- **Staff labeling:** `taxonomy.yml` defines clients/modules/settings; `/grimml mark start` writes time-range MARKER records with optional `client-name=meteor` (or any free text) plus module settings.
+- **Staff labeling:** `taxonomy.yml` defines clients/modules/settings; `/grimmlrecorder mark start` writes time-range MARKER records with optional `client-name=meteor` (or any free text) plus module settings.
 - **Live mark feedback:** marked players see an action bar with label/module/client name and data-quality hints (ping, jitter, mspt, frame count).
-- **Weak labels from Grim:** bounded queue off the netty thread, decaying scores, `grim-labels.csv` / `grim-review.csv`, `/grimml suspects` and `/grimml review` (never `CHEAT_CONFIRMED` from Grim alone).
+- **Weak labels from Grim:** bounded queue off the netty thread, decaying scores, `grim-labels.csv` / `grim-review.csv`, `/grimmlrecorder suspects` and `/grimmlrecorder review` (never `CHEAT_CONFIRMED` from Grim alone).
 - **Ban hooks:** LiteBans (when installed) and vanilla kick fallback → SUSPECT backfill; grimml loads without LiteBans present.
 - **Anonymized:** SHA-256 salted player ids, random session ids; sidecars use anon ids only.
 - **Performance:** seqlock rings, single async writer, drop-newest under load, MSPT and disk-cap auto-pause.
@@ -52,27 +74,27 @@ mvn clean package
 ```
 
 1. Copy `recorder/target/grimml-0.1.0-SNAPSHOT.jar` and PacketEvents into `plugins/`.
-2. Start the server once to generate `plugins/grimml/config.yml`, `taxonomy.yml`, `grim-weights.yml`.
-3. **Change `anonymize-salt`** to a random secret value, then run `/grimml reload` or restart.
+2. Start the server once to generate `plugins/grimmlrecorder/config.yml`, `taxonomy.yml`, `grim-weights.yml`.
+3. **Change `anonymize-salt`** to a random secret value, then run `/grimmlrecorder reload` or restart.
 
-Recordings are written to `plugins/grimml/recordings/`.
+Recordings are written to `plugins/grimmlrecorder/recordings/`.
 
 ## Usage
 
-All commands need `grimml.admin` (op by default). Console/RCON supported where noted.
+All commands need `grimmlrecorder.admin` (op by default). Console/RCON supported where noted.
 
 | Command | What it does |
 |---|---|
-| `/grimml status` | enabled/paused, windows written/dropped, bytes, drop summary |
-| `/grimml pause` / `resume` | stop or resume flushing windows |
-| `/grimml reload` | reload config, taxonomy, grim-weights; applies `recording-mode` to online sessions |
-| `/grimml mark start <account> <label> [client] [module] [key=value...]` | open a labeled segment (`LEGIT_CONFIRMED` or `CHEAT`); prints a stable id (`m83e5404d`) |
-| `/grimml mark end <account>` | close the open segment; repeats id and duration |
-| `/grimml mark list` / `get <id>` | look up open and recent marked sessions |
-| `/grimml testaccount [account] [on\|off]` | persist test-account UUIDs (excluded from normal player mixes in headers) |
-| `/grimml suspects [limit]` | top decaying Grim-evidence scores (anon ids) |
-| `/grimml review next` | next window flagged for staff replay |
-| `/grimml review mark <id> confirmed\|legit\|unsure` | update review sidecar |
+| `/grimmlrecorder status` | enabled/paused, windows written/dropped, bytes, drop summary |
+| `/grimmlrecorder pause` / `resume` | stop or resume flushing windows |
+| `/grimmlrecorder reload` | reload config, taxonomy, grim-weights; applies `recording-mode` to online sessions |
+| `/grimmlrecorder mark start <account> <label> [client] [module] [key=value...]` | open a labeled segment (`LEGIT_CONFIRMED` or `CHEAT`); prints a stable id (`m83e5404d`) |
+| `/grimmlrecorder mark end <account>` | close the open segment; repeats id and duration |
+| `/grimmlrecorder mark list` / `get <id>` | look up open and recent marked sessions |
+| `/grimmlrecorder testaccount [account] [on\|off]` | persist test-account UUIDs (excluded from normal player mixes in headers) |
+| `/grimmlrecorder suspects [limit]` | top decaying Grim-evidence scores (anon ids) |
+| `/grimmlrecorder review next` | next window flagged for staff replay |
+| `/grimmlrecorder review mark <id> confirmed\|legit\|unsure` | update review sidecar |
 
 ## Configuration (high level)
 
@@ -132,4 +154,5 @@ mvn clean package -DskipTests   # build only
 
 ## License
 
-[MIT](LICENSE)
+- Source code: [MIT](LICENSE)
+- Trained models (`models/`, also bundled in the detector jar and served by auto-update): [CC BY-NC-SA 4.0](models/LICENSE.md). Free to run on any server; no commercial use, including in or for paid clients.

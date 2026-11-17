@@ -20,7 +20,7 @@ public final class ReviewCommand implements SubCommand {
             return;
         }
         if (args.length < 2) {
-            GrimMLCommand.msg(sender, "<red>/grimml review next|mark <id> confirmed|legit|unsure");
+            GrimMLCommand.msg(sender, "<red>/grimmlrecorder review next|mark <id> confirmed|legit|unsure");
             return;
         }
         if (args[1].equalsIgnoreCase("next")) {
@@ -34,7 +34,7 @@ public final class ReviewCommand implements SubCommand {
         }
         if (args[1].equalsIgnoreCase("mark")) {
             if (args.length < 4) {
-                GrimMLCommand.msg(sender, "<red>/grimml review mark <id> confirmed|legit|unsure");
+                GrimMLCommand.msg(sender, "<red>/grimmlrecorder review mark <id> confirmed|legit|unsure");
                 return;
             }
             long id;
@@ -52,7 +52,7 @@ public final class ReviewCommand implements SubCommand {
             GrimMLCommand.msg(sender, "<green>review " + id + " " + status);
             return;
         }
-        GrimMLCommand.msg(sender, "<red>/grimml review next|mark <id> confirmed|legit|unsure");
+        GrimMLCommand.msg(sender, "<red>/grimmlrecorder review next|mark <id> confirmed|legit|unsure");
     }
 
     @Override

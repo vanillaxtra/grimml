@@ -20,3 +20,46 @@ CLAUDE.md
 .claude/
 todo.txt
 training/prestige temp test
+
+# ---- recordings and player data: never commit (they hold other players' play)
+*.gmlml
+!training/tests/fixtures/*.gmlml
+*.parquet
+marks.csv
+training/prestige temp test/
+recordings/
+recordings_processed/
+
+# ---- training output (rebuilt by every run; publish models with publish_models.py instead)
+training/out/
+training/out_*/
+training/config.yaml
+
+# ---- local test servers, logs, secrets
+run/
+server/
+*.log
+logs/
+.env
+*.env
+
+# ---- build output
+*.jar
+!.mvn/wrapper/*.jar
+*.class
+
+# ---- Python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# ---- editors and OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -72,7 +72,7 @@ public final class PlayerRingBuffer {
     public volatile int grimCheckHash;
     // when true only TRIGGER_MARKER activates flush; events still write to ring
     public volatile boolean markOnly;
-    // open /grimml mark segment: writer keeps dumping the ring until end
+    // open /grimmlrecorder mark segment: writer keeps dumping the ring until end
     public volatile boolean markActive;
     public volatile String markId = "";
     // world of this player, sampled on the main thread (was one global value shared by every window)

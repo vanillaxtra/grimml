@@ -31,7 +31,7 @@ public final class SessionLifecycle implements Listener {
         buf.bedrock = geyser.isBedrock(player);
         buf.clientBrand = player.getClientBrandName() == null ? "" : player.getClientBrandName();
         buf.clientProtocol = clientProtocol(player);
-        buf.staff = player.hasPermission("grimml.admin") || player.isOp();
+        buf.staff = player.hasPermission("grimmlrecorder.admin") || player.isOp();
         buf.gamemode = player.getGameMode().ordinal();
         buf.world = player.getWorld().getName();
         // the server tells the client its saved hotbar slot before this buffer exists, and the client never

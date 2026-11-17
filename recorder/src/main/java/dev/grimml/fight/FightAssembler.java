@@ -125,7 +125,7 @@ public final class FightAssembler {
         }
     }
 
-    // mark-only: only the open /grimml mark account, never nearby players
+    // mark-only: only the open /grimmlrecorder mark account, never nearby players
     static boolean shouldFlush(boolean markOnly, boolean markActive, boolean combatActive, long lastAttackNanos) {
         if (markOnly) {
             return markActive;

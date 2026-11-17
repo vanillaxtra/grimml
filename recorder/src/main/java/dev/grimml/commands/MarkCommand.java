@@ -25,10 +25,10 @@ import java.util.List;
 
 public final class MarkCommand implements SubCommand {
 
-    private static final String USAGE = "<red>/grimml mark start <account> <label> [client] [module] [key=value...]\n"
-            + "<red>/grimml mark end <account>\n"
-            + "<red>/grimml mark list\n"
-            + "<red>/grimml mark get <id>";
+    private static final String USAGE = "<red>/grimmlrecorder mark start <account> <label> [client] [module] [key=value...]\n"
+            + "<red>/grimmlrecorder mark end <account>\n"
+            + "<red>/grimmlrecorder mark list\n"
+            + "<red>/grimmlrecorder mark get <id>";
 
     private final GrimMLPlugin plugin;
 
@@ -53,7 +53,7 @@ public final class MarkCommand implements SubCommand {
         }
         if (op.equalsIgnoreCase("get")) {
             if (args.length < 3) {
-                GrimMLCommand.msg(sender, "<red>/grimml mark get <id>");
+                GrimMLCommand.msg(sender, "<red>/grimmlrecorder mark get <id>");
                 return;
             }
             show(sender, args[2]);

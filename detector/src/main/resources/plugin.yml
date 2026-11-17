@@ -1,21 +1,79 @@
-name: GrimMLDetector
+name: GrimML
 version: ${project.version}
 main: dev.grimml.detect.GrimMLDetector
 api-version: '1.21'
-description: Live ML combat checks that report through Grim
+description: Machine-learning combat checks for Grim Anticheat
 authors: [grimml]
+website: https://github.com/vanillaxtra/grimml
 # PacketEvents comes from inside GrimAC (references are relocated at build time), so Grim is the only dependency
 depend:
   - GrimAC
 commands:
-  grimmldetector:
-    description: GrimML detector status, reload and model update
-    aliases: [gmld]
-    permission: grimml.detect.admin
+  grimml:
+    description: GrimML alerts, status, reload and model update
+    aliases: [gml]
+    usage: /<command> [alerts|status|reload|update]
 permissions:
-  grimml.detect.admin:
-    description: Use /grimmldetector
+  grimml.*:
+    description: Everything below except bypass
     default: op
-  grimml.detect.bypass:
-    description: Never scanned
+    children:
+      grimml.admin: true
+      grimml.alerts: true
+      grimml.alerts.sound: true
+      grimml.notify: true
+  grimml.admin:
+    description: /grimml status, reload and update
+    default: op
+  grimml.alerts:
+    description: See GrimML alerts in chat (/grimml alerts turns them off and on)
+    default: op
+  grimml.alerts.sound:
+    description: Hear a ping sound with every alert you see
+    default: op
+  grimml.notify:
+    description: Be told when new models are downloaded
+    default: op
+  grimml.bypass:
+    description: Never scanned by any GrimML check
+    default: false
+  grimml.bypass.*:
+    description: Bypass every GrimML check one by one (same effect as grimml.bypass)
+    default: false
+    children:
+      grimml.bypass.mlkillaura: true
+      grimml.bypass.mlaimassist: true
+      grimml.bypass.mltriggerbot: true
+      grimml.bypass.mlsilentaim: true
+      grimml.bypass.aimgrid: true
+      grimml.bypass.lungerate: true
+      grimml.bypass.lungehold: true
+      grimml.bypass.swaporder: true
+      grimml.bypass.axehold: true
+  grimml.bypass.mlkillaura:
+    description: Never flagged for Kill Aura (MLKillAura)
+    default: false
+  grimml.bypass.mlaimassist:
+    description: Never flagged for Aim Assist (MLAimAssist)
+    default: false
+  grimml.bypass.mltriggerbot:
+    description: Never flagged for Triggerbot (MLTriggerbot)
+    default: false
+  grimml.bypass.mlsilentaim:
+    description: Never flagged for Silent Aim (MLSilentAim)
+    default: false
+  grimml.bypass.aimgrid:
+    description: Never flagged for Aim Assist (AimGrid)
+    default: false
+  grimml.bypass.lungerate:
+    description: Never flagged for Instant Lunge (LungeRate)
+    default: false
+  grimml.bypass.lungehold:
+    description: Never flagged for Instant Lunge (LungeHold)
+    default: false
+  grimml.bypass.swaporder:
+    description: Never flagged for Swap Macro (SwapOrder)
+    default: false
+  grimml.bypass.axehold:
+    description: Never flagged for Shield Breaker (AxeHold)
     default: false

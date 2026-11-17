@@ -313,9 +313,9 @@ def _wrap(deg: float) -> float:
     return (float(deg) + 180.0) % 360.0 - 180.0
 
 
-# ---------------------------------------------------------------- live lunge checks (LungeRate, LungeHold, SwapOrder)
+# ---------------------------------------------------------------- live lunge checks (LungeRate, LungeHold, SwapOrder, AxeHold)
 
-RATE, HOLD, ORDER = 1, 2, 4  # alert bits returned by LiveLunge
+RATE, HOLD, ORDER, AXE_HOLD = 1, 2, 4, 8  # alert bits returned by LiveLunge
 
 
 class LiveLunge:
@@ -336,13 +336,19 @@ class LiveLunge:
     before attacks inside one client tick, so this never happens by hand (0 in ~1400 legit hits and swaps); a client
     doing the whole chain in one tick does it on every lunge. `order_count` inside `order_window_ms` alert.
 
+    AXE_HOLD (AxeHold): Auto Shield Breaker swaps to the axe, hits the shield and swaps away on the very next client
+    tick. An axe hold is a hotbar swap to the axe with at least one hit on a player, ended by the swap away from it;
+    it is one-tick when that swap comes one client tick after the last hit. Legit fast hand stuns against a shielding
+    bot: 3-8% one-tick (3 sessions, ~220 axe holds); Prestige Auto Shield Breaker 63-98% (6 sessions, every setting).
+    `axe_count` one-tick holds among the last `axe_of` axe holds alert. Grim's breaker (2 ticks) is not covered.
+
     The tick rules need client ticks (1.21.2+ clients, ct > 0). All times are integer nanoseconds, so Python and Java
     agree exactly. Each feed returns the alert bits (0 = none); a check's counter restarts when it alerts.
     """
 
     def __init__(self, fast_ms: float = 300.0, min_ms: float = 75.0, count: int = 6, window_ms: float = 30000.0,
                  swap_in_ms: float = LUNGE_SWAP_IN_MS, hold_count: int = 5, hold_of: int = 10, order_count: int = 2,
-                 order_window_ms: float = 60000.0):
+                 order_window_ms: float = 60000.0, axe_count: int = 6, axe_of: int = 10):
         self.fast_ns = int(fast_ms * 1e6)
         self.min_ns = int(min_ms * 1e6)
         self.count = int(count)
@@ -364,6 +370,11 @@ class LiveLunge:
         self.hit_ct = 0                # client tick of the last attack / STAB
         self.order: list[int] = []
         self.order_total = 0
+        self.axe_count = int(axe_count)
+        self.axe_of = max(1, int(axe_of))
+        self.axe_hit_ct = -1           # client tick of the last hit while holding the axe swapped in, until the next swap
+        self.axes: list[int] = []      # last axe_of axe holds: 1 = swapped away one client tick after the last hit
+        self.axe_holds = 0
 
     def swap(self, nanos: int, to_cat: int, from_cat: int = -1, ct: int = 0) -> int:
         nanos, ct = int(nanos), int(ct)
@@ -385,6 +396,16 @@ class LiveLunge:
                     self.holds.clear()
                     out |= HOLD
             self.pending_hold_ct = -1
+        if self.axe_hit_ct > 0:
+            if from_cat == AXE and ct > 0:
+                self.axe_holds += 1
+                self.axes.append(1 if ct - self.axe_hit_ct == 1 else 0)
+                if len(self.axes) > self.axe_of:
+                    self.axes.pop(0)
+                if sum(self.axes) >= self.axe_count:
+                    self.axes.clear()
+                    out |= AXE_HOLD
+            self.axe_hit_ct = -1
         self.swap_to = int(to_cat)
         self.swap_ns = nanos
         self.swap_ct = ct
@@ -393,6 +414,8 @@ class LiveLunge:
 
     def hit(self, nanos: int, ct: int = 0) -> int:
         self.hit_ct = int(ct)
+        if self.swap_to == AXE and self.hit_ct > 0:
+            self.axe_hit_ct = self.hit_ct
         return 0
 
     def stab(self, nanos: int, ct: int = 0) -> int:

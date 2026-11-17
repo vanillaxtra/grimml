@@ -255,7 +255,8 @@ def export_live() -> None:
 # live lunge checks (LungeRate, LungeHold, SwapOrder): swap / attack / STAB streams (deduplicated across overlapping
 # windows) replayed through Python LiveLunge; the detector replays the same events through LungeRate and must return
 # the same alert bits on the same events.
-LUNGE_MARKS = ["m040a616d", "m54e35fb3", "ma8352fe2", "mee87b920", "m69a17c52", "m6013e9ff", "m2538fffc", "ma90a44db"]
+LUNGE_MARKS = ["m040a616d", "m54e35fb3", "ma8352fe2", "mee87b920", "m69a17c52", "m6013e9ff", "m2538fffc", "ma90a44db",
+               "m2ebed745", "m88e02374", "me716b56d"]  # last three: Auto Shield Breaker, fast hand stuns (AxeHold)
 LUNGE_ACTIONS = 3000
 
 

@@ -27,7 +27,11 @@ import java.util.function.Supplier;
 public final class Scanner implements Runnable {
 
     public interface Sink {
-        void flag(UUID player, String checkName, String description, String verbose);
+        /**
+         * confidence (0-1) is what the alert shows players: the model's average cheat score over the fight for ML
+         * checks; for rule checks the share of the player's recent actions that matched the cheat's pattern.
+         */
+        void flag(UUID player, String checkName, String description, double confidence, String verbose);
     }
 
     public record Settings(int frameCap, int minAttacks, int minFrames, long fightGapMs) {
@@ -46,29 +50,36 @@ public final class Scanner implements Runnable {
      */
     public record LungeSettings(boolean rateEnabled, double fastMs, double minMs, int count, double windowMs,
                                 boolean holdEnabled, int holdCount, int holdOf,
-                                boolean orderEnabled, int orderCount, double orderWindowMs, long cooldownMs) {
-        public static final String[] CHECKS = {"LungeRate", "LungeHold", "SwapOrder"};
+                                boolean orderEnabled, int orderCount, double orderWindowMs,
+                                boolean axeEnabled, int axeCount, int axeOf, long cooldownMs) {
+        public static final String[] CHECKS = {"LungeRate", "LungeHold", "SwapOrder", "AxeHold"};
         public static final String[] DESCRIPTIONS = {
                 "Spear swap-lunges chained faster than a hand can (Instant Lunge)",
                 "Spear swapped in, jabbed and swapped out within one client tick, again and again (Instant Lunge)",
-                "Hotbar swap sent after an attack in the same client tick, which the vanilla client never does"};
+                "Hotbar swap sent after an attack in the same client tick, which the vanilla client never does",
+                "Axe swapped away one client tick after the shield hit, again and again (Auto Shield Breaker)"};
 
         public boolean enabled() {
-            return rateEnabled || holdEnabled || orderEnabled;
+            return rateEnabled || holdEnabled || orderEnabled || axeEnabled;
         }
 
         boolean on(int check) {
-            return check == 0 ? rateEnabled : check == 1 ? holdEnabled : orderEnabled;
+            return switch (check) {
+                case 0 -> rateEnabled;
+                case 1 -> holdEnabled;
+                case 2 -> orderEnabled;
+                default -> axeEnabled;
+            };
         }
     }
 
     private static final class Lunge {
         final LungeRate rate;
-        final long[] lastAlertNanos = new long[3];
+        final long[] lastAlertNanos = new long[4];
 
         Lunge(LungeSettings l) {
             rate = new LungeRate(l.fastMs(), l.minMs(), l.count(), l.windowMs(), 150.0,
-                    l.holdCount(), l.holdOf(), l.orderCount(), l.orderWindowMs());
+                    l.holdCount(), l.holdOf(), l.orderCount(), l.orderWindowMs(), l.axeCount(), l.axeOf());
         }
     }
 
@@ -215,10 +226,10 @@ public final class Scanner implements Runnable {
                 }
                 double share = (double) fight.flagged / fight.windows;
                 if (fight.windows >= m.minWindows() && share >= m.alertShare()) {
-                    String verbose = String.format("%d/%d windows (%.0f%%, line %.0f%%) avg %.2f",
-                            fight.flagged, fight.windows, share * 100, m.alertShare() * 100, fight.scoreSum / fight.windows);
+                    String verbose = String.format("%d of %d fight windows flagged (%.0f%%, alert line %.0f%%)",
+                            fight.flagged, fight.windows, share * 100, m.alertShare() * 100);
                     flagsRaised.incrementAndGet();
-                    sink.flag(id, m.checkName(), m.description(), verbose);
+                    sink.flag(id, m.checkName(), m.description(), fight.scoreSum / fight.windows, verbose);
                     fight.windows = 0;
                     fight.flagged = 0;
                     fight.scoreSum = 0;
@@ -241,9 +252,10 @@ public final class Scanner implements Runnable {
         if (alert && now - gr.lastAlertNanos >= g.cooldownMs() * 1_000_000L) {
             gr.lastAlertNanos = now;
             flagsRaised.incrementAndGet();
-            sink.flag(id, GridSettings.CHECK, GridSettings.DESCRIPTION, String.format(
-                    "off-grid %.0f%% of recent rotation, toward-away %+.0f%%, step %.5f",
-                    gr.live.offShare() * 100, gr.live.bias() * 100, gr.live.step()));
+            double toward = Math.max(0.0, Math.min(1.0, (1.0 + gr.live.bias()) / 2.0));
+            sink.flag(id, GridSettings.CHECK, GridSettings.DESCRIPTION, toward, String.format(
+                    "%.0f%% of recent rotation off the mouse grid, %.0f%% of that toward the opponent",
+                    gr.live.offShare() * 100, toward * 100));
         }
     }
 
@@ -271,21 +283,29 @@ public final class Scanner implements Runnable {
                 r.lastNanos = n;
             }
         }
-        for (int c = 0; c < 3; c++) {
+        for (int c = 0; c < 4; c++) {
             if ((alerts & (1 << c)) == 0 || !l.on(c) || now - lu.lastAlertNanos[c] < l.cooldownMs() * 1_000_000L) {
                 continue;
             }
             lu.lastAlertNanos[c] = now;
             flagsRaised.incrementAndGet();
             String verbose = switch (c) {
-                case 0 -> String.format("%d swap-lunges under %.0f ms apart within %.0f s (%d swap-lunges seen)",
-                        l.count(), l.fastMs(), l.windowMs() / 1000, r.lunges());
-                case 1 -> String.format("spear held one client tick on %d of the last %d swap-lunges (%d seen)",
-                        l.holdCount(), l.holdOf(), r.lunges());
-                default -> String.format("%d swaps after an attack in the same client tick within %.0f s (%d total)",
-                        l.orderCount(), l.orderWindowMs() / 1000, r.orderTotal());
+                case 0 -> String.format("%d spear swap-lunges under %.0f ms apart within %.0f s",
+                        l.count(), l.fastMs(), l.windowMs() / 1000);
+                case 1 -> String.format("spear held one tick on %.0f%% of the last %d swap-lunges",
+                        r.holdShare * 100, l.holdOf());
+                case 2 -> String.format("%d hotbar swaps sent after an attack in the same tick within %.0f s",
+                        l.orderCount(), l.orderWindowMs() / 1000);
+                default -> String.format("axe swapped away one tick after the hit on %.0f%% of the last %d axe hits",
+                        r.axeShare * 100, l.axeOf());
             };
-            sink.flag(id, LungeSettings.CHECKS[c], LungeSettings.DESCRIPTIONS[c], verbose);
+            double conf = switch (c) {
+                case 0 -> r.rateShare;
+                case 1 -> r.holdShare;
+                case 2 -> 1.0; // vanilla never sends this order
+                default -> r.axeShare;
+            };
+            sink.flag(id, LungeSettings.CHECKS[c], LungeSettings.DESCRIPTIONS[c], conf, verbose);
         }
     }
 

@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>dev.grimml</groupId>
-    <artifactId>grimml</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <artifactId>grimmlrecorder</artifactId>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
 
-    <name>grimml</name>
+    <name>grimmlrecorder</name>
     <description>Combat recording for Grim ML training data (the detector is in ../detector)</description>
 
     <properties>
@@ -70,7 +70,7 @@
     </dependencies>
 
     <build>
-        <finalName>grimml-${project.version}</finalName>
+        <finalName>grimmlrecorder-${project.version}</finalName>
         <resources>
             <!-- only plugin.yml needs ${project.version}; config.yml is copied verbatim -->
             <resource>

@@ -14,8 +14,8 @@ import java.util.Map;
 
 public final class GrimMLCommand implements BasicCommand {
 
-    public static final String PERMISSION = "grimml.admin";
-    private static final String USAGE = "<red>/grimml <status|pause|resume|reload|mark|testaccount|suspects|review>";
+    public static final String PERMISSION = "grimmlrecorder.admin";
+    private static final String USAGE = "<red>/grimmlrecorder <status|pause|resume|reload|mark|testaccount|suspects|review>";
 
     private final Map<String, SubCommand> subs = new LinkedHashMap<>();
 

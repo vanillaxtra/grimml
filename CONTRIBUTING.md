@@ -38,4 +38,5 @@ Don't commit recordings (`.gmlml`), world folders, logs, jars, secrets, or anyth
 
 ## License
 
-By contributing you agree that your work is licensed under the [MIT License](LICENSE).
+By contributing you agree that code you contribute is licensed under the [MIT License](LICENSE), and that model files
+you contribute to `models/` are licensed under [CC BY-NC-SA 4.0](models/LICENSE.md).

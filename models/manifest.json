@@ -1,7 +1,7 @@
 {
-  "version": 5,
-  "published": "2026-11-16 13:55 UTC",
-  "source_run": "20261116_135456",
+  "version": 8,
+  "published": "2026-11-17 00:23 UTC",
+  "source_run": "v8run",
   "models": [
     {
       "module": "Aim Assist",
@@ -10,11 +10,11 @@
       "model": "aim_assist.txt",
       "meta": "aim_assist.json",
       "enabled": true,
-      "alert_share": 0.26,
-      "held_out_core_auc": 0.88,
-      "cheat_sessions_caught": "10/11",
-      "model_sha256": "f0165f5ff77c72fe6b6ca8bd77c970ac22c5a64040b2f101b9d6ae7971de5249",
-      "meta_sha256": "02dbe8f8ac1891e7b85e7fdf1903d03ccfab0f3e20a418f10d129a0307c3118b"
+      "alert_share": 0.25,
+      "held_out_core_auc": 0.878,
+      "cheat_sessions_caught": "9/11",
+      "model_sha256": "7ae530d0d33990d5e5291e7c69babb044163d7d67aeaa53572941a4681840141",
+      "meta_sha256": "46b67c28a7af6018b17d3864c551aaff355507b5c24b3522892d300792a57efe"
     },
     {
       "module": "Triggerbot",
@@ -23,24 +23,11 @@
       "model": "triggerbot.txt",
       "meta": "triggerbot.json",
       "enabled": true,
-      "alert_share": 0.24,
-      "held_out_core_auc": 0.926,
+      "alert_share": 0.28,
+      "held_out_core_auc": 0.937,
       "cheat_sessions_caught": "4/4",
-      "model_sha256": "60be9e00030fa1b0fb8afc3f1d476873f58590634e552db71ca5138b875b5952",
-      "meta_sha256": "9262f0d8f321fcd9b4ac66d9158ed66a59206fa1810da80ae9170461e5299bf6"
-    },
-    {
-      "module": "Kill Aura",
-      "check": "MLKillAura",
-      "description": "ML model for Kill Aura (experimental)",
-      "model": "kill_aura.txt",
-      "meta": "kill_aura.json",
-      "enabled": true,
-      "alert_share": 0.34,
-      "held_out_core_auc": 0.85,
-      "cheat_sessions_caught": "5/5",
-      "model_sha256": "047ebf9484787973518214b0739971fe0ecc040e7a4ac5280c461adf3b3db09f",
-      "meta_sha256": "5732b41da37fb1a70ef14702c82e992c20b05260f7d5ee65a04cb12fb3e98655"
+      "model_sha256": "e5563ead622f52b1f31b3eb5743d9e7e23b871e2fab5c21859ddd002283d44c5",
+      "meta_sha256": "95611aa045c0b9cbc52ab19ce79c20cf531bbb8c7bf23e2e60cc004423b72793"
     },
     {
       "module": "Silent Aim",
@@ -49,11 +36,24 @@
       "model": "silent_aim.txt",
       "meta": "silent_aim.json",
       "enabled": true,
-      "alert_share": 0.34,
-      "held_out_core_auc": 0.711,
+      "alert_share": 0.22,
+      "held_out_core_auc": 0.666,
       "cheat_sessions_caught": "3/4",
-      "model_sha256": "002c1796cbfdbe5b5deb209af4b39860c1c43d2871b9e5661ead2eaeb1d85878",
-      "meta_sha256": "9654850792fdd23a071dcb964d2881c8a3643dfd3251aa8daef653d2075b1d8e"
+      "model_sha256": "279cc807de41d2fc2f488f334a5bbf39fab5e715a6e3aeea0b61c607bc51b6cb",
+      "meta_sha256": "9a48ffe261a7b5df7c74395b5459824681643286efb1a8c50501b881438c54fd"
+    },
+    {
+      "module": "Kill Aura",
+      "check": "MLKillAura",
+      "description": "ML model for Kill Aura (experimental)",
+      "model": "kill_aura.txt",
+      "meta": "kill_aura.json",
+      "enabled": true,
+      "alert_share": 0.2,
+      "held_out_core_auc": 0.831,
+      "cheat_sessions_caught": "8/8",
+      "model_sha256": "5d1a9fb5384596210dc56eb24cb20583aed9bade7169cac0b4b7aaea4b7dedd7",
+      "meta_sha256": "993cdbd840b1d63dfaecca31018a0c947da76d9e5f0978f828d6609ec59d20c2"
     }
   ]
 }

@@ -1,8 +1,8 @@
-name: grimml
+name: grimmlrecorder
 version: ${project.version}
 main: dev.grimml.GrimMLPlugin
 api-version: '1.21'
-description: Combat recording for Grim ML detection (recorder only)
+description: Combat recorder that makes training data for GrimML (not needed to detect)
 authors: [grimml]
 depend:
   - packetevents
@@ -11,8 +11,8 @@ softdepend:
   - Geyser-Spigot
   - floodgate
   - LiteBans
-# /grimml is registered in code through the paper lifecycle command api
+# /grimmlrecorder (alias /gmlr) is registered in code through the paper lifecycle command api
 permissions:
-  grimml.admin:
+  grimmlrecorder.admin:
     description: Control the combat recorder
     default: op

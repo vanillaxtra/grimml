@@ -151,7 +151,7 @@ public final class StateSampler {
         buf.food = player.getFoodLevel();
         buf.pose = player.getPose().ordinal();
         buf.gamemode = player.getGameMode().ordinal();
-        buf.staff = player.hasPermission("grimml.admin") || player.isOp();
+        buf.staff = player.hasPermission("grimmlrecorder.admin") || player.isOp();
         buf.world = player.getWorld().getName();
         buf.attrDamage = attr(player, attrDamage);
         buf.attrSpeed = attr(player, attrSpeed);

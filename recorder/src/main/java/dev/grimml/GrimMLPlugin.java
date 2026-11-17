@@ -134,12 +134,12 @@ public final class GrimMLPlugin extends JavaPlugin {
 
         GrimMLCommand cmd = new GrimMLCommand(this);
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS,
-                event -> event.registrar().register("grimml", "grimml recorder admin", cmd));
+                event -> event.registrar().register("grimmlrecorder", "GrimML recorder admin", java.util.List.of("gmlr"), cmd));
 
         // 4-tick interval (~200 ms) is fast enough to feel live without saturating the scheduler
         feedbackTask = getServer().getScheduler().runTaskTimer(this, new dev.grimml.mark.MarkFeedback(this), 4L, 4L);
 
-        getLogger().info("grimml recorder enabled schema 3");
+        getLogger().info("GrimML recorder enabled schema 3");
     }
 
     @Override

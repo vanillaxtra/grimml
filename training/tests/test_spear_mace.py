@@ -248,3 +248,33 @@ def test_live_lunge_swap_after_stab_in_same_tick_is_order():
         swap_then_hit += [{"k": 1, "n": (1000 + i * 500) * MS, "to": SWORD, "from": AXE, "ct": 50 + i * 10},
                           {"k": 2, "n": (1001 + i * 500) * MS, "ct": 50 + i * 10}]
     assert [g.feed(a) for a in swap_then_hit] == [0] * 6
+
+
+# ---------------------------------------------------------------- live AxeHold check
+
+def _axe_holds(back_ticks, start_ct=100):
+    """One axe hold per entry: swap to the axe, hit in the same client tick, swap back back_ticks later."""
+    from grimml_train.features.spearmace import AXE
+    acts = []
+    for i, b in enumerate(back_ticks):
+        ct, t = start_ct + i * 40, (1000 + i * 2000) * MS
+        acts.append({"k": 1, "n": int(t), "to": AXE, "from": SWORD, "ct": ct})
+        acts.append({"k": 2, "n": int(t + MS), "ct": ct})
+        acts.append({"k": 1, "n": int(t + b * 50 * MS), "to": SWORD, "from": AXE, "ct": ct + b})
+    return acts
+
+
+def test_axe_hold_alerts_on_one_tick_swap_outs():
+    from grimml_train.features.spearmace import AXE_HOLD, LiveLunge
+    g = LiveLunge()
+    bits = [g.feed(a) for a in _axe_holds([1] * 6)]
+    assert g.axe_holds == 6 and bits[-1] == AXE_HOLD and not any(bits[:-1])
+
+
+def test_axe_hold_hand_speed_and_no_hit_never_alert():
+    from grimml_train.features.spearmace import AXE
+    assert _replay(_axe_holds([2, 3, 1, 2, 4, 1, 2, 3, 1, 2] * 5))[0] == []  # 30% one-tick
+    no_hit = [a for a in _axe_holds([1] * 20) if a["k"] != 2]                 # swapping without hitting
+    assert _replay(no_hit)[0] == []
+    no_ct = [dict(a, ct=0) for a in _axe_holds([1] * 20)]                     # pre-1.21.2 clients
+    assert _replay(no_ct)[0] == []

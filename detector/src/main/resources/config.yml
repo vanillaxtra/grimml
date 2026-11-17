@@ -1,7 +1,8 @@
-# GrimML detector
-# Scores fights with models trained from grimml recordings and reports through Grim.
-# The models are a pipeline test (one cheat operator, one client). Keep punishments off until the
-# models are trained on more data; alerts are safe to use.
+# GrimML - machine-learning combat checks for Grim Anticheat
+# Detects Kill Aura, Aim Assist, Triggerbot, Silent Aim, Instant Lunge and Auto Shield Breaker.
+# Beta: the models are trained on a small number of players. Alerts are safe to use; keep punishments off
+# until you have checked the alerts on your own server.
+# Permissions: grimml.alerts, grimml.alerts.sound, grimml.notify, grimml.admin, grimml.bypass, grimml.bypass.<check>
 
 models:
   # newest models are downloaded from here (checked every few minutes, off the main thread);
@@ -65,15 +66,70 @@ swap-order:
   count: 2                 # same-tick swaps after an attack ...
   window-ms: 60000         # ... within this long
 
+# AxeHold: Auto Shield Breaker swaps to the axe, hits the shield and swaps away on the very next client tick. An axe
+# hold is a swap to the axe with at least one hit on a player, ended by the swap away. By hand that swap comes 2+ ticks
+# after the hit on 92-97% of fast stuns against a shielding bot (3 sessions, ~220 axe holds, 0 alerts); Prestige Auto
+# Shield Breaker does it 1 tick later on 63-98% (6 sessions, every setting, 6-17 alerts each). Grim's shield breaker
+# swaps back after 2 ticks, like a fast hand, and is not caught by this. Needs 1.21.2+ clients (client ticks).
+# Shares lunge-rate.alert-cooldown-ms.
+axe-hold:
+  enabled: true
+  count: 6                 # one-tick swap-outs after an axe hit ...
+  of: 10                   # ... among this many latest axe holds
+
 alerts:
-  # empty = Grim's own alerts-format and prefix, so ML flags look like any Grim flag.
-  # placeholders: %prefix% %player% %check_name% %description% %vl% %verbose% %experimental%
-  format: ""
+  # Who sees alerts: players with grimml.alerts (op by default); /grimml alerts turns your own on or off.
+  # Players with grimml.alerts.sound also hear the sound below.
+  #
+  # Placeholders (chat, hover, click, webhook and punishments):
+  #   %player% %uuid% %check% (short name, e.g. Kill Aura) %check_name% (e.g. MLKillAura) %description%
+  #   %confidence% (0-100) %vl% %verbose% %ping% %version% (client version) %brand% %tps% %grimml_version%
+  # Confidence: for ML checks, the model's average cheat score over the fight; for rule checks, the share of the
+  # player's recent swaps or hits that matched the cheat's pattern.
+  # Colours: & codes, &#rrggbb hex, or MiniMessage tags.
+  prefix: "&bGrimML &8»"
+  format: "%prefix% &f%player% &7flagged &b%check% &8(&f%confidence%%&8) &7x%vl%"
+  # shown when hovering over the alert
+  hover:
+    - "&b%check% &8(%check_name%)"
+    - "&7%description%"
+    - ""
+    - "&7Confidence: &f%confidence%%"
+    - "&7Violations: &f%vl%"
+    - "&7Details: &f%verbose%"
+    - "&7Ping: &f%ping% ms &8| &7Client: &f%version% %brand%"
+    - ""
+    - "&eClick to teleport to %player%"
+  # run by the staff member who clicks the alert; "" = nothing happens on click
+  click-command: "/tp %player%"
   console: true
-  # Discord: empty = Grim's own webhook url (if Grim has one set and use-grim-webhook is true)
-  webhook-url: ""
-  use-grim-webhook: true
+  sound:
+    name: "block.note_block.pling"   # any Minecraft sound id; "" = no sound
+    volume: 1.0
+    pitch: 1.0
   decay-per-minute: 0.05
+
+# Discord webhook, laid out exactly like Grim's own (Grim's discord.yml), so GrimML alerts sit next to Grim's.
+webhook:
+  enabled: true
+  url: ""                   # "" = use Grim's webhook url when use-grim-webhook is true
+  use-grim-webhook: true
+  embed-title: "**GrimML Alert**"
+  embed-color: "#00FFFF"
+  embed-thumbnail-url: "https://crafthead.net/helm/%uuid%"
+  embed-image-url: ""
+  embed-footer-text: "GrimML v%grimml_version%"
+  embed-footer-url: "https://grim.ac/images/grim.png"
+  include-timestamp: true
+  include-verbose: true     # adds a "Verbose" field with the confidence and details
+  violation-content:
+    - "**Player**: `%player%`"
+    - "**Check**: %check_name%"
+    - "**Violations**: %violations%"
+    - "**Client Version**: %version%"
+    - "**Brand**: `%brand%`"
+    - "**Ping**: %ping%"
+    - "**TPS**: %tps%"
 
 # Console commands at a violation count (one violation = one flagged fight).
 punishments:

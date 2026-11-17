@@ -1,38 +1,61 @@
-# GrimML detector
+# GrimML
 
-Live ML combat checks that run next to [Grim Anticheat](https://github.com/GrimAnticheat/Grim). It scores every
-player in a fight with the models trained in `../training` and reports flags the way Grim does.
+Machine-learning combat checks that run next to [Grim Anticheat](https://github.com/GrimAnticheat/Grim). It scores
+every player in a fight with the models trained in `../training` and alerts staff.
 
-> **Experimental.** The current models were trained on one cheat operator using one client. Use the alerts to review
-> players; keep `punishments.enabled: false` until the models are trained on much more data.
+> **Beta.** The models are trained on a small number of players. Use the alerts to review players; keep
+> `punishments.enabled: false` until you have checked the alerts on your own server.
 
 ## Install
 
-1. `mvn clean package` in the repo root, then copy `detector/target/grimml-detector-0.1.0-SNAPSHOT.jar` to `plugins/`.
-2. Needs **GrimAC** and **PacketEvents** (the same ones Grim uses), Paper 1.21+, Java 21.
-3. Start the server. `plugins/GrimMLDetector/config.yml` is created; the defaults are fine.
+1. Build with `mvn clean package` in the repo root, then copy `detector/target/GrimML-1.1.0.jar` to `plugins/`.
+2. Needs **GrimAC**, Paper 1.21+ and Java 21.
+3. Start the server. `plugins/GrimML/config.yml` is created; the defaults are fine.
 
-The recorder (`recorder/`) is not needed on servers that only detect.
+The recorder (`recorder/`, plugin `grimmlrecorder`) only makes training data and is not needed to detect.
+
+> **Upgrading from the old GrimMLDetector / grimml plugins:** delete or rename the old `plugins/grimml/` folder
+> before installing. On Windows, `plugins/GrimML/` and `plugins/grimml/` are the same folder.
 
 ## What it looks like
 
-Flags use Grim's own `alerts-format` and prefix and go to everyone with `/grim alerts` on, for example
-`Grim » Steve failed MLKillAura (x1) 7/24 windows (29%, line 20%) avg 0.71`.
+One short line per flag, with a confidence anyone can read:
+
+`GrimML » Steve flagged Kill Aura (74%) x2`
+
+Hovering shows the details (check, description, violations, what was measured, ping, client), and clicking
+teleports you to the player (`alerts.click-command`). Everything is configurable in the `alerts` section.
+
+**Confidence** is the model's average cheat score over the fight for ML checks, and for rule checks the share of
+the player's recent swaps or hits that matched the cheat's pattern.
 
 - Grim's `FlagEvent` is fired for every flag, so other Grim add-ons see it and can cancel it.
-- Discord: posts to Grim's webhook url (or `alerts.webhook-url`) in Grim's embed style.
+- Discord: the embed is laid out exactly like Grim's own webhook (same fields, colour, player-head thumbnail, Verbose
+  field, footer and timestamp). It posts to Grim's webhook url unless `webhook.url` is set.
 - Punishments: console commands at violation counts in `config.yml` (off by default). One violation = one flagged fight.
 - Grim's API (1.3.x) has no way to add a third-party check to Grim's own check list, so `/grim` commands, Grim's
-  `punishments.yml` and Grim's violation history do not know about these checks. Everything else above works.
+  `punishments.yml` and Grim's violation history do not know about these checks.
 
-| Command | |
-|---|---|
-| `/gmld status` | loaded models, thresholds, windows scored, last scan time |
-| `/gmld update` | check for new models now |
-| `/gmld reload` | reload config.yml |
+| Command | Permission | |
+|---|---|---|
+| `/grimml alerts` | `grimml.alerts` | turn your alerts on or off |
+| `/grimml status [player]` | `grimml.admin` | checks, models, and whether a player is scanned |
+| `/grimml update` | `grimml.admin` | download newer models now |
+| `/grimml reload` | `grimml.admin` | reload config.yml |
 
-Permissions: `grimml.detect.admin` (op), `grimml.detect.bypass` (never scanned). Creative/spectator and
-Floodgate (Bedrock) players are skipped.
+`/gml` is a short alias. Every option tab-completes.
+
+| Permission | Default | |
+|---|---|---|
+| `grimml.*` | op | everything below except bypass |
+| `grimml.alerts` | op | see alerts in chat |
+| `grimml.alerts.sound` | op | hear a ping with every alert (`alerts.sound`) |
+| `grimml.notify` | op | be told when new models are downloaded |
+| `grimml.admin` | op | status, reload, update |
+| `grimml.bypass` | nobody | never scanned by any check |
+| `grimml.bypass.<check>` | nobody | never flagged by one check: `mlkillaura`, `mlaimassist`, `mltriggerbot`, `mlsilentaim`, `aimgrid`, `lungerate`, `lungehold`, `swaporder`, `axehold` (`grimml.bypass.*` = all) |
+
+Creative/spectator and Floodgate (Bedrock) players are skipped.
 
 ## How it decides
 
@@ -64,7 +87,7 @@ python export_parity.py
 cd .. && mvn clean package
 ```
 
-Then commit and push `models/` (and the fixture). Servers pick it up on their next check or `/gmld update`.
+Then commit and push `models/` (and the fixture). Servers pick it up on their next check or `/grimml update`.
 `publish_models.py` only switches on the modules you list; the rest are published switched off.
 
 The repo is public, so anyone can read the published models and thresholds.
@@ -76,14 +99,14 @@ Real mouse rotation is a whole number of sensitivity steps (`(sens*0.6+0.2)^3 * 
 (CUSUM) on off-grid rotation while they fight. It alerts when the score reaches `aim-grid.alert-score` and the
 off-grid rotation leans toward the opponent, so zoom, cinematic camera and unusual mice (off-grid both ways)
 do not flag. Players whose rotation fits no grid (controllers, cinematic camera) are skipped. Settings: the
-`aim-grid` section of `config.yml`. `/gmld status <player>` shows a player's learned step and current score.
+`aim-grid` section of `config.yml`. `/grimml status <player>` shows a player's learned step and current score.
 
 Calibrated on recorded fights (training `aimgrid.py`, same code): legit fights never scored above 2.3; aim
 assist sessions reached 20 within 1.5-6 s once the step was known. The Java port is checked against Python on
 every build (`live_grid.txt`). The same grid measurement feeds the ML models as `grid_off_frac`,
 `grid_off_toward`, `grid_off_away`, `grid_toward_minus_away`.
 
-## Lunge checks: LungeRate, LungeHold, SwapOrder (no model needed)
+## Swap checks: LungeRate, LungeHold, SwapOrder, AxeHold (no model needed)
 
 Instant Lunge swaps to the spear, jabs and swaps back as one macro. A swap-lunge is a spear jab (a digging STAB
 packet, not an attack) within 150 ms of a hotbar swap to the spear; each swap counts once, and jabbing while holding
@@ -97,8 +120,9 @@ because a lunge-only player never sends an attack. One `LungeRate` object per pl
 | `LungeRate` | gaps between swap-lunges in [`min-ms`, `fast-ms`) | 6 within 30 s, 75-300 ms | fastest gap 345 ms (3 sessions, 2 players), 0 alerts | 100-250 ms apart, alerted in all 7 sessions |
 | `LungeHold` | spear held exactly one client tick | 5 of the last 10 swap-lunges | 2 of 182 (1.1%), 0 alerts | 0-0: 100%, 20-70: 63%, 30-90: 34% / 0% |
 | `SwapOrder` | a hotbar swap after an attack or STAB in the same client tick (vanilla sends hotbar changes first) | 2 within 60 s | 0 in ~1400 hits and swaps | rare for Prestige; any client doing the chain inside one tick does it every lunge |
+| `AxeHold` | swap away from the axe one client tick after the last axe hit (Auto Shield Breaker) | 6 of the last 10 axe holds | 3-8% of ~220 fast hand stuns on a shielding bot, 0 alerts | Prestige 63-98% (6 sessions, 6-17 alerts each); Grim (2 ticks) not caught |
 
-LungeHold and SwapOrder need client ticks (1.21.2+ clients); older clients are skipped by those two. Settings: the
-`lunge-rate`, `lunge-hold` and `swap-order` sections of `config.yml`. Calibrated with training `spearmace.LiveLunge`
+LungeHold, SwapOrder and AxeHold need client ticks (1.21.2+ clients); older clients are skipped by those. Settings:
+the `lunge-rate`, `lunge-hold`, `swap-order` and `axe-hold` sections of `config.yml`. Calibrated with training `spearmace.LiveLunge`
 (same code) replayed over every recorded session; the Java port is checked against Python on every build
 (`live_lunge.txt`).

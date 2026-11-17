@@ -5,7 +5,7 @@
 - **schema:** GML3 (schema 3); GML1/GML2 files stay identifiable by magic, not rewritten
 - **depends:** packetevents (hard, used directly at enable)
 - **soft-depends:** GrimAC, Geyser-Spigot, floodgate, LiteBans
-- **commands:** `/grimml` registered via Paper lifecycle `LifecycleEvents.COMMANDS` as a `BasicCommand`; plugin.yml has no `commands:` section
+- **commands:** `/grimmlrecorder` registered via Paper lifecycle `LifecycleEvents.COMMANDS` as a `BasicCommand`; plugin.yml has no `commands:` section
 - **config schema version:** 4
 
 ## structure
@@ -51,15 +51,15 @@ flowchart LR
 
 | command | permission | notes |
 |---|---|---|
-| `/grimml status` | `grimml.admin` | windows, drops, bytes |
-| `/grimml pause` | `grimml.admin` | stop flushing |
-| `/grimml resume` | `grimml.admin` | resume flushing |
-| `/grimml reload` | `grimml.admin` | reload config and `taxonomy.yml` |
-| `/grimml mark start <account> <label> [client] [module] [key=value...]` | `grimml.admin` | time-range MARKER; prints id `m########`; console/RCON; labels `LEGIT_CONFIRMED` or `CHEAT` |
-| `/grimml mark end <account>` | `grimml.admin` | close the open segment; repeats id + duration |
-| `/grimml mark list` | `grimml.admin` | open marks plus recent ids from `marks.csv` |
-| `/grimml mark get <id>` | `grimml.admin` | one mark: settings, duration, file count |
-| `/grimml testaccount [account] [on\|off]` | `grimml.admin` | persist test-account uuids; header flag so they never mix with normal players |
-| `/grimml suspects [limit]` | `grimml.admin` | top decaying grim scores, anon ids only |
-| `/grimml review next` | `grimml.admin` | next `GRIM_WEAK` window for staff replay |
-| `/grimml review mark <id> confirmed\|legit\|unsure` | `grimml.admin` | writes `replay-confirmed` / legit; never overwrites staff markers |
+| `/grimmlrecorder status` | `grimmlrecorder.admin` | windows, drops, bytes |
+| `/grimmlrecorder pause` | `grimmlrecorder.admin` | stop flushing |
+| `/grimmlrecorder resume` | `grimmlrecorder.admin` | resume flushing |
+| `/grimmlrecorder reload` | `grimmlrecorder.admin` | reload config and `taxonomy.yml` |
+| `/grimmlrecorder mark start <account> <label> [client] [module] [key=value...]` | `grimmlrecorder.admin` | time-range MARKER; prints id `m########`; console/RCON; labels `LEGIT_CONFIRMED` or `CHEAT` |
+| `/grimmlrecorder mark end <account>` | `grimmlrecorder.admin` | close the open segment; repeats id + duration |
+| `/grimmlrecorder mark list` | `grimmlrecorder.admin` | open marks plus recent ids from `marks.csv` |
+| `/grimmlrecorder mark get <id>` | `grimmlrecorder.admin` | one mark: settings, duration, file count |
+| `/grimmlrecorder testaccount [account] [on\|off]` | `grimmlrecorder.admin` | persist test-account uuids; header flag so they never mix with normal players |
+| `/grimmlrecorder suspects [limit]` | `grimmlrecorder.admin` | top decaying grim scores, anon ids only |
+| `/grimmlrecorder review next` | `grimmlrecorder.admin` | next `GRIM_WEAK` window for staff replay |
+| `/grimmlrecorder review mark <id> confirmed\|legit\|unsure` | `grimmlrecorder.admin` | writes `replay-confirmed` / legit; never overwrites staff markers |

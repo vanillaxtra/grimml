@@ -137,12 +137,12 @@ public final class RecordWriter {
         pauseBits.updateAndGet(v -> pause ? v | reason : v & ~reason);
     }
 
-    // /grimml pause
+    // /grimmlrecorder pause
     public void setPaused(boolean pause) {
         setPaused(PAUSE_MANUAL, pause);
     }
 
-    // /grimml resume: an explicit operator override; a guard whose condition still holds pauses again
+    // /grimmlrecorder resume: an explicit operator override; a guard whose condition still holds pauses again
     public void resumeAll() {
         pauseBits.set(0);
     }

@@ -167,6 +167,13 @@ IDS = [
     {'mark_id': 'm67d3e2b3', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794831163325, 'end_ms': 1794831619182, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (7:45); no end marker, end = last window'},
     {'mark_id': 'mc8ae64ed', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794832772234, 'end_ms': 1794833135182, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (6:11); no end marker, end = last window'},
     {'mark_id': 'm45b396e6', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794836125760, 'end_ms': 1794836459182, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (5:42); no end marker, end = last window'},
+    {'mark_id': 'm30bccd69', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794850066579, 'end_ms': 1794850485376, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (7:08); no end marker, end = last window'},
+    {'mark_id': 'me716b56d', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794867130758, 'end_ms': 1794867537376, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (6:54), many fast hand axe stuns; no end marker, end = last window'},
+    {'mark_id': 'ma3260b06', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794868136695, 'end_ms': 1794868503376, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (6:14), many fast hand axe stuns; no end marker, end = last window'},
+    # 2026-11-16 Grim Killaura vs the pvp bot, schema 4; start = in-file marker, end = last window epoch
+    {'mark_id': 'm9a84bf96', 'label': 'CHEAT', 'client': 'grim', 'module': 'Kill Aura', 'settings': 'ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:FALSE', 'start_ms': 1794848823682, 'end_ms': 1794849111376, 'interrupted': False, 'multi_module': False, 'note': 'grim (4:57)'},
+    {'mark_id': 'm3ce1354f', 'label': 'CHEAT', 'client': 'grim', 'module': 'Kill Aura', 'settings': 'ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:TRUE', 'start_ms': 1794849226905, 'end_ms': 1794849563376, 'interrupted': False, 'multi_module': False, 'note': 'grim (5:46); logged as m3ce1254f (typo), the files say m3ce1354f'},
+    {'mark_id': 'm038a401a', 'label': 'CHEAT', 'client': 'grim', 'module': 'Kill Aura', 'settings': 'ROTATIONS:SNAP REACH:3 MISS_CHANCE:0 STUN:TRUE', 'start_ms': 1794849683214, 'end_ms': 1794849967376, 'interrupted': False, 'multi_module': False, 'note': 'grim (4:53)'},
 ]
 
 SELECTED_DEFAULT = ["Aim Assist", "Silent Aim", "Kill Aura", "Triggerbot"]
@@ -204,6 +211,8 @@ EXCLUDE_IDS = {
     "m22700b10": _AFK, "mf2dd0754": _AFK,  # Kill Aura
     "mb1f6fa34": _AFK, "md5e8301b": _AFK,  # Silent Aim
     "m12b44916": _AFK, "m109c3312": _AFK, "m70c1ef87": _AFK,  # Triggerbot
+    "m5045e1ea": _AFK, "mc516ec9d": _AFK, "ma635ec0c": _AFK, "m24355c9b": _AFK, "mf3dc7f00": _AFK, "m13d96247": _AFK,  # Grim, 07/11
+    "m365353b1": _AFK, "m004031bb": _AFK, "mf7bb67e8": _AFK, "m9c80fe11": _AFK, "m0bca2310": _AFK, "mc9a8d071": _AFK,  # Grim, 07/11
     "m3f63358f": _AFK,  # Doomsday Triggerbot (10/11, afk alt); matters once doomsday is a --train-client
 }
 
