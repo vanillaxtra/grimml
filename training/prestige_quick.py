@@ -181,6 +181,15 @@ IDS = [
     {'mark_id': 'm9a84bf96', 'label': 'CHEAT', 'client': 'grim', 'module': 'Kill Aura', 'settings': 'ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:FALSE', 'start_ms': 1794848823682, 'end_ms': 1794849111376, 'interrupted': False, 'multi_module': False, 'note': 'grim (4:57)'},
     {'mark_id': 'm3ce1354f', 'label': 'CHEAT', 'client': 'grim', 'module': 'Kill Aura', 'settings': 'ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:TRUE', 'start_ms': 1794849226905, 'end_ms': 1794849563376, 'interrupted': False, 'multi_module': False, 'note': 'grim (5:46); logged as m3ce1254f (typo), the files say m3ce1354f'},
     {'mark_id': 'm038a401a', 'label': 'CHEAT', 'client': 'grim', 'module': 'Kill Aura', 'settings': 'ROTATIONS:SNAP REACH:3 MISS_CHANCE:0 STUN:TRUE', 'start_ms': 1794849683214, 'end_ms': 1794849967376, 'interrupted': False, 'multi_module': False, 'note': 'grim (4:53)'},
+    # 2026-11-18 Prestige Silent Aim vs the pvp bot, schema 4; start/end = first/last window
+    {'mark_id': 'ma626a0ea', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Silent Aim', 'settings': 'CONTINOUS_TRACKING:TRUE', 'start_ms': 1795011158871, 'end_ms': 1795011662871, 'interrupted': False, 'multi_module': False, 'note': 'vs the pvp bot (8:26)'},
+    {'mark_id': 'mbef357b6', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Silent Aim', 'settings': 'CONTINOUS_TRACKING:TRUE', 'start_ms': 1795011830871, 'end_ms': 1795012220871, 'interrupted': False, 'multi_module': False, 'note': 'vs the pvp bot (6:31)'},
+    {'mark_id': 'ma0c07d9a', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Silent Aim', 'settings': 'CONTINOUS_TRACKING:TRUE', 'start_ms': 1795012282871, 'end_ms': 1795012850871, 'interrupted': False, 'multi_module': False, 'note': 'vs the pvp bot (9:29)'},
+    {'mark_id': 'mcbe005b3', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Silent Aim', 'settings': 'CONTINOUS_TRACKING:FALSE', 'start_ms': 1795012986871, 'end_ms': 1795013440871, 'interrupted': False, 'multi_module': False, 'note': 'vs the pvp bot (7:35)'},
+    {'mark_id': 'm9b2c5f40', 'label': 'CHEAT', 'client': 'prestige', 'module': 'Silent Aim', 'settings': 'CONTINOUS_TRACKING:FALSE', 'start_ms': 1795013518871, 'end_ms': 1795014022871, 'interrupted': False, 'multi_module': False, 'note': 'vs the pvp bot (8:27)'},
+    # 2026-11-18 legit duels vs the strong friend, operator account only (CHEATTRAINING lists the friend in By)
+    {'mark_id': 'mb30fdc1a', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1795014090871, 'end_ms': 1795014596871, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs a friend (8:27); start/end = first/last window'},
+    {'mark_id': 'm7da6aae9', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1795014834871, 'end_ms': 1795015428871, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs a friend (9:55); start/end = first/last window'},
 ]
 
 SELECTED_DEFAULT = ["Aim Assist", "Silent Aim", "Kill Aura", "Triggerbot"]
