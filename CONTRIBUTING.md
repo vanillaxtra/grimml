@@ -4,7 +4,7 @@ Thanks for helping. Read this before opening a pull request.
 
 ## Setup
 
-Needs JDK 21+ and Maven. Python 3 for `training/`.
+Needs JDK 21+ and Maven. Python 3.11+ for `training/` (`pip install -e ".[dev]"` in `training/`).
 
 ```bash
 mvn clean package                 # builds recorder and detector, runs the self-checks
@@ -21,7 +21,8 @@ If you change `BinaryFormat`, `CombatSnapshot`, `RecordTypes` or the feature ext
 - **Main thread stays light.** Heavy work runs async; only Bukkit calls go on the main thread. Folia is not supported yet.
 - **Hot path stays cheap.** Packet handlers must not allocate per packet, lock, look up entities or call Bukkit API.
 - **Privacy.** Raw UUIDs, names and IPs never reach disk. Use `Anonymizer`.
-- **Never punish.** The detector only alerts through Grim.
+- **Punishments are opt-in.** The detector alerts through Grim; punishment commands run only from groups the server
+  owner configures (`punishments.enabled` is false by default). Never add a check that punishes on its own.
 - **Layout.** One package per function, one `.java` file per feature. Command routers and the packet listener only dispatch.
 - **Comments.** Single line, lowercase, only for what the code can't say.
 - **Config.** Bump `config-version` in `config.yml` when keys change.
@@ -39,4 +40,7 @@ Don't commit recordings (`.gmlml`), world folders, logs, jars, secrets, or anyth
 ## License
 
 By contributing you agree that code you contribute is licensed under the [MIT License](LICENSE), and that model files
-you contribute to `models/` are licensed under [CC BY-NC-SA 4.0](models/LICENSE.md).
+you contribute to `models/` are licensed under the [GrimML Model License](models/LICENSE.md).
+
+Never commit real player names or UUIDs, in code, docs, tests or commit messages: refer to players as "player" or
+"friend".

@@ -30,10 +30,9 @@ training/prestige temp test/
 recordings/
 recordings_processed/
 
-# ---- training output (rebuilt by every run; publish models with publish_models.py instead)
-training/out/
-training/out_*/
-training/config.yaml
+# ---- training output (rebuilt by every run; publish models with `grimml-train publish` instead)
+training/runs/
+training/.cache/
 
 # ---- local test servers, logs, secrets
 run/
@@ -63,3 +62,6 @@ venv/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# ---- operator cheat log: names real players, keep it local (labels live in training/config/sessions.csv)
+CHEATTRAINING.md

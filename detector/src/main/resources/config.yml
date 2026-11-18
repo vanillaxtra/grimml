@@ -4,6 +4,9 @@
 # until you have checked the alerts on your own server.
 # Permissions: grimml.alerts, grimml.alerts.sound, grimml.notify, grimml.admin, grimml.bypass, grimml.bypass.<check>
 
+# do not change: tells GrimML which settings this file has (a warning on startup means new settings were added)
+config-version: 1
+
 # tell the console and players with grimml.update.notify when a new GrimML release is on GitHub
 update-checker: true
 

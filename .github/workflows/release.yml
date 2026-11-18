@@ -1,0 +1,43 @@
+name: Release
+
+# Push a tag like v1.1.0 (matching <version> in the poms) to build the jars and publish a GitHub release.
+# The release notes are the matching section of CHANGELOG.md.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Check the tag matches the pom version
+        run: |
+          version=$(mvn -q -N -ntp help:evaluate -Dexpression=project.version -DforceStdout)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match pom version $version"; exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - run: mvn -B -ntp clean package
+      - name: Release notes from CHANGELOG.md
+        run: |
+          awk -v head="## [$VERSION]" '
+            index($0, head) == 1 { on = 1; next }
+            on && (index($0, "## [") == 1 || index($0, "[Unreleased]:") == 1) { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then echo "::error::no '## [$VERSION]' section in CHANGELOG.md"; exit 1; fi
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --title "GrimML $VERSION" --notes-file notes.md \
+            "detector/target/GrimML-$VERSION.jar" "recorder/target/grimmlrecorder-$VERSION.jar"

@@ -1,0 +1,53 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plugins:
+    name: Plugins (Maven)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      # builds recorder + detector and runs every self-check, including Java/Python feature and score parity
+      - run: mvn -B -ntp clean package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jars
+          path: |
+            detector/target/GrimML-*.jar
+            !detector/target/original-*.jar
+            recorder/target/grimmlrecorder-*.jar
+          if-no-files-found: error
+
+  training:
+    name: Training (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: training
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: training/pyproject.toml
+      - run: pip install -e ".[dev]"
+      - run: pytest -q
+      - run: grimml-train modules

@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Only the latest commit on `main` gets security fixes. There are no release builds yet.
+Only the latest release (see [Releases](https://github.com/vanillaxtra/grimml/releases)) and `main` get security fixes.
 
 ## Reporting a vulnerability
 

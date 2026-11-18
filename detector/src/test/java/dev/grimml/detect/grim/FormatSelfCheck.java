@@ -79,6 +79,8 @@ public final class FormatSelfCheck {
         try (var in = FormatSelfCheck.class.getClassLoader().getResourceAsStream("config.yml")) {
             var cfg = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(
                     new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8));
+            check(cfg.getInt("config-version") == dev.grimml.detect.GrimMLDetector.CONFIG_VERSION,
+                    "shipped config-version matches GrimMLDetector.CONFIG_VERSION");
             var gs = cfg.getConfigurationSection("punishments.groups");
             check(gs != null && gs.getKeys(false).size() >= 4, "default punishment groups");
             for (String g : gs.getKeys(false)) {

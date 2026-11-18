@@ -96,7 +96,7 @@ Each combat window is one file with magic **`GML3`** (schema 3). Unmarked auto w
 - **Body:** Deflate-compressed delta-encoded frames plus typed events (including MARKER / MARKER_KV).
 - **Sidecars:** `sessions.idx` (join/quit/mark/grim lines), `marks.csv` (staff mark ledger with ids), `grim-labels.csv`, `grim-review.csv`, `grim-checks.json`, `test-accounts.txt`.
 
-Encoder: `format/BinaryFormat.java`. Round-trip check: `format/BinaryFormatSelfCheck.java`.
+Encoder: `format/BinaryFormat.java`. Round-trip check: `src/test/java/dev/grimml/format/BinaryFormatSelfCheck.java`.
 
 ## How it works
 

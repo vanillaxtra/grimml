@@ -46,6 +46,8 @@ import java.util.concurrent.TimeUnit;
 public final class GrimMLDetector extends JavaPlugin implements Listener, TabCompleter {
 
     private static final int ATTACK_CAP = 2048; // per-player event ring (schema 4 events, ~60-80/s in a fight)
+    /** Bump when config.yml keys are added, renamed or change meaning. */
+    public static final int CONFIG_VERSION = 1;
 
     private final Map<UUID, PlayerTrack> tracks = new ConcurrentHashMap<>();
     private final Map<Integer, PlayerTrack> byEntity = new ConcurrentHashMap<>();
@@ -68,6 +70,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        checkConfigVersion();
         frameCap = Math.max(32, getConfig().getInt("window.frames", 160));
 
         store = new ModelStore(getDataFolder().toPath().resolve("models"), getLogger());
@@ -106,10 +109,25 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
             updateExec.scheduleWithFixedDelay(this::checkForModels, 5, minutes * 60, TimeUnit.SECONDS);
         }
         getLogger().info("Scanning every " + every + " ms off the main thread.");
+        getLogger().info("The ML checks are in beta and can flag legit players: use their alerts to decide who to "
+                + "watch, and keep punishments for them off until the alerts look right on your server.");
         if (getConfig().getBoolean("update-checker", true)) {
             new dev.grimml.detect.update.UpdateChecker(this);
         }
         setupMetrics();
+    }
+
+    /** Missing keys fall back to their defaults, so an old config keeps working; the warning says what to compare. */
+    private void checkConfigVersion() {
+        int have = getConfig().getInt("config-version", 0);
+        if (have < CONFIG_VERSION) {
+            getLogger().warning("config.yml is version " + have + ", this GrimML expects " + CONFIG_VERSION + ". New "
+                    + "settings use their defaults; compare with the config.yml in the jar (or delete yours to "
+                    + "regenerate it), then set config-version: " + CONFIG_VERSION + ".");
+        } else if (have > CONFIG_VERSION) {
+            getLogger().warning("config.yml is version " + have + ", newer than this GrimML (" + CONFIG_VERSION
+                    + "). Settings it does not know are ignored.");
+        }
     }
 
     @Override
@@ -583,6 +601,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                     return true;
                 }
                 reloadConfig();
+                checkConfigVersion();
                 grim.settings(bridgeSettings());
                 scanner.settings(scanSettings(), gridSettings(), lungeSettings());
                 say(sender, "&7Config reloaded &8(window size and scan interval need a restart)&7.");

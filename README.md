@@ -1,5 +1,6 @@
 # GrimML
 
+[![Build](https://github.com/vanillaxtra/grimml/actions/workflows/build.yml/badge.svg)](https://github.com/vanillaxtra/grimml/actions/workflows/build.yml)
 [![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/vanillaxtra/grimml/releases)
 [![Platform](https://img.shields.io/badge/Paper-1.21%2B-purple.svg)](https://papermc.io/)
 [![Java](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://adoptium.net/)
@@ -236,6 +237,12 @@ This repository also holds the tools used to build the models:
 This plugin uses [bStats](https://bstats.org/plugin/bukkit/grim-ml/35441) to collect anonymous usage statistics
 (server count, Minecraft version, models version, whether punishments and the webhook are on). No player data is
 sent. You can opt out in `plugins/bStats/config.yml`.
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
 
 ---
 

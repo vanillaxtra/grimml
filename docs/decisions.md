@@ -1,5 +1,14 @@
 # decisions
 
+## 2026-11-18 - training is one command, one module at a time
+
+- `training/` is the `grimml-train` package: `train`, `loco`, `publish`, `parity`, `sessions`, `modules`
+- labels live in `training/config/sessions.csv` + `labels.yaml`, module settings in `modules.yaml` (no labels in code)
+- `publish` replaces only the given module in `models/manifest.json`; the other modules stay as they are
+- the old ingest pipeline (`grimml-train ingest`, `E:/recordings_processed` parquet) was removed; bulk legit still works
+  with `--bulk-dir` / `--bulk-processed`. The 2026-11-07 entry below is history.
+- `CHEATTRAINING.md` (the operator's cheat log) stays local: it names real players
+
 ## 2026-11-07 - processed parquet lives on E:/recordings_processed
 
 - grimml-train `out_dir` is `E:/recordings_processed`, never mixed into `E:/recordings`

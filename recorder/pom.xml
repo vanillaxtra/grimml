@@ -117,14 +117,14 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.4.2</version>
             </plugin>
-            <!-- Compact format self-check; no test framework. Runs in the test phase, skipped by -DskipTests -->
+            <!-- *SelfCheck mains in src/test (not shipped in the jar); no test framework. Run in the test phase, skipped by -DskipTests -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.5.0</version>
                 <configuration>
                     <mainClass>dev.grimml.format.BinaryFormatSelfCheck</mainClass>
-                    <classpathScope>compile</classpathScope>
+                    <classpathScope>test</classpathScope>
                 </configuration>
                 <executions>
                     <execution>
@@ -255,6 +255,28 @@
                         </goals>
                         <configuration>
                             <mainClass>dev.grimml.roster.CombatReasonMatcherSelfCheck</mainClass>
+                            <skip>${skipTests}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>fight-assembler-self-check</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>dev.grimml.fight.FightAssemblerSelfCheck</mainClass>
+                            <skip>${skipTests}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>mark-log-self-check</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>dev.grimml.mark.MarkLogSelfCheck</mainClass>
                             <skip>${skipTests}</skip>
                         </configuration>
                     </execution>
