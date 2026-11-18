@@ -170,6 +170,13 @@ IDS = [
     {'mark_id': 'm30bccd69', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794850066579, 'end_ms': 1794850485376, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (7:08); no end marker, end = last window'},
     {'mark_id': 'me716b56d', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794867130758, 'end_ms': 1794867537376, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (6:54), many fast hand axe stuns; no end marker, end = last window'},
     {'mark_id': 'ma3260b06', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794868136695, 'end_ms': 1794868503376, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs the pvp bot (6:14), many fast hand axe stuns; no end marker, end = last window'},
+    # 2026-11-17 legit duels vs a strong friend, recorded from both accounts
+    {'mark_id': 'm206be58a', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794957172871, 'end_ms': 1794957682871, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs a friend (8:33); same fight as md5c80410; start/end = first/last window'},
+    {'mark_id': 'md5c80410', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794957168871, 'end_ms': 1794957668871, 'interrupted': False, 'multi_module': False, 'note': 'friend account (strong player), schema 4, duel DiamondSMP vs a friend (8:22); same fight as m206be58a; start/end = first/last window'},
+    {'mark_id': 'm7998a6ee', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794957920871, 'end_ms': 1794958312871, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs a friend (6:33); same fight as m84ced182; start/end = first/last window'},
+    {'mark_id': 'm84ced182', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794957918871, 'end_ms': 1794958312871, 'interrupted': False, 'multi_module': False, 'note': 'friend account (strong player), schema 4, duel DiamondSMP vs a friend (6:34); same fight as m7998a6ee; start/end = first/last window'},
+    {'mark_id': 'm1e7716fc', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794958466871, 'end_ms': 1794958896871, 'interrupted': False, 'multi_module': False, 'note': 'schema 4, duel DiamondSMP vs a friend (7:10); same fight as mc838ba88; start/end = first/last window'},
+    {'mark_id': 'mc838ba88', 'label': 'LEGIT_CONFIRMED', 'client': '', 'module': 'LEGIT', 'settings': '', 'start_ms': 1794958464871, 'end_ms': 1794958894871, 'interrupted': False, 'multi_module': False, 'note': 'friend account (strong player), schema 4, duel DiamondSMP vs a friend (7:10); same fight as m1e7716fc; start/end = first/last window'},
     # 2026-11-16 Grim Killaura vs the pvp bot, schema 4; start = in-file marker, end = last window epoch
     {'mark_id': 'm9a84bf96', 'label': 'CHEAT', 'client': 'grim', 'module': 'Kill Aura', 'settings': 'ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:FALSE', 'start_ms': 1794848823682, 'end_ms': 1794849111376, 'interrupted': False, 'multi_module': False, 'note': 'grim (4:57)'},
     {'mark_id': 'm3ce1354f', 'label': 'CHEAT', 'client': 'grim', 'module': 'Kill Aura', 'settings': 'ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:TRUE', 'start_ms': 1794849226905, 'end_ms': 1794849563376, 'interrupted': False, 'multi_module': False, 'note': 'grim (5:46); logged as m3ce1254f (typo), the files say m3ce1354f'},
@@ -260,6 +267,8 @@ SAME_FIGHT = {
     # 2026-11-12 23:56 friend duels: overlapping in time with shared opponents, so one group
     "m4b282fd8": "m4bc0a6be", "m4e10fb72": "m4bc0a6be", "mf9c15713": "m4bc0a6be", "m456e408b": "m4bc0a6be",
     "mfe92d472": "m7f9d360a",
+    # 2026-11-17 duels vs a strong friend, both accounts
+    "md5c80410": "m206be58a", "m84ced182": "m7998a6ee", "mc838ba88": "m1e7716fc",
 }
 
 
