@@ -50,6 +50,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 18/11/26 | Silent Aim | CONTINOUS_TRACKING:TRUE | 6:31 | mbef357b6 | notauthorised | bot | 4 |
 | 18/11/26 | Silent Aim | CONTINOUS_TRACKING:TRUE | 9:29 | ma0c07d9a | notauthorised | bot | 4 |
 | 18/11/26 | Silent Aim | CONTINOUS_TRACKING:FALSE | 7:35 | mcbe005b3 | notauthorised | bot | 4 |
+| 18/11/26 | Silent Aim | CONTINOUS_TRACKING:FALSE | 8:27 | m9b2c5f40 | notauthorised | bot | 4 |
 |  |  |  |  |  |  |  |  |
 | 02/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100 | 4:14 | m12b44916 | notauthorised | afk alt | 3 |
 | 02/11/26 | Triggerbot | DELAY_MIN_MS:25 DELAY_MAX_MS:50 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100 | 2:49 | m109c3312 | notauthorised | afk alt | 3 |
