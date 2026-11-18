@@ -83,18 +83,18 @@ Models live in `../models` and are bundled in the jar. The plugin also checks
 `models.manifest-url` (this repo's `models/manifest.json` on GitHub) every 15 minutes, downloads a newer version,
 verifies every file's sha256 and switches over without a restart. A broken download keeps the old models running.
 
-To publish new models after recording more data:
+To publish a new model after recording more data (one module at a time, see `training/README.md`):
 
 ```bash
 cd training
-python prestige_quick.py --match-activity
-python publish_models.py out_quick/<run> --enable "Kill Aura,Silent Aim"
-python export_parity.py
+grimml-train train "Silent Aim"
+grimml-train publish runs/silent_aim/<time> --enable
+grimml-train parity
 cd .. && mvn clean package
 ```
 
 Then commit and push `models/` (and the fixture). Servers pick it up on their next check or `/grimml update`.
-`publish_models.py` only switches on the modules you list; the rest are published switched off.
+`publish` only replaces the module it was given; the other modules stay as they are.
 
 The repo is public, so anyone can read the published models and thresholds.
 

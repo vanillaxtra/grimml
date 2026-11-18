@@ -4,8 +4,9 @@ __pycache__/
 .venv/
 dist/
 build/
-out/
 *.parquet
 
+# training data and generated output
 prestige temp test/
-out_quick/
+runs/
+.cache/

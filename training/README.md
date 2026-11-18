@@ -1,78 +1,89 @@
-# grimml training pipeline
+# grimml-train
 
-Decode `.gmlml` combat windows (GML1 / GML2 / GML3), recover labels from in-file MARKER records (GML2/3) plus optional sidecars, build features, train a leakage-safe baseline.
-
-Format details: [docs/format-notes.md](docs/format-notes.md). Leakage audit: [AUDIT.md](AUDIT.md).
-
-## Run order
-
-`decode` → `inventory` → `label` → `features` (computed during decode) → `train` → `eval` → `export`
+Trains, tests and publishes the GrimML combat models, **one module at a time**.
 
 ```bash
 cd training
 pip install -e ".[dev]"
 ```
 
-`config.yaml` points at `E:/recordings` and writes processed parquet to `E:/recordings_processed`.
+## Everyday use
 
 ```bash
-grimml-train --config config.yaml ingest --dry-run
-grimml-train --config config.yaml ingest --max-files 20000
-grimml-train --config config.yaml ingest
-grimml-train --config config.yaml label --bulk
-grimml-train --config config.yaml inventory
-grimml-train --config config.yaml sample
+grimml-train modules                      # every configured module, its settings and session count
+grimml-train sessions --module "Kill Aura"   # its sessions, file counts and whether each is used (and why not)
+grimml-train train "Silent Aim"           # held-out test + model  ->  runs/silent_aim/<time>/
+grimml-train publish runs/silent_aim/<time> --enable
+grimml-train parity                       # refresh the Java/Python parity fixtures, then: mvn clean package
 ```
 
-Or `grimml-train --config config.yaml pipeline`.
+`python -m grimml_train ...` works too, without installing.
 
-Resume: `E:/recordings_processed/ingest/done.txt` skips finished files. Failures go to `errors.csv` (`path,category,reason`). One bad file does not stop the batch. Ctrl+C is safe; rerun `ingest` to continue.
+`publish` replaces **only that module** in `../models/`; every other module stays as it is. The manifest version goes
+up by one, and servers pick it up without a restart once `models/` is pushed. Without `--enable`/`--disable` a
+module keeps its current on/off state (a new module starts off).
 
-UNLABELED is never treated as legit. Train uses staff `CHEAT` vs `LEGIT_CONFIRMED` only.
+Read `report.txt` in the run folder before publishing:
 
-### Current dump (`E:\recordings`)
+- **core AUC**: how well the model separates held-out cheat sessions from held-out legit fights.
+- **shortcut AUC**: the same using only ping, window length and counts. 0.75 or more means `LEAK RISK`: the labels
+  can be told apart by the recording setup, so do not publish.
+- **per FIGHT**: the share of each fight's windows that get flagged. The alert line is set above every legit fight
+  (+ margin), so check `top legit fights` and `cheat segments above the line`.
 
-Early files are **GML1** (yaw/pitch only, no MARKER, no xyz). Inventory will warn if GML1 dominates. Staff marks for those windows need `cheat_log.csv` / `marks.csv` / other sidecars in `sidecar_dir`. GML3 marked sessions (`*_m########_*.gmlml`) join by marker time range plus `mark_id`.
+## Adding data or a module
 
-### Sticky validity bits (old recorder builds)
+| To... | Edit |
+|---|---|
+| add recordings | copy the `.gmlml` files into `prestige temp test/` (the file names keep the `m<8 hex>` mark id) |
+| label a session | add a row to `config/sessions.csv` |
+| never train on a session | list it under `exclude` in `config/labels.yaml`, with the reason |
+| keep both accounts of one duel together | `same_fight` in `config/labels.yaml` |
+| add a module | an entry in `config/modules.yaml` (its schema 4 feature `families`), then `grimml-train train "<Module>"` |
+| change a module's settings | `config/modules.yaml`, or one run with a flag (`--schema4`, `--chunk-min 2`, `--train-clients ...`) |
 
-Recorder builds before the 2026-11-10 fix never cleared the `valid_death/respawn/teleport/world/gamemode/vanish/lag` bits, so after a player's first respawn, gamemode change or teleport **every later window carried the bit**. In those files the event bits are not usable (Prestige legit recording: `valid_gamemode` on 513/513 windows; the hard-validity filter dropped all of it). The fixed plugin sets a bit only when the event happened inside that window.
+Rules the pipeline enforces:
 
-Files record when they ran: the window header has `epoch_ms` (UTC wall clock) and the file name starts with the date. `prestige_quick.py` uses it automatically:
+- Only `CHEAT` and `LEGIT_CONFIRMED` sessions are used; unlabelled windows never count as legit.
+- Whole sessions (cheat) and whole time chunks (legit) are held out together, so a fight is never split across train
+  and test.
+- A module only sees its own schema 4 feature families, and with `schema4` both classes come from schema 4 recordings.
+- Cheat and legit are matched on activity (attacks x events per window) so "how busy the fight was" cannot separate
+  them.
 
-- set `VALIDITY_FIXED_FROM_MS` in `prestige_quick.py` (or pass `--validity-fixed-from 2026-11-12T18:00:00Z`) to the time the fixed jar went live; the default `None` means no fixed build yet, so every file is treated as old
-- windows at/after that time get the hard-validity filter; earlier windows ignore it (this replaces typing `--keep-hard-invalid` by hand)
-- overrides: `--keep-hard-invalid` never filters, `--drop-hard-invalid` always filters
-- the report notes how many windows were filtered vs ignored
+## Layout
 
-The main pipeline (`ingest`, `exclude_flagged_from_train`) does **not** have this cutoff yet; changing train filters needs operator approval. See `docs/known-issues.md`.
+```
+config/
+  sessions.csv        labelled sessions (mark id, label, client, module, settings, start/end)
+  labels.yaml         sessions to leave out, same-fight groups, recorder validity fix date
+  modules.yaml        per-module settings: features, train clients, chunking
+grimml_train/
+  cli.py              the grimml-train command
+  modules.py          module settings (modules.yaml)
+  catalog.py          sessions and label rules
+  dataset.py          decode (cached in .cache/), label, held-out blocks, activity matching
+  evaluation.py       LightGBM fit, leave-one-session-out, fight-level alert line
+  report.py           run folder: report.txt, result.json, model/
+  train.py            train / loco for one module
+  publish.py          models/ and manifest.json
+  parity.py           detector parity fixtures
+  decode/             .gmlml reader (GML1-GML4)
+  features/           feature code, ported 1:1 to the detector (Java)
+tests/
+prestige temp test/   the recordings (not in git)
+runs/                 run output (not in git)
+```
 
-### Trial model on Prestige + bulk legit
+Decoded windows are cached in `.cache/` per file and per version of the decode/feature code: after the first run only
+new or changed recordings are decoded. `--no-cache` decodes everything again.
 
-`python prestige_quick.py --bulk-processed E:/recordings_processed/ingest/windows` adds legit windows from the earlier ingest (no scan, no decoding, ~15 s). The live hold-out accounts are excluded, only GML3 windows with role 1/2 are used, capped at 30 windows per player, and players are held out in groups. `--bulk-dir E:/recordings --bulk-files N` instead samples N fresh files; it first lists the whole folder once (very slow on millions of files, progress is printed, cached in `out_quick/bulk_listing.txt`). Bulk legit is operator-asserted, and comes from other servers than the cheat test server, so the shortcut-only line in the report decides whether a score is trustworthy.
+## Other commands
 
-### Leave-one-client-out and activity matching (`prestige_quick.py`)
+```bash
+grimml-train loco "Kill Aura" --test-client doomsday   # train on the other clients, test on an unseen one
+grimml-train train "Kill Aura" --bulk-processed E:/recordings_processed/ingest/windows   # add bulk legit windows
+grimml-train publish runs/kill_aura/<time> --dry-run    # show the alert line without writing models/
+```
 
-- `--loco --train-clients prestige,grim --test-client doomsday` trains on cheat from the training clients and scores the unseen client. Legit is held out chunk by chunk, and the report prints all/core/shortcut-only side by side. `--test-client all` rotates every client as the unseen one. Only modules present in both the training clients and the test client are run (today: Triggerbot).
-- `--match-activity` subsamples cheat and legit to equal window counts per (attack_count x event_count) cell, so "how busy the window was" cannot separate them (`--match-cols` changes the columns). Cheat test sessions are mostly continuous hitting, so unmatched shortcut-only scores are inflated by activity, not just by setup.
-- Read order: shortcut-only first. If it is high, the core number is not trustworthy. A held-out client with 1-3 segments is a hint, not a result.
-
-### Schema 4 recordings
-
-- The recorder now writes schema 4 (`GML4`, see `../docs/schema4.md`): exact rotation, the opponent's position and state every tick, client ticks, inputs, sprint toggles, transactions, opponent movement as sent to the client, crystal spawns and more, in extension blocks the decoder skips when it does not know a tag.
-- The 13 core features are identical on schema 3 and 4 windows, so old and new recordings train together.
-- `grimml_train/features/schema4.py` adds 44 features (aim assist, triggerbot, backtrack, jump reset, W-tap, autoclicker, crystal/anchor, shield breaker). They are NaN on old windows. Use them with `python prestige_quick.py --schema4-features`. The detector computes the same 44 features live (Java port checked against Python on real windows every build), so these models publish like any other.
-- With `--schema4-features` only schema 4 windows are used (cheat and legit), and each module only sees its own feature family (`S4_FAMILIES` in `prestige_quick.py`: Aim Assist gets `aim_*`, Triggerbot `trig_*`/`click_*`, Backtrack `bt_*`, ...). `grimml_train/features/aimgrid.py` is the mouse-grid aim measurement: the player's sensitivity step is learned from the Minecraft sensitivity formula (never a free float GCD), then `grid_*` features give the off-grid share overall and toward/away from the opponent; `LiveGrid` is the detector's live AimGrid check, calibrated by replaying recorded sessions. Connection features (`S4_NETWORK`: transaction RTT, packet gaps, bursts) measure ping, not the player, so they are never in core and join the shortcut-only set. `grimml_train/features/spearmace.py` is the spear-mace family (Instant Lunge `lunge_*`, Auto Mace `mace_*`, Auto Stun Slam `stun_*`, shared `swap_*`): swap -> hit/stab -> swap back timing, mace fall from the apex, silent-aim snap on the mace hit. Spear jabs are `break` events with a = 8 (STAB), not attacks, and old recordings' spears (category 0) are resolved through their item ids. Hand lunge swaps, attribute swaps and stun slams are legit, so the family measures how fast and how regular the chain is, never whether it happened. `LiveLunge` in the same file is the detector's three live lunge checks (LungeRate: swap-lunges chained under 300 ms apart; LungeHold: the spear held for one client tick; SwapOrder: a hotbar swap after an attack in the same client tick), replayed against every recorded session.
-
-### Publishing to the detector
-
-- `python publish_models.py out_quick/<run> --enable "Kill Aura,Silent Aim"` copies that run's models into `../models`, sets each module's fight alert line above every held-out legit fight, writes `manifest.json` (version +1, sha256 sums), and switches on only the listed modules.
-- `python export_parity.py` refreshes the detector's parity fixture; `mvn package` then fails if Java and Python disagree.
-- Commit and push `models/`; running detectors download it on their next check. See `../detector/README.md`.
-
-### Permanently excluded sessions and saved models
-
-- `EXCLUDE_IDS` in `prestige_quick.py` leaves out every session recorded against the afk alt (cheat and legit). A target that never moves makes legit hits look like Kill Aura: one afk-alt legit chunk was flagged at 54% while every real-opponent fight stayed under 18%. Record new sessions against a moving opponent (a player or the mineflayer pvp bot); a new afk-alt session must be added to `EXCLUDE_IDS`.
-- `--drop-ids a,b,c` leaves out more mark ids for a single run, for tests like this.
-- Each run saves one LightGBM model per module to `<out>/models/<module>.txt`, plus `<module>.json` with the features, the window threshold (5% of legit windows), the fight line, and the held-out AUC. Thresholds come from held-out scores. These are pipeline-test models (one operator, one client): do not ban on them.
-- The report's "top legit fights" line lists the three legit fights each model scores highest. Look there first when chasing false flags.
+Format details: [docs/format-notes.md](docs/format-notes.md).

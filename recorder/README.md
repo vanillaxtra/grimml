@@ -13,7 +13,7 @@ Rule-based anticheats like Grim are good at catching movement and protocol cheat
 |---|---|
 | `recorder/` | the recording plugin (this README): GML3 combat recorder, staff **mark** segments, weak Grim-evidence sidecars, ban backfill labels |
 | `detector/` | the live detection plugin: loads the trained models and reports flags through Grim. See [detector/README.md](../detector/README.md) |
-| `training/` | decode → features → train → `publish_models.py` |
+| `training/` | decode → features → train → `grimml-train publish` |
 | `models/` | the published models the detector downloads (`manifest.json` + one LightGBM model per module) |
 
 `mvn clean package` in the root builds both plugins.

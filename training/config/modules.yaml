@@ -1,0 +1,61 @@
+# Trainable modules. The key must match the `module` column in sessions.csv (case does not matter).
+#
+# To add a module: record and label its sessions in sessions.csv, add an entry here, then
+#     grimml-train train "<Module>"
+#
+# Every setting under `defaults` can be overridden per module, and on the command line.
+defaults:
+  schema4: false          # also train on the module's schema 4 feature families (schema 4 recordings only)
+  train_clients: [prestige, doomsday, grim]   # cheat clients whose sessions train the model
+  match_activity: true    # equal cheat/legit window counts per activity cell (attack_count x event_count)
+  match_cols: [attack_count, event_count]
+  chunk_min: 4.0          # legit recordings are cut into held-out chunks of this many minutes
+  chunk_gap_s: 7.0        # windows this close after a chunk boundary are dropped (windows overlap)
+  trim_s: 3.0             # seconds dropped at each end of a labelled session
+  min_secs: 60            # cheat sessions shorter than this are not used
+  roles: [1, 2]           # window roles kept: 1 attacker, 2 defender, 3 bystander
+  seed: 7
+
+# families: the schema 4 feature prefixes the module may use (features/schema4.py). A module only sees its own
+# families, otherwise it learns whatever else differed between its sessions and the legit ones.
+# aliases: other names for the module, accepted on the command line.
+modules:
+  Aim Assist:
+    families: [aim_, grid_]
+    schema4: true
+    chunk_min: 2.0
+  Silent Aim:
+    families: [aim_, grid_]
+  Kill Aura:
+    families: [aim_, grid_, trig_, click_]
+  Triggerbot:
+    families: [trig_, click_]
+    schema4: true
+    chunk_min: 2.0
+  Autoclicker:
+    families: [click_]
+  Auto W Tap:
+    aliases: [Auto W-Tap]
+    families: [wtap_]
+  Auto Shield Breaker:
+    aliases: [Auto Shield Break]
+    families: [shield_]
+  Backtrack:
+    families: [bt_]
+  Jump Reset:
+    aliases: [Auto Jump Reset]
+    families: [jr_]
+  Criticals:
+    families: [jr_, click_]
+  Auto Crystal:
+    families: [crystal_]
+  Anchor Macro:
+    families: [anchor_]
+  Auto Lunge:
+    aliases: [Instant Lunge]
+    families: [lunge_, swap_]
+  Auto Mace:
+    families: [mace_, swap_]
+  Auto Stun Slam:
+    aliases: [Stun Slam]
+    families: [stun_, swap_]

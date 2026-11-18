@@ -10,7 +10,7 @@ import java.util.Map;
  * Same names, same order, same numbers: ParitySelfCheck compares both. Change both together.
  *
  * <p>Categories arrive already resolved: live from {@code GrimMLDetector.category} (spears are SPEAR), in the parity
- * fixture from export_parity.py (old recordings' spears resolved through their item ids). A spear jab is a BREAK event
+ * fixture from grimml_train/parity.py (old recordings' spears resolved through their item ids). A spear jab is a BREAK event
  * with a = 8 (digging action STAB), not an attack.
  */
 public final class SpearMace {

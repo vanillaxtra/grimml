@@ -12,7 +12,7 @@ import java.util.Map;
 
 /**
  * Java must give the same features and scores as Python on real recorded windows
- * (fixture written by training/export_parity.py), using the published models in ../models.
+ * (fixture written by `grimml-train parity`, training/grimml_train/parity.py), using the published models in ../models.
  * args: [fixture dir] [models dir]
  */
 public final class ParitySelfCheck {
@@ -21,7 +21,7 @@ public final class ParitySelfCheck {
         Path fixture = Path.of(args.length > 0 ? args[0] : "src/test/resources/parity").resolve("windows.txt");
         Path models = Path.of(args.length > 1 ? args[1] : "../models");
         if (!Files.exists(fixture)) {
-            System.out.println("parity: no fixture, run training/export_parity.py; skipped");
+            System.out.println("parity: no fixture, run `grimml-train parity` in training/; skipped");
             return;
         }
         ModelSet set = ModelSet.build(ModelSet.parseManifest(Files.readAllBytes(models.resolve("manifest.json"))),

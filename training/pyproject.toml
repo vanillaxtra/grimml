@@ -1,23 +1,18 @@
 [project]
 name = "grimml-train"
-version = "0.1.0"
-description = "Decode, label, feature, train and export grimml combat datasets"
+version = "0.2.0"
+description = "Train, test and publish GrimML combat models, one module at a time"
 requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.26",
     "pandas>=2.2",
-    "pyarrow>=15",
+    "pyyaml>=6",
     "scikit-learn>=1.4",
     "lightgbm>=4.3",
-    "skl2onnx>=1.16",
-    "onnxmltools>=1.12",
-    "onnxruntime>=1.17",
-    "matplotlib>=3.8",
-    "pydantic>=2.6",
-    "pyyaml>=6",
 ]
 
 [project.optional-dependencies]
+bulk = ["pyarrow>=15"]   # --bulk-processed (parquet)
 dev = ["pytest>=8"]
 
 [project.scripts]

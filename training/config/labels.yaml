@@ -1,0 +1,62 @@
+# Rules applied on top of sessions.csv.
+
+# Sessions that are never trained on, with the reason shown by `grimml-train sessions`.
+#
+# afk alt (decided 2026-11-14): the target never moves, so legit hits on it look like Kill Aura (steady aim, regular
+# clicks) and cheat sessions on it teach the model "still target = cheat". With them in, one legit afk-alt chunk was
+# flagged at 54% by Kill Aura; with them out, no legit fight is above 18% and Kill Aura still separates.
+exclude:
+  "afk-alt session: still target, causes false flags":
+    # legit vs afk alt
+    - med3d6926
+    - m3ab6bfb8
+    - m6013e9ff
+    - m24d6d071
+    - m5c84ea76   # interrupted legit from the same 06/11 afk-alt session
+    - m9e797b92   # interrupted legit from the same 06/11 afk-alt session
+    - m2538fffc   # 15/11 one-sided spear-mace fight vs afk (only used to check the live lunge rules)
+    # cheat vs afk alt
+    - me9b0dc92   # Aim Assist
+    - ma2e0fb94
+    - m9ec7d620
+    - m0a6016b0
+    - m4108b362
+    - m22700b10   # Kill Aura
+    - mf2dd0754
+    - mb1f6fa34   # Silent Aim
+    - md5e8301b
+    - m12b44916   # Triggerbot
+    - m109c3312
+    - m70c1ef87
+    - m5045e1ea   # Grim, 07/11
+    - mc516ec9d
+    - ma635ec0c
+    - m24355c9b
+    - mf3dc7f00
+    - m13d96247
+    - m365353b1
+    - m004031bb
+    - mf7bb67e8
+    - m9c80fe11
+    - m0bca2310
+    - mc9a8d071
+    - m3f63358f   # Doomsday Triggerbot (10/11)
+
+# Legit duels recorded from both players' accounts are the same fight twice, so they must never be split across
+# train and test. Every mark id listed under a group id is held out together with it.
+same_fight:
+  me9366054: [ma9691d79]
+  m69a17c52: [mc27105be]
+  # 2026-11-12 23:56 friend duels: overlapping in time with shared opponents
+  m4bc0a6be: [m4b282fd8, m4e10fb72, mf9c15713, m456e408b]
+  m7f9d360a: [mfe92d472]
+  # 2026-11-17 duels vs a strong friend, both accounts
+  m206be58a: [md5c80410]
+  m7998a6ee: [m84ced182]
+  m1e7716fc: [mc838ba88]
+
+# Recorder builds before the per-window validity fix OR'd the event bits over the player's whole session, so
+# valid_death/respawn/teleport/... were set on almost every window after the first such event. Set this to the UTC
+# time the fixed recorder went live (ISO or epoch ms); windows recorded from then on get the hard-validity filter.
+# null = no fixed build deployed yet, every file is treated as old. See docs/known-issues.md ("sticky validity bits").
+validity_fixed_from: null

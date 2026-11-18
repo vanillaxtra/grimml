@@ -1,252 +1,216 @@
+"""grimml-train: train, test and publish one GrimML module at a time.
+
+    grimml-train modules                         configured modules and their settings
+    grimml-train sessions [--module "Kill Aura"] labelled sessions, file counts and whether each is used
+    grimml-train train "Silent Aim"              held-out test + model -> runs/silent_aim/<time>/
+    grimml-train loco "Kill Aura" --test-client doomsday
+    grimml-train publish runs/silent_aim/<time> [--enable]
+    grimml-train parity                          refresh the detector's Java/Python parity fixtures
+"""
 from __future__ import annotations
 
 import argparse
-import json
+import sys
+from dataclasses import asdict
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
-
-from grimml_train.config import load_config
-from grimml_train.eval.report import confound_probe, evaluate, window_hours
-from grimml_train.export.onnx_export import export_bundle
-from grimml_train.features.extract import FEATURE_COLUMNS
-from grimml_train.ingest import dry_run, ingest, load_ingest_table
-from grimml_train.inventory.report import inventory_report
-from grimml_train.labels.bulk import apply_bulk, labels_table_path, undo_bulk, write_labels_table
-from grimml_train.labels.join import join_labels
-from grimml_train.run import write_run_meta
-from grimml_train.split.sample import BANNER, build_sample, holdout_path
-from grimml_train.split.splits import grouped_split, leave_one_out, require_operator_for_cheat
-from grimml_train.train.lgbm import threshold_on_val, train_fold
+from grimml_train.paths import DATA_DIR
 
 
-VALIDITY_COLS = [
-    "valid_partial",
-    "valid_lag",
-    "valid_death",
-    "valid_respawn",
-    "valid_teleport",
-    "valid_setback",
-    "valid_world",
-    "valid_gamemode",
-    "valid_vanish",
-]
+def _ids(s: str) -> set[str]:
+    return {x.strip().lower() for x in s.split(",") if x.strip()}
 
 
-def main() -> None:
-    p = argparse.ArgumentParser(prog="grimml-train")
-    p.add_argument("--config", type=Path, default=Path("config.yaml"))
-    sub = p.add_subparsers(dest="cmd", required=True)
-    ing = sub.add_parser("ingest")
-    ing.add_argument("--dry-run", action="store_true")
-    ing.add_argument("--max-files", type=int, default=None)
-    ing.add_argument("--shard-range", type=str, default=None)
-    dec = sub.add_parser("decode")
-    dec.add_argument("--dry-run", action="store_true")
-    dec.add_argument("--max-files", type=int, default=None)
-    dec.add_argument("--shard-range", type=str, default=None)
-    lab = sub.add_parser("label")
-    lab.add_argument("--bulk", action="store_true")
-    lab.add_argument("--undo", action="store_true")
-    sub.add_parser("inventory")
-    sub.add_parser("features")
-    samp = sub.add_parser("sample")
-    samp.add_argument("--regenerate", action="store_true")
-    sub.add_parser("train")
-    sub.add_parser("eval")
-    sub.add_parser("export")
-    sub.add_parser("pipeline")
-    args = p.parse_args()
-    cfg = load_config(args.config)
-    np.random.seed(cfg.seed)
-    cfg.out_dir.mkdir(parents=True, exist_ok=True)
-
-    if args.cmd in ("ingest", "decode"):
-        if getattr(args, "dry_run", False):
-            dry_run(cfg)
-            write_run_meta(cfg, {"stage": "ingest-dry-run"})
-            return
-        ingest(cfg, max_files=getattr(args, "max_files", None), shard_range=getattr(args, "shard_range", None))
-        write_run_meta(cfg, {"stage": "ingest"})
-        return
-    if args.cmd == "label":
-        _cmd_label(cfg, bulk=args.bulk, undo=args.undo)
-        return
-    if args.cmd == "inventory":
-        print(inventory_report(_windows_for_inventory(cfg), cfg.out_dir / "inventory.md"))
-        return
-    if args.cmd == "features":
-        print("features are computed during ingest")
-        return
-    if args.cmd == "sample":
-        build_sample(_windows_for_inventory(cfg), cfg, regenerate_holdout=args.regenerate)
-        write_run_meta(cfg, {"stage": "sample"})
-        return
-    if args.cmd == "train":
-        _cmd_train(cfg)
-        return
-    if args.cmd == "eval":
-        print(json.dumps(_cmd_eval(cfg), indent=2, default=str))
-        return
-    if args.cmd == "export":
-        _cmd_export(cfg)
-        return
-    if args.cmd == "pipeline":
-        ingest(cfg)
-        _cmd_label(cfg, bulk=True, undo=False)
-        print(inventory_report(_windows_for_inventory(cfg), cfg.out_dir / "inventory.md"))
-        _cmd_train(cfg)
-        print(json.dumps(_cmd_eval(cfg), indent=2, default=str))
-        _cmd_export(cfg)
-        return
+def _add_data_options(p: argparse.ArgumentParser) -> None:
+    g = p.add_argument_group("data")
+    g.add_argument("--folder", type=Path, default=DATA_DIR, help="folder with the labelled .gmlml files")
+    g.add_argument("--workers", type=int, default=0, help="decode processes (0 = auto)")
+    g.add_argument("--no-cache", action="store_true", help="decode every file again instead of using .cache/")
+    g.add_argument("--legit-ids", default="", help="comma list: only these legit sessions")
+    g.add_argument("--drop-ids", default="", help="comma list: leave these sessions out")
+    g.add_argument("--include-interrupted-legit", action="store_true")
+    g.add_argument("--keep-hard-invalid", dest="hard_invalid", action="store_const", const="keep",
+                   help="never apply the hard-validity filter")
+    g.add_argument("--drop-hard-invalid", dest="hard_invalid", action="store_const", const="drop",
+                   help="always apply the hard-validity filter, even to old recorder files")
+    g.add_argument("--validity-fixed-from", default="", help="overrides validity_fixed_from in labels.yaml")
+    g.add_argument("--bulk-dir", type=Path, help="also sample legit windows from this bulk dump")
+    g.add_argument("--bulk-processed", type=Path, help="reuse already decoded bulk windows (parquet folder)")
+    g.add_argument("--bulk-files", type=int, default=6000)
+    g.add_argument("--bulk-per-player", type=int, default=30)
+    p.set_defaults(hard_invalid="auto")
 
 
-def _merge_labels(windows: pd.DataFrame, cfg) -> pd.DataFrame:
-    p = labels_table_path(cfg.out_dir)
-    if not p.exists() or windows.empty or "window_key" not in windows.columns:
-        return windows
-    lab = pd.read_parquet(p)
-    drop = [c for c in lab.columns if c != "window_key" and c in windows.columns]
-    w = windows.drop(columns=drop, errors="ignore")
-    return w.merge(lab, on="window_key", how="left")
+def _add_module_overrides(p: argparse.ArgumentParser) -> None:
+    g = p.add_argument_group("module settings (override config/modules.yaml for this run)")
+    g.add_argument("--schema4", dest="schema4", action="store_true", default=None)
+    g.add_argument("--no-schema4", dest="schema4", action="store_false")
+    g.add_argument("--match-activity", dest="match_activity", action="store_true", default=None)
+    g.add_argument("--no-match-activity", dest="match_activity", action="store_false")
+    g.add_argument("--train-clients", help="comma list")
+    g.add_argument("--chunk-min", type=float)
+    g.add_argument("--chunk-gap-s", type=float)
+    g.add_argument("--trim-s", type=float)
+    g.add_argument("--min-secs", type=float)
+    g.add_argument("--roles", help="comma list, e.g. 1,2")
+    g.add_argument("--seed", type=int)
 
 
-def _drop_holdout(w: pd.DataFrame, cfg) -> pd.DataFrame:
-    hp = holdout_path(cfg.out_dir)
-    if not hp.exists() or w.empty or "anon_player_id" not in w.columns:
-        return w
-    hold = {ln.strip() for ln in hp.read_text(encoding="utf-8").splitlines() if ln.strip()}
-    if not hold:
-        return w
-    return w[~w["anon_player_id"].astype(str).isin(hold)]
+def build_parser() -> argparse.ArgumentParser:
+    ap = argparse.ArgumentParser(prog="grimml-train", description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    sub.add_parser("modules", help="list configured modules and their settings")
+
+    p = sub.add_parser("sessions", help="list labelled sessions and whether each is used")
+    p.add_argument("--module", help="only this module's cheat sessions (and the legit ones)")
+    p.add_argument("--folder", type=Path, default=DATA_DIR)
+
+    p = sub.add_parser("train", help="train and test one module")
+    p.add_argument("module")
+    p.add_argument("--out", type=Path, help="run folder (default runs/<module>/<time>)")
+    _add_module_overrides(p)
+    _add_data_options(p)
+
+    p = sub.add_parser("loco", help="leave-one-client-out test for one module")
+    p.add_argument("module")
+    p.add_argument("--test-client", required=True)
+    p.add_argument("--out", type=Path)
+    _add_module_overrides(p)
+    _add_data_options(p)
+
+    p = sub.add_parser("publish", help="put trained modules into models/ (only those modules change)")
+    p.add_argument("runs", nargs="+", type=Path, help="run folders from `train`")
+    on = p.add_mutually_exclusive_group()
+    on.add_argument("--enable", dest="enable", action="store_true", default=None, help="let the module flag")
+    on.add_argument("--disable", dest="enable", action="store_false", help="load the module but never flag")
+    p.add_argument("--margin", type=float, default=0.04, help="added to the highest legit fight share")
+    p.add_argument("--dry-run", action="store_true")
+
+    sub.add_parser("parity", help="write the detector's parity fixtures from models/")
+    return ap
 
 
-def _labeled(cfg):
-    w = load_ingest_table(cfg.out_dir, "windows")
-    if w.empty:
-        raise SystemExit(f"missing ingest windows under {cfg.out_dir}")
-    w = _merge_labels(w, cfg)
-    if "label" not in w.columns:
-        raise SystemExit("missing labels; run grimml-train label --bulk")
-    return _drop_holdout(w, cfg)
+def _spec(args):
+    from grimml_train.modules import ModuleRegistry
+
+    reg = ModuleRegistry.load()
+    spec = reg.get(args.module).with_overrides(
+        schema4=args.schema4, match_activity=args.match_activity, train_clients=args.train_clients,
+        chunk_min=args.chunk_min, chunk_gap_s=args.chunk_gap_s, trim_s=args.trim_s, min_secs=args.min_secs,
+        roles=args.roles, seed=args.seed)
+    return reg, spec
 
 
-def _windows_for_inventory(cfg):
-    w = load_ingest_table(cfg.out_dir, "windows")
-    if w.empty:
-        raise SystemExit("missing ingest/windows; run grimml-train ingest")
-    return _merge_labels(w, cfg)
+def _data_options(args):
+    from grimml_train.catalog import parse_time_ms
+    from grimml_train.train import DataOptions
+
+    return DataOptions(
+        folder=args.folder, workers=args.workers, use_cache=not args.no_cache,
+        include_interrupted_legit=args.include_interrupted_legit,
+        legit_ids=_ids(args.legit_ids), drop_ids=_ids(args.drop_ids), hard_invalid=args.hard_invalid,
+        validity_fixed_from_ms=parse_time_ms(args.validity_fixed_from),
+        bulk_dir=args.bulk_dir, bulk_processed=args.bulk_processed,
+        bulk_files=args.bulk_files, bulk_per_player=args.bulk_per_player)
 
 
-def _cmd_label(cfg, *, bulk: bool, undo: bool) -> None:
-    windows = load_ingest_table(cfg.out_dir, "windows")
-    markers = load_ingest_table(cfg.out_dir, "markers")
-    if windows.empty:
-        raise SystemExit("no ingest windows; run grimml-train ingest")
-    if undo:
-        n = undo_bulk(cfg.out_dir)
-        print(f"removed {n} operator_asserted_bulk rows")
-        bulk = False
-    labeled = join_labels(
-        windows,
-        cfg.sidecar_dir,
-        cfg.marker_trim_seconds,
-        markers,
-        exclude_interrupted=cfg.exclude_interrupted,
-    )
-    if bulk:
-        labeled = apply_bulk(labeled, cfg)
-    write_labels_table(labeled, cfg.out_dir)
-    if not cfg.keep_unlabeled:
-        labeled = labeled[labeled["label"] != "UNLABELED"]
-    dest = cfg.out_dir / "labeled"
-    dest.mkdir(parents=True, exist_ok=True)
-    if len(labeled) <= 250_000:
-        labeled.to_parquet(dest / "windows.parquet", index=False)
-    print(f"labeled {len(labeled)} {labeled['label'].value_counts().to_dict()}")
-    print(f"sources {labeled['label_source'].value_counts().to_dict()}")
-    write_run_meta(cfg, {"stage": "label", "bulk": bulk})
+def cmd_modules(_args) -> int:
+    from grimml_train.catalog import CHEAT, read_sessions
+    from grimml_train.modules import ModuleRegistry
+
+    reg = ModuleRegistry.load()
+    s = read_sessions()
+    cheat = s[s["label"] == CHEAT]
+    print(f"{'module':<22}{'sessions':>9}  {'features':<9}{'clients':<26}families")
+    for name in reg.names():
+        spec = reg.get(name)
+        n = int(cheat["module"].map(lambda m: reg.matches(spec, m)).sum())
+        print(f"{name:<22}{n:>9}  {'schema4' if spec.schema4 else 'core':<9}{','.join(spec.train_clients):<26}"
+              f"{' '.join(spec.families)}")
+    specs = [reg.get(n) for n in reg.names()]
+    trainable = cheat[~cheat["multi_module"] & (cheat["module"] != "UNLOGGED")]  # these are never trained anyway
+    unknown = sorted({m for m in trainable["module"] if not any(reg.matches(sp, m) for sp in specs)})
+    if unknown:
+        print("\nmodules in sessions.csv without a modules.yaml entry: " + ", ".join(unknown))
+    return 0
 
 
-def _train_table(cfg) -> pd.DataFrame:
-    w = _labeled(cfg)
-    if cfg.exclude_flagged_from_train:
-        for c in VALIDITY_COLS:
-            if c in w.columns:
-                w = w[w[c].fillna(False) != True]
-    return w
+def cmd_sessions(args) -> int:
+    from grimml_train.catalog import CHEAT, LabelRules, session_table
+    from grimml_train.dataset import MARK_RE, find_files
+    from grimml_train.modules import ModuleRegistry
+
+    reg = ModuleRegistry.load()
+    spec = reg.get(args.module) if args.module else None
+    t = session_table(LabelRules.load(), min_secs=spec.min_secs if spec else 60.0)
+    if spec:
+        t = t[(t["label"] != CHEAT) | t["module"].map(lambda m: reg.matches(spec, m))]
+    files = find_files(args.folder) if Path(args.folder).exists() else []
+    counts: dict[str, int] = {}
+    for p in files:
+        m = MARK_RE.search(p.name)
+        if m:
+            counts[m.group(1).lower()] = counts.get(m.group(1).lower(), 0) + 1
+    print(f"folder: {args.folder}  ({len(files)} .gmlml files)")
+    print(f"{'mark id':<12}{'label':<17}{'client':<10}{'module':<24}{'secs':>6}{'files':>7}  used?")
+    for r in t.itertuples():
+        print(f"{r.mark_id:<12}{r.label:<17}{r.client:<10}{r.module[:23]:<24}{r.secs:>6.0f}"
+              f"{counts.get(r.mark_id, 0):>7}  {r.exclude_reason or 'yes'}")
+    unknown = sorted(set(counts) - set(t["mark_id"])) if not spec else []
+    if unknown:
+        print("mark ids in the folder that are not in sessions.csv: " + ", ".join(unknown))
+    return 0
 
 
-def _cmd_train(cfg) -> None:
-    w = _train_table(cfg)
-    require_operator_for_cheat(w[w["label"] == "CHEAT"]) if "label" in w.columns else None
-    train, val = grouped_split(w, group_col="anon_player_id", test_size=0.2, seed=cfg.seed)
-    clf, scaler, cols = train_fold(train, cfg.seed)
-    thr = threshold_on_val(clf, scaler, val, cols, cfg.max_fpr)
-    clf.booster_.save_model(str(cfg.out_dir / "model.txt"))
-    np.savez(cfg.out_dir / "scaler.npz", mean=scaler.mean_, scale=scaler.scale_)
-    meta = {"threshold": thr, "feature_names": cols}
-    (cfg.out_dir / "train_meta.json").write_text(json.dumps(meta), encoding="utf-8")
-    print(f"model -> {cfg.out_dir / 'model.txt'} threshold={thr}")
-    write_run_meta(cfg, {"stage": "train", **meta})
+def cmd_train(args) -> int:
+    from grimml_train.catalog import LabelRules
+    from grimml_train.train import train_module
+
+    reg, spec = _spec(args)
+    print(f"{spec.name}: " + ", ".join(f"{k}={v}" for k, v in asdict(spec).items() if k != "name"))
+    train_module(spec, _data_options(args), LabelRules.load(), reg, out=args.out)
+    return 0
 
 
-def _cmd_eval(cfg) -> dict:
-    w = _train_table(cfg)
-    require_operator_for_cheat(w)
-    train, test = grouped_split(w, group_col="anon_player_id", seed=cfg.seed)
-    inner_tr, val = grouped_split(train, group_col="anon_player_id", test_size=0.25, seed=cfg.seed + 1)
-    clf, scaler, cols = train_fold(inner_tr, cfg.seed)
-    thr = threshold_on_val(clf, scaler, val, cols, cfg.max_fpr)
-    rep = evaluate(clf, scaler, cols, test, thr)
-    legit = w[w["label"] == "LEGIT_CONFIRMED"]
-    probe = {}
-    for target in ("is_test_account", "server_id", "map_id", "kit"):
-        probe[target] = confound_probe(legit, [c for c in FEATURE_COLUMNS if c in legit.columns], target)
-    if any(isinstance(v, float) and v > cfg.confound_auc_warn for v in probe.values() if v == v):
-        same = w[w["is_test_account"] == True] if "is_test_account" in w.columns else w
-        rep["confound_restriction"] = "restrict primary model to same test sessions"
-        rep["same_session_windows"] = int(len(same))
-    rep["confound_auc"] = probe
-    loco = []
-    for name, tr, te in leave_one_out(w, "mark_client_id"):
-        c, s, cols2 = train_fold(tr, cfg.seed)
-        thr2 = threshold_on_val(c, s, tr.sample(frac=0.2, random_state=cfg.seed) if len(tr) > 5 else tr, cols2, cfg.max_fpr)
-        loco.append({"held_out": name, **evaluate(c, s, cols2, te, thr2)})
-    looo = []
-    for name, tr, te in leave_one_out(w, "operator"):
-        looo.append({"held_out": name, "n_test": len(te)})
-    rep["leave_one_client_out"] = loco
-    rep["leave_one_operator_out"] = looo
-    hp = holdout_path(cfg.out_dir)
-    if hp.exists() and "anon_player_id" in w.columns:
-        ids = {ln.strip() for ln in hp.read_text(encoding="utf-8").splitlines() if ln.strip()}
-        hw = w[w["anon_player_id"].astype(str).isin(ids)] if ids else w.iloc[0:0]
-        rep["live_holdout_accounts"] = int(len(ids))
-        rep["live_holdout_windows"] = int(len(hw))
-        rep["live_holdout_player_hours"] = float(window_hours(hw).sum()) if len(hw) else 0.0
-        if "label_source" in w.columns and (w["label_source"] == "operator_asserted_bulk").any():
-            print(BANNER, flush=True)
-            print(
-                f"hold-out accounts={rep['live_holdout_accounts']} windows={rep['live_holdout_windows']} "
-                f"player-hours={rep['live_holdout_player_hours']:.2f}",
-                flush=True,
-            )
-    (cfg.out_dir / "eval.json").write_text(json.dumps(rep, indent=2, default=str), encoding="utf-8")
-    write_run_meta(cfg, {"stage": "eval"})
-    return rep
+def cmd_loco(args) -> int:
+    from grimml_train.catalog import LabelRules
+    from grimml_train.train import loco_module
+
+    reg, spec = _spec(args)
+    loco_module(spec, args.test_client, _data_options(args), LabelRules.load(), reg, out=args.out)
+    return 0
 
 
-def _cmd_export(cfg) -> None:
-    w = _train_table(cfg)
-    train, val = grouped_split(w, seed=cfg.seed)
-    clf, scaler, cols = train_fold(train, cfg.seed)
-    thr = threshold_on_val(clf, scaler, val, cols, cfg.max_fpr)
-    export_bundle(clf, scaler, cols, val if len(val) else train, cfg.out_dir / "export", thr)
-    print(f"export -> {cfg.out_dir / 'export'}")
-    write_run_meta(cfg, {"stage": "export"})
+def cmd_publish(args) -> int:
+    from grimml_train.publish import publish
+
+    publish(args.runs, enable=args.enable, margin=args.margin, dry_run=args.dry_run)
+    return 0
+
+
+def cmd_parity(_args) -> int:
+    from grimml_train import parity
+
+    parity.main()
+    return 0
+
+
+COMMANDS = {"modules": cmd_modules, "sessions": cmd_sessions, "train": cmd_train, "loco": cmd_loco,
+            "publish": cmd_publish, "parity": cmd_parity}
+
+
+def main(argv: list[str] | None = None) -> int:
+    from grimml_train.modules import ConfigError
+
+    args = build_parser().parse_args(argv)
+    try:
+        return COMMANDS[args.cmd](args)
+    except ConfigError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

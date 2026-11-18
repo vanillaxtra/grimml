@@ -1,0 +1,159 @@
+# Labelled recording sessions. One row per mark id (the m<8 hex> in every .gmlml file name).
+# label: CHEAT or LEGIT_CONFIRMED. start_ms/end_ms: marker start/end (UTC epoch ms), used for edge trimming.
+# Lines starting with # are comments. Leave-out rules and same-fight groups are in labels.yaml.
+mark_id,label,client,module,settings,start_ms,end_ms,interrupted,multi_module,note
+me9b0dc92,CHEAT,prestige,Aim Assist,FOV:90 SPEED:50 SMOOTHING:0 RANDOMNESS:70 ONLY_ON_ROTATE:FALSE,1793626734393,1793626879582,false,false,
+ma2e0fb94,CHEAT,prestige,Aim Assist,FOV:360 SPEED:50 SMOOTHING:75 RANDOMNESS:70 ONLY_ON_ROTATE:FALSE,1793627040507,1793627229998,false,false,"log: fov 360 / randomness 70, marker: fov 0 / randomness 75"
+m9ec7d620,CHEAT,prestige,Aim Assist,FOV:360 SPEED:25.08 SMOOTHING:75 RANDOMNESS:70 ONLY_ON_ROTATE:FALSE,1793627315211,1793627453238,false,false,"log: fov 360 / randomness 70, marker: fov 0 / randomness 75"
+m22700b10,CHEAT,prestige,Kill Aura,HUMANIZED:FALSE REACH:3 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100,1793627685477,1793628011013,false,false,
+mf2dd0754,CHEAT,prestige,Kill Aura,HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100,1793628147221,1793628385027,false,false,
+m89ff4396,CHEAT,prestige,Auto Mace,HORS_TARGET_DISTANCE:5.0 MIN_FALL_DISTANCE:10 STUNSLAM:FALSE SILENT_AIM:TRUE SWAP_BACK:FALSE,1793628828339,1793629104425,false,false,
+m3ddf06f9,CHEAT,prestige,Auto Lunge,SWAP_DELAY_MIN:20 SWAP_DELAY_MAX:70 SWAP_BACK:TRUE,1793629224552,1793629363358,false,false,
+mb6a1b94b,CHEAT,prestige,Auto Lunge,SWAP_DELAY_MIN:0 SWAP_DELAY_MAX:0 SWAP_BACK:TRUE,1793629723046,1793629856389,false,false,
+
+# schema 4 Auto Lunge, no opponent (lunging in open air, 0 attacks); start = in-file marker, end = last window epoch
+m040a616d,CHEAT,prestige,Auto Lunge,SWAP_DELAY_MIN:20 SWAP_DELAY_MAX:70 SWAP_BACK:TRUE,1794788159144,1794788250884,false,false,"schema 4, no opponent"
+m54e35fb3,CHEAT,prestige,Auto Lunge,SWAP_DELAY_MIN:30 SWAP_DELAY_MAX:90 SWAP_BACK:TRUE,1794787683632,1794787777157,false,false,"schema 4, no opponent"
+ma8352fe2,CHEAT,prestige,Auto Lunge,SWAP_DELAY_MIN:30 SWAP_DELAY_MAX:90 SWAP_BACK:TRUE,1794788343713,1794788414884,false,false,"schema 4, no opponent"
+mee87b920,CHEAT,prestige,Auto Lunge,SWAP_DELAY_MIN:0 SWAP_DELAY_MAX:0 SWAP_BACK:TRUE,1794789169666,1794789331872,false,false,"schema 4, no opponent"
+m2fe00ef9,CHEAT,prestige,Auto Breach Swap,CHANCE:100,1793629986983,1793630107861,false,false,
+mb1f6fa34,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:FALSE,1793630170325,1793630330056,false,false,log says CONTINOUS_TRACKING:FALSE but the marker says true
+md5e8301b,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:TRUE,1793630381965,1793630693771,false,false,
+m12b44916,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100,1793631084664,1793631339636,false,false,
+m109c3312,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:25 DELAY_MAX_MS:50 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100,1793631384317,1793631553565,false,false,
+m37a281c0,CHEAT,prestige,UNLOGGED,chance=100,1793631736051,1793631825311,false,false,"89 s, module unknown (not in your log)"
+m56635106,CHEAT,prestige,Auto W Tap,CHANCE:100 HOLD_LENGTH_MIN:100 HOLD_LENGTH_MAX:200 REACTION_TIME_MIN:10 REACTION_TIME_MAX:30,1793631975514,1793632142123,false,false,
+m126182c9,CHEAT,prestige,Wind Charge Aura,REACH:2.95 HUMANIZED:TRUE,1793632532237,1793632651931,false,false,
+m3bc01e38,CHEAT,prestige,Auto Mace,horizontal_target_distance=5 min_fall_distance=0 silent_aim=true stunslam=true swap_back=false,1793633970851,1793634162409,false,false,"not in your log; settings match mc8bdb2be (stunslam=true), module inferred"
+mc8bdb2be,CHEAT,prestige,Auto Mace,STUNSLAM:TRUE CHANCE:100 SILENT_AIM:TRUE SWAP_BACK:TRUE,1793634298919,1793634740164,false,false,log says SWAP_BACK:TRUE but the marker says swap_back=false
+m8b2b7b6a,CHEAT,prestige,Anchor Macro,ANCHOR_DELAY_MIN:30 ANCHOR_DELAY_MAX:50 SILENT_AIM:FALSE,1793635755984,1793635870143,false,false,
+md82d7087,CHEAT,prestige,Anchor Macro,ANCHOR_DELAY_MIN:0 ANCHOR_DELAY_MAX:0 SILENT_AIM:FALSE,1793635974374,1793636049784,false,false,
+m49a01405,CHEAT,prestige,UNLOGGED,damage_tick=false delay_max_ms=78 delay_min_ms=10 head_bob=true,1793636403934,1793636423299,true,false,"19 s, interrupted, restarted as mc4d1d678"
+mc4d1d678,CHEAT,prestige,Auto Crystal,DAMAGE_TICK_FALSE DELAY_MIN_MS:10 DELAY_MAX_MS:78 HEAD_BOB:TRUE,1793636423299,1793636469847,false,false,
+m2bf596fd,CHEAT,prestige,Auto Pearl Catch,WIND_CHARGE_DELAY:120 MOVING_DELAY:80 LEGIT_ROTATE:FALSE SMOOTHING:0.0,1793653360451,1793653464143,false,false,
+m626f669b,CHEAT,prestige,Auto Pearl Catch,WIND_CHARGE_DELAY:50 MOVING_DELAY:50 LEGIT_ROTATE:FALSE SMOOTHING:0.0,1793653551622,1793653657518,false,false,
+m426bed25,CHEAT,prestige,Auto Pearl Catch,WIND_CHARGE_DELAY:50 MOVING_DELAY:50 LEGIT_ROTATE:TRUE SMOOTHING:0.5,1793653796869,1793653940287,false,false,
+m85069287,CHEAT,prestige,Auto Diagonal Pearl Catch,WIND_CHARGE_DELAY:50 SILENT_AIM:TRUE LEGIT_ROTATE:FALSE,1793654233972,1793654434296,false,false,
+m1bd74715,CHEAT,prestige,Auto Diagonal Pearl Catch,WIND_CHARGE_DELAY:50 SILENT_AIM:TRUE LEGIT_ROTATE:TRUE,1793654571972,1793654833410,false,false,
+md923db5a,CHEAT,prestige,Auto Xbow Cart,DELAY_TICKS:2 SILENT_AIM:TRUE SILENT_AIM_FOV:180,1793664803693,1793664983166,false,false,
+m46eb4f21,CHEAT,prestige,UNLOGGED,delay_ticks=2 silent_aim=true silent_aim_fov=180,1793665016531,1793665018948,false,false,2 s accidental mark
+m292a06ce,CHEAT,prestige,Auto Xbow Cart,DELAY_TICKS:0 SILENT_AIM:TRUE SILENT_AIM_FOV:180,1793665021683,1793665241523,false,false,
+m63659df6,CHEAT,prestige,Auto Shield Breaker,CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:1200 BREAK_COOLDOWN_MIN_MS:900,1793665936838,1793666282689,false,false,
+m94403eea,CHEAT,prestige,Auto Shield Breaker,CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:600 BREAK_COOLDOWN_MIN_MS:300,1793666351970,1793666647804,false,false,
+mf97e1a20,CHEAT,prestige,Auto Shield Breaker,CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:0 BREAK_COOLDOWN_MIN_MS:0,1793666700636,1793666973206,false,false,
+m0a6016b0,CHEAT,prestige,Aim Assist,FOV:360 SPEED:10.09 SMOOTHING:75 RANDOMNESS:70 ONLY_ON_ROTATE:FALSE,1793667638941,1793667904327,false,false,
+m4108b362,CHEAT,prestige,Aim Assist,FOV:360 SPEED:100 SMOOTHING:0 RANDOMNESS:70 ONLY_ON_ROTATE:TRUE,1793668202163,1793668335193,false,false,
+m70c1ef87,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:94 COOLDOWN_MAX_PERCENT:100,1793668905179,1793669179697,false,false,
+m1dff7271,CHEAT,prestige,Auto Shield Breaker|Kill Aura,HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100,1793728410449,1793728928323,false,true,
+m3367bfcd,CHEAT,prestige,Auto Shield Breaker|Silent Aim,CONTINOUS_TRACKING:TRUE,1793731852010,1793732505110,false,true,
+med3d6926,LEGIT_CONFIRMED,,LEGIT,,1793925135475,1793926477847,false,false,THE ~22 min legit recording (ended cleanly)
+
+# 2026-11-11/12 additions; start_ms read from the in-file marker, end_ms = start + duration from the operator's table
+m1900082b,CHEAT,prestige,Kill Aura,HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100,1794413968055,1794414259055,false,false,friend opponent (4:51)
+m98f0b9c2,CHEAT,prestige,Kill Aura,HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100,1794415716084,1794416031084,false,false,friend opponent (5:15)
+md3d2f5e7,LEGIT_CONFIRMED,,LEGIT,,1794415326772,1794415644772,false,false,duel DiamondSMP with a friend (5:18)
+
+# legit recorded 2026-11-11; start_ms read from the in-file marker, end_ms = start + duration from the operator's table
+m3ab6bfb8,LEGIT_CONFIRMED,,LEGIT,,1794357587755,1794358023755,false,false,"critting, webbing, full boxing, comboing (7:16)"
+m6013e9ff,LEGIT_CONFIRMED,,LEGIT,,1794358373058,1794358664058,false,false,spear swap as fast as possible (4:51)
+m24d6d071,LEGIT_CONFIRMED,,LEGIT,,1794358829953,1794358989953,false,false,"block placing/item use, butterfly right+left click (2:40)"
+me9366054,LEGIT_CONFIRMED,,LEGIT,,1794407099811,1794408149811,false,false,"duel DiamondSMP kit, second account (17:30); same fight as ma9691d79"
+ma9691d79,LEGIT_CONFIRMED,,LEGIT,,1794407092037,1794408148037,false,false,duel DiamondSMP kit (17:36); same fight as me9366054
+m69a17c52,LEGIT_CONFIRMED,,LEGIT,,1794408439833,1794408781833,false,false,"duel Spearmace kit, second account (5:42); same fight as mc27105be"
+mc27105be,LEGIT_CONFIRMED,,LEGIT,,1794408443154,1794408783154,false,false,duel Spearmace kit (5:40); same fight as m69a17c52
+m5c84ea76,LEGIT_CONFIRMED,,LEGIT,,1793925139516,1793926235154,true,false,"legit, ended when the player quit (interrupted)"
+m9e797b92,LEGIT_CONFIRMED,,LEGIT,,1793925523767,1793926490353,true,false,"legit, ended when the player quit (interrupted)"
+m5045e1ea,CHEAT,grim,Auto Stun Slam,MACE_DELAY_MIN_TICKS:1 MACE_DELAY_MAX_TICKS:1,1794011270021,1794011587006,false,false,
+mc516ec9d,CHEAT,grim,Triggerbot,COOLDOWN_MIN_PERCENT:90 COOLDOWN_MAX_PERCENT:90,1794014389422,1794014929530,false,false,
+m24355c9b,CHEAT,grim,Auto Shield Breaker,STUN:TRUE,1794016595880,1794016874803,false,false,
+ma635ec0c,CHEAT,grim,Auto Shield Breaker|Triggerbot,COOLDOWN_MIN_PERCENT:90 COOLDOWN_MAX_PERCENT:90,1794016937999,1794017221470,false,true,
+mf3dc7f00,CHEAT,grim,Auto Shield Breaker|Kill Aura,STUN:TRUE,1794017360032,1794017832529,false,true,
+m365353b1,CHEAT,grim,Aim Assist,SPEED:50,1794054177046,1794054695041,false,false,
+m004031bb,CHEAT,grim,Auto Mace,STUN_SLAM:TRUE SILENT_AIM:FALSE,1794056612803,1794057109013,false,false,
+mf7bb67e8,CHEAT,grim,Auto Wind Charge Hitter,HUMANIZED:TRUE REACH:3,1794057256083,1794057560849,false,false,
+m9c80fe11,CHEAT,grim,Auto Lunge,SWITCH_DELAY_MAX:0 SWITCH_DELAY_MIN:0 SWAP_BACK_TRUE,1794057882448,1794058111621,false,false,
+m0bca2310,CHEAT,rise,Auto Xbow Cart,DELAY_TICKS:0 SILENT_AIM:TRUE PLACE_PROTECTP:FALSE,1794059482918,1794059706641,false,false,
+mc9a8d071,CHEAT,rise,Auto Xbow Cart,DELAY_TICKS:0 SILENT_AIM:TRUE PLACE_PROTECTP:TRUE,1794062370934,1794062567050,false,false,
+m13d96247,CHEAT,grim,Kill Aura,ROTATIONS:SNAP REACH:3 MISS_CHANCE:0 STUN:TRUE,1794062884345,1794063220269,false,false,
+m3f63358f,CHEAT,doomsday,Triggerbot,cooldown_max_percent=100 cooldown_min_percent=90 delay_max_ms=0 delay_min_ms=0 miss_chance=0,1794349673670,1794349957035,false,false,"doomsday; not in your log, module inferred from the setting keys"
+m7ecb1998,CHEAT,doomsday,UNLOGGED,chance=100,1794350913243,1794350948212,false,false,"35 s doomsday, module unknown (not in your log)"
+
+# 2026-11-12 evening session vs a friend; start_ms read from the in-file marker, end_ms = start + duration from the table
+mcd7a19cf,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:TRUE,1794525075538,1794525355538,false,false,friend opponent (4:40)
+m96dd5b71,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:TRUE,1794525867563,1794526239563,false,false,friend opponent (6:12)
+mc723710d,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:FALSE,1794609518037,1794609912037,false,false,vs the mineflayer pvp bot (6:34)
+m42852fa8,CHEAT,prestige,Kill Aura,HUMANIZED:TRUE REACH:2.8 MISS_CHANCE:5 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 ROTATIONS:SNAP,1794610040837,1794610535837,false,false,vs the mineflayer pvp bot (8:15); rotations=snap from the marker
+m16f82554,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100,1794598215361,1794598740361,false,false,vs the mineflayer pvp bot (8:45)
+md8c4ad84,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100,1794607554994,1794608113994,false,false,vs the mineflayer pvp bot (9:19)
+m45e840bd,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:30 DELAY_MAX_MS:80 MISS_CHANCE:5 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100,1794614378831,1794614782831,false,false,vs the mineflayer pvp bot (6:44)
+m8a278525,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:TRUE,1794571126851,1794571383851,false,false,vs the mineflayer pvp bot (4:17)
+m6aaba334,CHEAT,prestige,Aim Assist,FOV:360 SPEED:20 SMOOTHING:0 RANDOMNESS:10,1794526393677,1794526838677,false,false,friend opponent (7:25)
+m5791f5dd,CHEAT,prestige,Aim Assist,FOV:90 SPEED:20 SMOOTHING:50 RANDOMNESS:30 ONLY_ON_ROTATE:FALSE,1794601594311,1794602110311,false,false,"vs the mineflayer pvp bot (8:36); MARKED LEGIT IN-GAME BY MISTAKE, the in-file marker says label=1, this row is the truth"
+m5123c635,CHEAT,prestige,Aim Assist,FOV:90 SPEED:30 SMOOTHING:50 RANDOMNESS:0 ONLY_ON_ROTATE:FALSE,1794657258135,1794657712721,false,false,"first schema 4 session, vs the pvp bot (~7:35); no end marker, end = last window; in-game marker says module 18 (Silent Aim on the server list) but the settings and the operator say Aim Assist; transaction replies were not captured (pre-fix recorder)"
+m8f52a835,CHEAT,prestige,Aim Assist,FOV:90 SPEED:30 SMOOTHING:50 RANDOMNESS:0 ONLY_ON_ROTATE:FALSE,1794662575345,1794663262203,false,false,"schema 4, vs the pvp bot (11:36); no end marker, end = last window; in-game module id 21"
+mff6051d6,CHEAT,prestige,Aim Assist,FOV:90 SPEED:15 SMOOTHING:75 RANDOMNESS:0 ONLY_ON_ROTATE:FALSE,1794663354591,1794663790203,false,false,"schema 4, vs the pvp bot (7:25), subtle; no end marker, end = last window"
+m1eaa1d2d,CHEAT,prestige,Aim Assist,FOV:90 SPEED:60 SMOOTHING:0 RANDOMNESS:0 ONLY_ON_ROTATE:FALSE,1794663905011,1794664428203,false,false,"schema 4, vs the pvp bot (8:51), blatant; no end marker, end = last window"
+m1cde4c02,CHEAT,prestige,Kill Aura,HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 ROTATIONS:SNAP,1794526977277,1794527395277,false,false,friend opponent (6:58)
+m3ed146aa,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100,1794527493331,1794527619331,false,false,friend opponent (2:06)
+m4bc0a6be,LEGIT_CONFIRMED,,LEGIT,,1794527828791,1794528255791,false,false,duel DiamondSMP vs friends (7:07)
+m4b282fd8,LEGIT_CONFIRMED,,LEGIT,,1794527786138,1794528176138,false,false,"friend account, duel DiamondSMP (6:30)"
+m7f9d360a,LEGIT_CONFIRMED,,LEGIT,,1794527793636,1794528200636,false,false,"friend account, duel DiamondSMP (6:47)"
+mfe92d472,LEGIT_CONFIRMED,,LEGIT,,1794527797682,1794528225682,false,false,"friend account, duel DiamondSMP (7:08)"
+m4e10fb72,LEGIT_CONFIRMED,,LEGIT,,1794528197402,1794528368402,false,false,"friend account, duel DiamondSMP (2:51)"
+mf9c15713,LEGIT_CONFIRMED,,LEGIT,,1794528216754,1794528498754,false,false,"friend account, duel DiamondSMP (4:42)"
+m456e408b,LEGIT_CONFIRMED,,LEGIT,,1794528247651,1794528500651,false,false,"friend account, duel DiamondSMP (4:13)"
+mdf40d9cf,LEGIT_CONFIRMED,,LEGIT,,1794570419350,1794570757350,false,false,duel DiamondSMP vs the mineflayer pvp bot (5:38); only the operator is recorded
+m457a9807,LEGIT_CONFIRMED,,LEGIT,,1794597689788,1794598125788,false,false,duel DiamondSMP vs the mineflayer pvp bot (7:16)
+m39bac321,LEGIT_CONFIRMED,,LEGIT,,1794606916259,1794607433259,false,false,duel DiamondSMP vs the mineflayer pvp bot (8:37)
+m0dfe272f,LEGIT_CONFIRMED,,LEGIT,,1794608176235,1794608776235,false,false,duel DiamondSMP vs the mineflayer pvp bot (10:00)
+mb1f0f01e,LEGIT_CONFIRMED,,LEGIT,,1794613672156,1794614293156,false,false,duel DiamondSMP vs the mineflayer pvp bot (10:21)
+m0ee3763e,CHEAT,prestige,Aim Assist,FOV:90 SPEED:20 SMOOTHING:50 RANDOMNESS:0 ONLY_ON_ROTATE:TRUE,1794702030278,1794702528023,false,false,"schema 4, vs the pvp bot (8:27), only on rotate; no end marker, end = last window; in-game module id 5 (other sessions said 21)"
+m4ca53577,CHEAT,prestige,Kill Aura,HUMANIZED:TRUE REACH:2.9 MISS_CHANCE:3 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100,1794689593622,1794690206620,false,false,"schema 4, vs the pvp bot (10:22), realistic; no end marker, end = last window"
+m051a9a47,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:30 DELAY_MAX_MS:80 MISS_CHANCE:5 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100,1794686607799,1794687248620,false,false,"schema 4, vs the pvp bot (10:49), subtle; no end marker, end = last window"
+m4f107966,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100,1794687381968,1794687890620,false,false,"schema 4, vs the pvp bot (8:38), blatant; no end marker, end = last window"
+m1ca0279f,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100,1794688143043,1794688688620,false,false,"schema 4, vs the pvp bot (9:15), realistic; no end marker, end = last window"
+m61b69c50,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100,1794688929672,1794689370620,false,false,"schema 4, vs the pvp bot (7:30), realistic; no end marker, end = last window"
+m1c38d70b,LEGIT_CONFIRMED,,LEGIT,,1794660227452,1794660746203,false,false,"schema 4, duel DiamondSMP vs the pvp bot (8:46); no end marker, end = last window"
+ma90a44db,LEGIT_CONFIRMED,,LEGIT,,1794660900922,1794661484203,false,false,"schema 4, duel DiamondSMP vs the pvp bot, bot spams shield (9:51); no end marker, end = last window"
+m2538fffc,LEGIT_CONFIRMED,,LEGIT,,1794791861789,1794792202227,false,false,"one-sided spear-mace fight vs afk (5:50), schema 4; maces, gaps, food, pearls, wind charges"
+
+# 2026-11-16 Doomsday Free Aim Assist vs the pvp bot, schema 4; start = in-file marker, no end marker, end = last window epoch
+m5a6d93c9,CHEAT,doomsday,Aim Assist|Triggerbot,SPEED:8 SENSITIVITY:8 PREDICTION:0 AIM_POSITION:CENTER VERTICAL_AIM:FALSE,1794830655346,1794831043182,false,true,"logged twice (Triggerbot and Aim Assist, same id and length); in-game module id 18, the other Aim Assist sessions say 15"
+m5e1b5c35,CHEAT,doomsday,Aim Assist,SPEED:1 SENSITIVITY:1 PREDICTION:0 AIM_POSITION:RANDOM VERTICAL_AIM:FALSE,1794833216292,1794833627182,false,false,"doomsday, subtle (6:59)"
+mb913f5ca,CHEAT,doomsday,Aim Assist,SPEED:2 SENSITIVITY:2 PREDICTION:0 AIM_POSITION:RANDOM VERTICAL_AIM:FALSE,1794833996103,1794834271182,false,false,doomsday (4:44)
+mff3508c5,CHEAT,doomsday,Aim Assist,SPEED:2 SENSITIVITY:2 PREDICTION:1 AIM_POSITION:RANDOM VERTICAL_AIM:FALSE,1794834492582,1794834843182,false,false,doomsday (5:59)
+mde682af5,CHEAT,doomsday,Aim Assist,SPEED:3 SENSITIVITY:3 PREDICTION:1 AIM_POSITION:RANDOM VERTICAL_AIM:FALSE,1794834990225,1794835305182,false,false,doomsday (5:23)
+mcf36f647,CHEAT,doomsday,Aim Assist,SPEED:3 SENSITIVITY:3 PREDICTION:1 AIM_POSITION:RANDOM VERTICAL_AIM:TRUE,1794835400045,1794835693182,false,false,doomsday (5:02)
+mac127aec,CHEAT,doomsday,Aim Assist,SPEED:5 SENSITIVITY:4 PREDICTION:1 AIM_POSITION:CENTER VERTICAL_AIM:FALSE,1794835752910,1794836077182,false,false,doomsday (5:34)
+
+# 2026-11-16 legit duels vs the pvp bot, same day and setup as the Doomsday sessions
+m67d3e2b3,LEGIT_CONFIRMED,,LEGIT,,1794831163325,1794831619182,false,false,"schema 4, duel DiamondSMP vs the pvp bot (7:45); no end marker, end = last window"
+mc8ae64ed,LEGIT_CONFIRMED,,LEGIT,,1794832772234,1794833135182,false,false,"schema 4, duel DiamondSMP vs the pvp bot (6:11); no end marker, end = last window"
+m45b396e6,LEGIT_CONFIRMED,,LEGIT,,1794836125760,1794836459182,false,false,"schema 4, duel DiamondSMP vs the pvp bot (5:42); no end marker, end = last window"
+m30bccd69,LEGIT_CONFIRMED,,LEGIT,,1794850066579,1794850485376,false,false,"schema 4, duel DiamondSMP vs the pvp bot (7:08); no end marker, end = last window"
+me716b56d,LEGIT_CONFIRMED,,LEGIT,,1794867130758,1794867537376,false,false,"schema 4, duel DiamondSMP vs the pvp bot (6:54), many fast hand axe stuns; no end marker, end = last window"
+ma3260b06,LEGIT_CONFIRMED,,LEGIT,,1794868136695,1794868503376,false,false,"schema 4, duel DiamondSMP vs the pvp bot (6:14), many fast hand axe stuns; no end marker, end = last window"
+
+# 2026-11-17 legit duels vs a strong friend, recorded from both accounts
+m206be58a,LEGIT_CONFIRMED,,LEGIT,,1794957172871,1794957682871,false,false,"schema 4, duel DiamondSMP vs a friend (8:33); same fight as md5c80410; start/end = first/last window"
+md5c80410,LEGIT_CONFIRMED,,LEGIT,,1794957168871,1794957668871,false,false,"friend account (strong player), schema 4, duel DiamondSMP vs a friend (8:22); same fight as m206be58a; start/end = first/last window"
+m7998a6ee,LEGIT_CONFIRMED,,LEGIT,,1794957920871,1794958312871,false,false,"schema 4, duel DiamondSMP vs a friend (6:33); same fight as m84ced182; start/end = first/last window"
+m84ced182,LEGIT_CONFIRMED,,LEGIT,,1794957918871,1794958312871,false,false,"friend account (strong player), schema 4, duel DiamondSMP vs a friend (6:34); same fight as m7998a6ee; start/end = first/last window"
+m1e7716fc,LEGIT_CONFIRMED,,LEGIT,,1794958466871,1794958896871,false,false,"schema 4, duel DiamondSMP vs a friend (7:10); same fight as mc838ba88; start/end = first/last window"
+mc838ba88,LEGIT_CONFIRMED,,LEGIT,,1794958464871,1794958894871,false,false,"friend account (strong player), schema 4, duel DiamondSMP vs a friend (7:10); same fight as m1e7716fc; start/end = first/last window"
+
+# 2026-11-16 Grim Killaura vs the pvp bot, schema 4; start = in-file marker, end = last window epoch
+m9a84bf96,CHEAT,grim,Kill Aura,ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:FALSE,1794848823682,1794849111376,false,false,grim (4:57)
+m3ce1354f,CHEAT,grim,Kill Aura,ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:TRUE,1794849226905,1794849563376,false,false,"grim (5:46); logged as m3ce1254f (typo), the files say m3ce1354f"
+m038a401a,CHEAT,grim,Kill Aura,ROTATIONS:SNAP REACH:3 MISS_CHANCE:0 STUN:TRUE,1794849683214,1794849967376,false,false,grim (4:53)
+
+# 2026-11-18 Prestige Silent Aim vs the pvp bot, schema 4; start/end = first/last window
+ma626a0ea,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:TRUE,1795011158871,1795011662871,false,false,vs the pvp bot (8:26)
+mbef357b6,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:TRUE,1795011830871,1795012220871,false,false,vs the pvp bot (6:31)
+ma0c07d9a,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:TRUE,1795012282871,1795012850871,false,false,vs the pvp bot (9:29)
+mcbe005b3,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:FALSE,1795012986871,1795013440871,false,false,vs the pvp bot (7:35)
+m9b2c5f40,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:FALSE,1795013518871,1795014022871,false,false,vs the pvp bot (8:27)
+
+# 2026-11-18 legit duels vs the strong friend, operator account only (CHEATTRAINING lists the friend in By)
+mb30fdc1a,LEGIT_CONFIRMED,,LEGIT,,1795014090871,1795014596871,false,false,"schema 4, duel DiamondSMP vs a friend (8:27); start/end = first/last window"
+m7da6aae9,LEGIT_CONFIRMED,,LEGIT,,1795014834871,1795015428871,false,false,"schema 4, duel DiamondSMP vs a friend (9:55); start/end = first/last window"
