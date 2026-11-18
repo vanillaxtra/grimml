@@ -63,5 +63,3 @@ venv/
 Thumbs.db
 desktop.ini
 
-# ---- operator cheat log: names real players, keep it local (labels live in training/config/sessions.csv)
-CHEATTRAINING.md
