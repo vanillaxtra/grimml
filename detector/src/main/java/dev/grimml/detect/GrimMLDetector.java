@@ -3,6 +3,7 @@ package dev.grimml.detect;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerCommon;
 import dev.grimml.detect.grim.GrimBridge;
+import dev.grimml.detect.grim.Punishments;
 import dev.grimml.detect.model.ModelSet;
 import dev.grimml.detect.model.ModelStore;
 import dev.grimml.detect.model.ModuleModel;
@@ -24,6 +25,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -104,6 +106,10 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
             updateExec.scheduleWithFixedDelay(this::checkForModels, 5, minutes * 60, TimeUnit.SECONDS);
         }
         getLogger().info("Scanning every " + every + " ms off the main thread.");
+        if (getConfig().getBoolean("update-checker", true)) {
+            new dev.grimml.detect.update.UpdateChecker(this);
+        }
+        setupMetrics();
     }
 
     @Override
@@ -121,6 +127,21 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
             grim.shutdown();
         }
         tracks.clear();
+    }
+
+    /** bStats (https://bstats.org/plugin/bukkit/grim-ml/35441). Opt out in plugins/bStats/config.yml. Never fatal. */
+    private void setupMetrics() {
+        try {
+            var metrics = new org.bstats.bukkit.Metrics(this, 35441);
+            metrics.addCustomChart(new org.bstats.charts.SimplePie("models_version",
+                    () -> Integer.toString(store.current().version())));
+            metrics.addCustomChart(new org.bstats.charts.SimplePie("punishments",
+                    () -> grim.groups().isEmpty() ? "off" : "on"));
+            metrics.addCustomChart(new org.bstats.charts.SimplePie("webhook",
+                    () -> getConfig().getBoolean("webhook.enabled", true) ? "on" : "off"));
+        } catch (Throwable t) {
+            getLogger().warning("bStats failed to start: " + t.getMessage());
+        }
     }
 
     private static Thread daemon(Runnable r, String name) {
@@ -167,20 +188,8 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
 
     private GrimBridge.Settings bridgeSettings() {
         var c = getConfig();
-        Map<Integer, List<String>> punish = new HashMap<>();
-        ConfigurationSection ps = c.getConfigurationSection("punishments");
-        if (ps != null && ps.getBoolean("enabled", false)) {
-            ConfigurationSection at = ps.getConfigurationSection("at-violations");
-            if (at != null) {
-                for (String k : at.getKeys(false)) {
-                    try {
-                        punish.put(Integer.parseInt(k), new ArrayList<>(at.getStringList(k)));
-                    } catch (NumberFormatException ignored) {
-                        getLogger().warning("punishments.at-violations key '" + k + "' is not a number");
-                    }
-                }
-            }
-        }
+        List<Punishments.Group> punish = punishmentGroups(c.getConfigurationSection("punishments"),
+                c.getDouble("alerts.decay-per-minute", 0.05));
         var webhook = new GrimBridge.Webhook(
                 c.getBoolean("webhook.enabled", true),
                 c.getString("webhook.url", ""),
@@ -206,7 +215,103 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 (float) c.getDouble("alerts.sound.volume", 1.0),
                 (float) c.getDouble("alerts.sound.pitch", 1.0),
                 c.getDouble("alerts.decay-per-minute", 0.05),
-                punish, webhook);
+                punish, webhook, punishmentWebhook(c, webhook));
+    }
+
+    /** punishments.groups.<name>: checks, decay-per-minute, at-violations. The old flat punishments.at-violations
+     *  (from 1.1.0 and earlier) still works, as one group over every check. */
+    private List<Punishments.Group> punishmentGroups(ConfigurationSection ps, double defaultDecay) {
+        List<Punishments.Group> out = new ArrayList<>();
+        if (ps == null || !ps.getBoolean("enabled", false)) {
+            return out;
+        }
+        ConfigurationSection groups = ps.getConfigurationSection("groups");
+        if (groups != null) {
+            for (String name : groups.getKeys(false)) {
+                ConfigurationSection g = groups.getConfigurationSection(name);
+                if (g == null) {
+                    getLogger().warning("punishments.groups." + name + " is not a section, skipped");
+                    continue;
+                }
+                Set<String> checks = new HashSet<>();
+                for (String ch : g.getStringList("checks")) {
+                    checks.add(ch.trim().toLowerCase(Locale.ROOT));
+                }
+                Set<String> known = new HashSet<>();
+                for (String k : allChecks()) {
+                    known.add(k.toLowerCase(Locale.ROOT));
+                    known.add(GrimBridge.friendly(k).toLowerCase(Locale.ROOT));
+                }
+                for (String ch : checks) {
+                    if (!ch.equals("*") && !known.contains(ch)) {
+                        getLogger().warning("punishments.groups." + name + ": unknown check '" + ch + "' (known: "
+                                + String.join(", ", allChecks()) + ", their short names, or *)");
+                    }
+                }
+                if (checks.isEmpty()) {
+                    getLogger().warning("punishments.groups." + name + ".checks is empty, skipped");
+                    continue;
+                }
+                var at = thresholds(g.getConfigurationSection("at-violations"), "punishments.groups." + name);
+                if (!at.isEmpty() && g.getBoolean("enabled", true)) {
+                    out.add(new Punishments.Group(name, checks, g.getDouble("decay-per-minute", defaultDecay), at));
+                }
+            }
+        } else if (ps.isConfigurationSection("at-violations")) {
+            var at = thresholds(ps.getConfigurationSection("at-violations"), "punishments");
+            if (!at.isEmpty()) {
+                getLogger().info("punishments.at-violations is the old layout: counted over every check together. "
+                        + "Move it into punishments.groups (see the default config) to punish per check.");
+                out.add(new Punishments.Group("all", Set.of("*"), defaultDecay, at));
+            }
+        }
+        return out;
+    }
+
+    private java.util.TreeMap<Integer, List<String>> thresholds(ConfigurationSection at, String path) {
+        var out = new java.util.TreeMap<Integer, List<String>>();
+        if (at == null) {
+            return out;
+        }
+        for (String k : at.getKeys(false)) {
+            try {
+                int n = Integer.parseInt(k.trim());
+                List<String> cmds = new ArrayList<>();
+                for (String cmd : at.isList(k) ? at.getStringList(k) : List.of(at.getString(k, ""))) {
+                    String t = cmd.trim();
+                    if (t.startsWith("/")) {
+                        t = t.substring(1);
+                    }
+                    if (!t.isEmpty()) {
+                        cmds.add(t);
+                    }
+                }
+                if (n > 0) {
+                    out.put(n, cmds);
+                } else {
+                    getLogger().warning(path + ".at-violations." + k + " must be 1 or more");
+                }
+            } catch (NumberFormatException e) {
+                getLogger().warning(path + ".at-violations key '" + k + "' is not a number");
+            }
+        }
+        return out;
+    }
+
+    /** webhook.punishments: same look as the alert embed, own title, colour and lines; null = not posted. */
+    private static GrimBridge.Webhook punishmentWebhook(org.bukkit.configuration.file.FileConfiguration c, GrimBridge.Webhook w) {
+        if (!c.getBoolean("webhook.punishments.enabled", true)) {
+            return null;
+        }
+        return new GrimBridge.Webhook(true, w.url(), w.useGrimWebhook(),
+                c.getString("webhook.punishments.embed-title", "**GrimML Punishment**"),
+                c.getString("webhook.punishments.embed-color", "#FF0000"),
+                w.thumbnailUrl(), w.imageUrl(), w.footerText(), w.footerUrl(), w.includeTimestamp(),
+                c.getBoolean("webhook.punishments.include-verbose", true),
+                c.isList("webhook.punishments.content") ? c.getStringList("webhook.punishments.content") : List.of(
+                        "**Player**: `%player%`", "**Punishment**: %group% at %group_vl% violations",
+                        "**Last check**: %check_name%", "**Commands**: `%commands%`",
+                        "**Client Version**: %version%", "**Ping**: %ping%"));
     }
 
     /** Staff with grimml.notify see model updates. */
@@ -441,6 +546,12 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 for (int i = 0; i < rules.size(); i++) {
                     line(sender, "&8 - &f" + GrimBridge.friendly(rules.get(i)) + " &7(" + rules.get(i) + ") " + onOff(on[i]));
                 }
+                List<Punishments.Group> groups = grim.groups();
+                line(sender, "&8 - &7Punishments " + (groups.isEmpty() ? "&coff" : "&a" + groups.size() + " groups"));
+                for (Punishments.Group pg : groups) {
+                    line(sender, "&8   - &f" + pg.name() + " &7at &f" + pg.at().keySet().stream().map(String::valueOf)
+                            .collect(java.util.stream.Collectors.joining(", ")) + " &7violations");
+                }
                 if (args.length > 1) {
                     Player target = Bukkit.getPlayerExact(args[1]);
                     if (target == null) {
@@ -453,6 +564,12 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                                 ? "&enot scanned &8(grimml.bypass, creative/spectator or Bedrock)"
                                 : "&ascanned" + (b.isEmpty() ? "" : " &7except " + String.join(", ", b));
                         say(sender, "&f" + target.getName() + "&7: " + state + (st == null ? "" : " &8| aim grid " + st));
+                        for (Punishments.Group pg : groups) {
+                            double v = grim.groupViolations(id, pg.name());
+                            if (v > 0) {
+                                line(sender, String.format("&8   - &f%s &7%.1f violations", pg.name(), v));
+                            }
+                        }
                     }
                 }
                 line(sender, String.format("&7Tracking &f%d &7players, &f%d &7windows scored, &f%d &7flags, last scan &f%.2f ms",

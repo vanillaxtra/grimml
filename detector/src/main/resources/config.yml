@@ -4,6 +4,9 @@
 # until you have checked the alerts on your own server.
 # Permissions: grimml.alerts, grimml.alerts.sound, grimml.notify, grimml.admin, grimml.bypass, grimml.bypass.<check>
 
+# tell the console and players with grimml.update.notify when a new GrimML release is on GitHub
+update-checker: true
+
 models:
   # newest models are downloaded from here (checked every few minutes, off the main thread);
   # the copy bundled in the jar is used until then, and if the download fails
@@ -130,10 +133,63 @@ webhook:
     - "**Brand**: `%brand%`"
     - "**Ping**: %ping%"
     - "**TPS**: %tps%"
+  # a second embed every time punishment commands run (kicks, bans, anything in punishments)
+  punishments:
+    enabled: true
+    embed-title: "**GrimML Punishment**"
+    embed-color: "#FF0000"
+    include-verbose: true
+    content:
+      - "**Player**: `%player%`"
+      - "**Punishment**: %group% at %group_vl% violations"
+      - "**Last check**: %check_name% (%confidence%%)"
+      - "**Commands**: `%commands%`"
+      - "**Client Version**: %version%"
+      - "**Ping**: %ping%"
 
-# Console commands at a violation count (one violation = one flagged fight).
+# Console commands when a player reaches a number of violations. One violation = one flagged fight (ML checks) or
+# one alert (rule checks). Each group adds up the violations of its checks and loses decay-per-minute of them every
+# minute (0.05 = one violation per 20 minutes); leaving and rejoining does not reset them.
+# checks: MLKillAura MLAimAssist MLTriggerbot MLSilentAim AimGrid LungeRate LungeHold SwapOrder AxeHold,
+#   or short names: Kill Aura, Aim Assist (MLAimAssist + AimGrid), Triggerbot, Silent Aim,
+#   Instant Lunge (LungeRate + LungeHold), Swap Macro (SwapOrder), Shield Breaker (AxeHold), or "*" for every check.
+# Commands run from the console with the alert placeholders plus %group% and %group_vl%; a leading / is optional.
+# Use your ban plugin's commands (tempban needs one, e.g. EssentialsX or LiteBans). Every punishment is posted to the
+# webhook (see webhook.punishments). Beta: keep this off until the alerts look right on your server.
 punishments:
   enabled: false
-  at-violations:
-    3:
-      - "say %player% flagged %check_name% %vl% times"
+  groups:
+    # Instant Lunge and Swap Macro never flagged a legit player in testing
+    instant-lunge:
+      checks: [Instant Lunge, Swap Macro]
+      at-violations:
+        3:
+          - "kick %player% Unfair advantage (%check%)"
+        6:
+          - "ban %player% Unfair advantage (%check%)"
+    # Shield Breaker has flagged a few very fast legit players, so it waits longer
+    shield-breaker:
+      checks: [Shield Breaker]
+      at-violations:
+        4:
+          - "kick %player% Unfair advantage (%check%)"
+        8:
+          - "ban %player% Unfair advantage (%check%)"
+    # ML checks: one false flag per fight is possible, so act only on many
+    kill-aura:
+      checks: [Kill Aura]
+      at-violations:
+        5:
+          - "kick %player% Unfair advantage (%check%)"
+    aim:
+      checks: [Aim Assist, Triggerbot]
+      at-violations:
+        6:
+          - "kick %player% Unfair advantage (%check%)"
+    silent-aim:
+      enabled: false
+      checks: [Silent Aim]
+      decay-per-minute: 0.1
+      at-violations:
+        8:
+          - "kick %player% Unfair advantage (%check%)"

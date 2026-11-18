@@ -32,7 +32,12 @@ the player's recent swaps or hits that matched the cheat's pattern.
 - Grim's `FlagEvent` is fired for every flag, so other Grim add-ons see it and can cancel it.
 - Discord: the embed is laid out exactly like Grim's own webhook (same fields, colour, player-head thumbnail, Verbose
   field, footer and timestamp). It posts to Grim's webhook url unless `webhook.url` is set.
-- Punishments: console commands at violation counts in `config.yml` (off by default). One violation = one flagged fight.
+- Punishments (off by default): `punishments.groups` in `config.yml`. Each group lists checks (check names, short
+  names such as `Instant Lunge`, or `*`) and console commands to run at violation counts, e.g. kick at 3 and ban at 6.
+  A group adds up the violations of all its checks, which decay over time and survive relogging. One violation = one
+  flagged fight (ML checks) or one alert (rule checks). Every punishment also posts a red "GrimML Punishment" embed to
+  the webhook with the commands that ran (`webhook.punishments`). `/grimml status <player>` shows their counts.
+  The old flat `punishments.at-violations` still works, counted over every check together.
 - Grim's API (1.3.x) has no way to add a third-party check to Grim's own check list, so `/grim` commands, Grim's
   `punishments.yml` and Grim's violation history do not know about these checks.
 
@@ -51,6 +56,7 @@ the player's recent swaps or hits that matched the cheat's pattern.
 | `grimml.alerts` | op | see alerts in chat |
 | `grimml.alerts.sound` | op | hear a ping with every alert (`alerts.sound`) |
 | `grimml.notify` | op | be told when new models are downloaded |
+| `grimml.update.notify` | op | be told on join (once a day) when a new GrimML release is on GitHub (`update-checker`) |
 | `grimml.admin` | op | status, reload, update |
 | `grimml.bypass` | nobody | never scanned by any check |
 | `grimml.bypass.<check>` | nobody | never flagged by one check: `mlkillaura`, `mlaimassist`, `mltriggerbot`, `mlsilentaim`, `aimgrid`, `lungerate`, `lungehold`, `swaporder`, `axehold` (`grimml.bypass.*` = all) |
@@ -126,3 +132,18 @@ LungeHold, SwapOrder and AxeHold need client ticks (1.21.2+ clients); older clie
 the `lunge-rate`, `lunge-hold`, `swap-order` and `axe-hold` sections of `config.yml`. Calibrated with training `spearmace.LiveLunge`
 (same code) replayed over every recorded session; the Java port is checked against Python on every build
 (`live_lunge.txt`).
+
+## Update checker and bStats
+
+On start, and when someone with `grimml.update.notify` joins (re-checked at most hourly), GrimML asks GitHub for the
+latest release of `vanillaxtra/grimml` off the main thread. A newer tag prints a console banner and gives those
+players a clickable download link once a day. `update-checker: false` turns it off.
+
+bStats id [35441](https://bstats.org/plugin/bukkit/grim-ml/35441), shaded and relocated to
+`dev.grimml.detect.libs.bstats`. Custom charts: models version, punishments on/off, webhook on/off. Opt out in
+`plugins/bStats/config.yml`.
+
+## License
+
+Code: MIT (`../LICENSE`). Models: [GrimML Model License](../models/LICENSE.md): run them only through this plugin; no
+paid use, no redistribution, no derived models.

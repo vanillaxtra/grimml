@@ -1,158 +1,248 @@
 # GrimML
-![code](https://img.shields.io/badge/code-MIT-blue) ![models](https://img.shields.io/badge/models-CC%20BY--NC--SA%204.0-lightgrey) ![java](https://img.shields.io/badge/java-21%2B-orange) ![paper](https://img.shields.io/badge/paper-1.21%2B-lightgrey) ![status](https://img.shields.io/badge/status-beta-yellow)
 
-Machine-learning combat checks for [Grim Anticheat](https://github.com/GrimAnticheat/Grim). GrimML catches
-**Kill Aura, Aim Assist, Triggerbot, Silent Aim, Instant Lunge and Auto Shield Breaker**, and alerts staff with one
-simple line and a confidence %.
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/vanillaxtra/grimml/releases)
+[![Platform](https://img.shields.io/badge/Paper-1.21%2B-purple.svg)](https://papermc.io/)
+[![Java](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://adoptium.net/)
+[![Requires Grim](https://img.shields.io/badge/requires-GrimAC-00bcd4.svg)](https://github.com/GrimAnticheat/Grim)
+[![bStats](https://img.shields.io/badge/bStats-GrimML-brightgreen.svg)](https://bstats.org/plugin/bukkit/grim-ml/35441)
+[![Status](https://img.shields.io/badge/status-beta-yellow.svg)](#beta-read-this)
 
-**Server owners: install [GrimML](detector/README.md)** (`detector/`): install, commands, permissions and config.
+Machine-learning combat checks for **[Grim Anticheat](https://github.com/GrimAnticheat/Grim)**. GrimML catches the
+combat cheats fixed rules struggle with: **Kill Aura, Aim Assist, Triggerbot, Silent Aim, Instant Lunge and Auto
+Shield Breaker**. It alerts staff with one short line and a confidence %, posts to the same Discord webhook as
+Grim, and can run your own punishment commands.
 
-This repo also holds the recorder and training code used to build the models:
-
-| Folder | Plugin / tool | What |
-|---|---|---|
-| `detector/` | **GrimML** | the detection plugin servers install. See [detector/README.md](detector/README.md) |
-| `recorder/` | **grimmlrecorder** | records labelled combat data for training (the rest of this README); not needed to detect |
-| `training/` | Python | decode → features → train → `publish_models.py` |
-| `models/` | data | the published models GrimML downloads (`manifest.json` + one LightGBM model per check) |
-
-`mvn clean package` in the root builds both plugins.
+<!-- GIF: hero - a cheater getting flagged in chat, hover open -->
+![GrimML in action](assets/hero.gif)
 
 ---
 
-# grimmlrecorder
-
-A Paper plugin that records anonymized PvP combat data next to Grim, to build a dataset for machine-learning cheat
-detection.
-
-## Why
-
-Rule-based anticheats like Grim are good at catching movement and protocol cheats. Combat cheats such as aim assist and subtle killaura are harder to pin down with fixed rules. A model trained on real fights could catch them, but that first needs clean, labelled combat data. grimml collects that data on a live server without hurting performance.
-
-**Repository layout**
-
-| Folder | What |
-|---|---|
-| `recorder/` | the recording plugin (this README): GML3 combat recorder, staff **mark** segments, weak Grim-evidence sidecars, ban backfill labels |
-| `detector/` | the live detection plugin: loads the trained models and reports flags through Grim. See [detector/README.md](detector/README.md) |
-| `training/` | decode → features → train → `publish_models.py` |
-| `models/` | the published models the detector downloads (`manifest.json` + one LightGBM model per module) |
-
-`mvn clean package` in the root builds both plugins.
-
-## Features
-
-- **Combat windows** with rolling pre/post buffer (configurable). Optional **`recording-mode: mark-only`** so `.gmlml` files are written only for the marked player while `/grimmlrecorder mark` is open (everyone still buffers packets).
-- **GML4 capture** ([docs/schema4.md](docs/schema4.md)): everything below plus exact rotation, the opponent's position/state every tick, client ticks, every input and sprint toggle, transaction send times, opponent movement as sent to the client, crystal spawns, attack cooldown and clicked block, in skippable extension blocks.
-- **GML3 capture:** per-tick frames (position, rotation, input flags, ping, ack tick), fight-linked attacker/target/bystander snapshots, attacks with target anon ids, damage, swings, use-item, inventory/window, shield/totem/knockback, block place, setbacks, markers, and more.
-- **Staff labeling:** `taxonomy.yml` defines clients/modules/settings; `/grimmlrecorder mark start` writes time-range MARKER records with optional `client-name=meteor` (or any free text) plus module settings.
-- **Live mark feedback:** marked players see an action bar with label/module/client name and data-quality hints (ping, jitter, mspt, frame count).
-- **Weak labels from Grim:** bounded queue off the netty thread, decaying scores, `grim-labels.csv` / `grim-review.csv`, `/grimmlrecorder suspects` and `/grimmlrecorder review` (never `CHEAT_CONFIRMED` from Grim alone).
-- **Ban hooks:** LiteBans (when installed) and vanilla kick fallback → SUSPECT backfill; grimml loads without LiteBans present.
-- **Anonymized:** SHA-256 salted player ids, random session ids; sidecars use anon ids only.
-- **Performance:** seqlock rings, single async writer, drop-newest under load, MSPT and disk-cap auto-pause.
-
-Sibling repo **grimml-synth** (Python) generates synthetic pretraining windows. The **training/** folder in this repo holds the decode → train pipeline (`TODOtraining.md`).
-
 ## Requirements
 
-| | |
-|---|---|
-| Server | Paper (or a fork such as Leaf), 1.21.1 through 26.x |
-| Java | 21+ |
-| Required plugin | [PacketEvents](https://github.com/retrooper/packetevents) 2.14.0+ |
-| Optional plugins | GrimAC (weak labels), Geyser-Spigot / floodgate (Bedrock), LiteBans (ban backfill) |
+- **Server:** Paper 1.21+ (or a fork such as Purpur or Leaf)
+- **Java:** 21+
+- **Required plugin:** [GrimAC](https://github.com/GrimAnticheat/Grim) 2.3+ (GrimML uses the PacketEvents bundled inside Grim)
+
+---
 
 ## Installation
 
-There are no release builds yet, so build it yourself (needs JDK 21+ and Maven):
+1. Download the latest `GrimML-<version>.jar` from [Releases](https://github.com/vanillaxtra/grimml/releases).
+2. Put it in your server's `plugins` folder next to Grim.
+3. Restart the server.
+4. Check `plugins/GrimML/config.yml`; the defaults are safe (alerts on, punishments off).
+5. Reload with `/grimml reload`.
 
-```bash
-git clone https://github.com/vanillaxtra/grimml
-cd grimml
-mvn clean package
+---
+
+# 🧠 What It Detects
+
+### ML checks (trained models)
+
+Every 2 seconds GrimML scores each fighting player's last 8 seconds of aim and clicks with a trained model. A fight
+is flagged only when enough of it looks like cheating, so one lucky flick never flags anyone.
+
+| Check | Catches |
+|-------|---------|
+| **Kill Aura** | Automatic attacking and aiming at whoever is in reach |
+| **Aim Assist** | Rotation pulled toward the opponent, even when smoothed and randomized |
+| **Triggerbot** | Attacks fired the moment the crosshair is on a target |
+| **Silent Aim** | Server-side aim that differs from what the player sees |
+
+<!-- GIF: killaura - a Kill Aura player getting flagged, chat alert visible -->
+![Kill Aura detection](assets/killaura.gif)
+
+<!-- GIF: aimassist - aim assist on a strafing opponent, alert appears -->
+![Aim Assist detection](assets/aimassist.gif)
+
+### Rule checks (no model, exact)
+
+| Check | Catches |
+|-------|---------|
+| **Aim Assist (AimGrid)** | Mouse rotation that is not a whole number of sensitivity steps and leans toward the opponent |
+| **Instant Lunge** | Spear swap, jab and swap back faster or more exactly than a hand can |
+| **Swap Macro** | A hotbar swap after an attack in the same client tick, which the vanilla client never sends |
+| **Shield Breaker** | Swapping away from the axe exactly one tick after breaking a shield, every time |
+
+<!-- GIF: lunge - Instant Lunge macro getting flagged -->
+![Instant Lunge detection](assets/lunge.gif)
+
+<!-- GIF: shieldbreaker - Auto Shield Breaker getting flagged -->
+![Shield Breaker detection](assets/shieldbreaker.gif)
+
+---
+
+# 🔔 Alerts
+
+* **One short line** – `GrimML » Steve flagged Kill Aura (74%) x2`
+* **Confidence %** – how sure the check is, readable by anyone.
+* **Hover for details** – check, description, violations, what was measured, ping and client.
+* **Click to teleport** – runs `/tp %player%` by default (any command).
+* **Sound ping** – for staff with `grimml.alerts.sound`.
+* **Toggle** – `/grimml alerts` turns your own alerts on or off.
+* **Grim-friendly** – fires Grim's `FlagEvent`, so other Grim add-ons see and can cancel GrimML flags.
+
+<!-- GIF: alerts - hovering over an alert, then clicking it to teleport -->
+![Alerts](assets/alerts.gif)
+
+---
+
+# 💬 Discord Webhook
+
+* Laid out **exactly like Grim's own webhook**, so GrimML alerts sit neatly next to Grim's.
+* Uses **Grim's webhook URL** automatically, or set your own.
+* **Punishments are posted too** – a red *GrimML Punishment* embed with the player, the punishment and the commands
+  that ran (kicks, bans, anything).
+
+<!-- IMAGE: webhook - an alert embed and a punishment embed in Discord -->
+![Discord webhook](assets/webhook.png)
+
+---
+
+# ⚖️ Punishments
+
+Run any console commands when a player reaches a number of violations. Group checks together, pick your own counts,
+use your own ban plugin. **Off by default.**
+
+```yaml
+punishments:
+  enabled: true
+  groups:
+    instant-lunge:
+      checks: [Instant Lunge, Swap Macro]
+      at-violations:
+        3:
+          - "kick %player% Unfair advantage (%check%)"
+        6:
+          - "ban %player% Unfair advantage (%check%)"
 ```
 
-1. Copy `recorder/target/grimml-0.1.0-SNAPSHOT.jar` and PacketEvents into `plugins/`.
-2. Start the server once to generate `plugins/grimmlrecorder/config.yml`, `taxonomy.yml`, `grim-weights.yml`.
-3. **Change `anonymize-salt`** to a random secret value, then run `/grimmlrecorder reload` or restart.
+* **Groups** – each group adds up its checks' violations (check names, short names like `Instant Lunge`, or `*`).
+* **Any commands** – kick, tempban, a Discord bot command, a broadcast… as many as you like per count.
+* **Decay** – violations fade over time (per group), and **relogging does not reset them**.
+* **Webhook** – every punishment is posted to Discord.
+* `/grimml status <player>` shows a player's counts.
 
-Recordings are written to `plugins/grimmlrecorder/recordings/`.
+---
 
-## Usage
+# 🔄 Always Up To Date
 
-All commands need `grimmlrecorder.admin` (op by default). Console/RCON supported where noted.
+* **Models update by themselves** – new models are downloaded from this repository, checked (sha256) and swapped in
+  **without a restart**. A broken download keeps the old models running.
+* **Plugin update checker** – the console and staff with `grimml.update.notify` are told when a new release is out
+  (once a day, with a download link).
 
-| Command | What it does |
-|---|---|
-| `/grimmlrecorder status` | enabled/paused, windows written/dropped, bytes, drop summary |
-| `/grimmlrecorder pause` / `resume` | stop or resume flushing windows |
-| `/grimmlrecorder reload` | reload config, taxonomy, grim-weights; applies `recording-mode` to online sessions |
-| `/grimmlrecorder mark start <account> <label> [client] [module] [key=value...]` | open a labeled segment (`LEGIT_CONFIRMED` or `CHEAT`); prints a stable id (`m83e5404d`) |
-| `/grimmlrecorder mark end <account>` | close the open segment; repeats id and duration |
-| `/grimmlrecorder mark list` / `get <id>` | look up open and recent marked sessions |
-| `/grimmlrecorder testaccount [account] [on\|off]` | persist test-account UUIDs (excluded from normal player mixes in headers) |
-| `/grimmlrecorder suspects [limit]` | top decaying Grim-evidence scores (anon ids) |
-| `/grimmlrecorder review next` | next window flagged for staff replay |
-| `/grimmlrecorder review mark <id> confirmed\|legit\|unsure` | update review sidecar |
+---
 
-## Configuration (high level)
+# 🚀 Built For Performance
 
-| Key | Default | Meaning |
-|---|---|---|
-| `enabled` | `true` | master switch |
-| `recording-mode` | `auto` | `mark-only` = `.gmlml` only for the marked player during an open mark |
-| `anonymize-salt` | `change-me` | player id hashing salt |
-| `pre-combat-seconds` / `post-combat-seconds` | `5` / `2` | combat window timing |
-| `ring-capacity` / `event-ring-capacity` | `160` / `128` | per-player buffers |
-| `grim-evidence.enabled` | `true` | weak auto-labeling kill switch |
-| `ban-labels.enabled` | `true` | combat ban → SUSPECT backfill |
+* Packet data is copied on Netty threads into small per-player buffers.
+* All scoring runs on **one background thread**. The main thread only sends chat and runs commands.
+* Floodgate (Bedrock), creative and spectator players are skipped.
 
-See `config.yml` and [docs/architecture.md](docs/architecture.md) for the full list.
+---
 
-## Output format
+## Commands
 
-Each combat window is one file with magic **`GML3`** (schema 3). Unmarked auto windows: `<date>_<anonId>_<session>_<rand>.gmlml`. Marked sessions: `<date>_<markId>_<rand>.gmlml` (same `m########` id on every file of that mark). Older `GML1`/`GML2` files remain identifiable by magic; they are not rewritten.
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/grimml alerts` | `grimml.alerts` | Turn your alerts on or off |
+| `/grimml status [player]` | `grimml.admin` | Models, checks, punishments, and a player's scan state and counts |
+| `/grimml update` | `grimml.admin` | Download newer models now |
+| `/grimml reload` | `grimml.admin` | Reload `config.yml` |
 
-- **Header:** fight/window ids, role, trigger, label source, validity, session/anon ids, epoch + nanos, boot id, MSPT, ping, kit/server/map/world, MC/Grim/PacketEvents versions, taxonomy version + hash.
-- **Body:** Deflate-compressed delta-encoded frames plus typed events (including MARKER / MARKER_KV).
-- **Sidecars:** `sessions.idx` (join/quit/mark/grim lines), `marks.csv` (staff mark ledger with ids), `grim-labels.csv`, `grim-review.csv`, `grim-checks.json`, `test-accounts.txt`.
+**Alias:** `/gml`
 
-Encoder: `format/BinaryFormat.java`. Round-trip check: `format/BinaryFormatSelfCheck.java`.
+---
 
-## How it works
+## Permissions
 
-```mermaid
-flowchart LR
-    A[PacketEvents netty thread] -->|frames and events| B[PlayerRingBuffer]
-    C[Main thread sampler] -->|state attributes| B
-    D[Grim FlagEvent] -->|queue then 1 Hz tracker| B
-    B -->|fight assembler| E[Async writer]
-    E -->|deflate| F[.gmlml file]
-```
+| Permission | Default | Description |
+|------------|---------|-------------|
+| `grimml.*` | OP | Everything below except bypass |
+| `grimml.alerts` | OP | See alerts in chat |
+| `grimml.alerts.sound` | OP | Hear a ping with every alert |
+| `grimml.notify` | OP | Be told when new models are downloaded |
+| `grimml.update.notify` | OP | Be told when a new GrimML release is out |
+| `grimml.admin` | OP | Status, reload, update |
+| `grimml.bypass` | false | Never scanned by any check |
+| `grimml.bypass.<check>` | false | Never flagged by one check (`mlkillaura`, `mlaimassist`, `mltriggerbot`, `mlsilentaim`, `aimgrid`, `lungerate`, `lungehold`, `swaporder`, `axehold`) |
 
-More detail: [docs/architecture.md](docs/architecture.md), [docs/decisions.md](docs/decisions.md), progress [TODO.md](TODO.md).
+---
 
-## Non-goals (this repo)
+## Placeholders
 
-- No trained model, ONNX inference, alerts, or punishments.
-- No Folia-aware schedulers yet (Paper single-region scheduler).
-- Full training/inference automation lives under **`training/`** (see `training/TODOtraining.md`); alert-only server plugin is still out of scope.
+Used in alerts, hover, click command, webhook and punishments.
 
-Open bugs and quirks: [docs/known-issues.md](docs/known-issues.md).
+| Placeholder | Description |
+|-------------|-------------|
+| `%player%` / `%uuid%` | Player name / UUID |
+| `%check%` | Short name, e.g. `Kill Aura` |
+| `%check_name%` | Internal name, e.g. `MLKillAura` |
+| `%description%` | What the check looks for |
+| `%confidence%` | 0–100 |
+| `%vl%` / `%violations%` | Violations of this check |
+| `%verbose%` | What was measured |
+| `%ping%` / `%version%` / `%brand%` | Ping, client version, client brand |
+| `%tps%` / `%grimml_version%` | Server TPS, GrimML version |
+| `%group%` / `%group_vl%` | Punishments only: group name and its violations |
+| `%commands%` | Punishment webhook only: the commands that ran |
 
-## Contributing
+---
 
-```bash
-mvn clean package               # build + binary format self-check
-mvn clean package -DskipTests   # build only
-```
+## Configuration
 
-- One folder per function, one file per feature.
-- Keep the packet path free of allocations and locks on the hot path.
-- Update `docs/` and [TODO.md](TODO.md) when behaviour changes.
+Main config: `plugins/GrimML/config.yml`
+
+- `alerts` – Format, hover, click command, sound, decay
+- `webhook` – Discord embed, and `webhook.punishments` for the punishment embed
+- `punishments` – Groups, checks, commands per violation count
+- `aim-grid`, `lunge-rate`, `lunge-hold`, `swap-order`, `axe-hold` – Rule check tuning
+- `models` – Auto-update and manifest URL
+- `update-checker` – Plugin release notices
+
+Full technical details: [detector/README.md](detector/README.md).
+
+---
+
+## Beta: read this
+
+The models are trained on a small number of players and recorded fights, so **they can flag legit players**,
+especially very good ones. Use the alerts to decide who to watch and spectate; keep punishments for the ML checks
+off (or high) until the alerts look right on your own server. The rule checks (Instant Lunge, Swap Macro) never
+flagged a legit player in testing.
+
+Found a false flag? Open an issue with the alert (hover text or webhook embed).
+
+---
+
+## For developers
+
+This repository also holds the tools used to build the models:
+
+| Folder | What |
+|--------|------|
+| `detector/` | The GrimML plugin ([technical README](detector/README.md)) |
+| `recorder/` | **grimmlrecorder**, records labelled combat data for training ([README](recorder/README.md)) |
+| `training/` | Python: decode, features, train, publish |
+| `models/` | The published models GrimML downloads |
+
+`mvn clean package` in the root builds both plugins and checks the Java scoring against Python.
+
+---
+
+## Statistics
+
+This plugin uses [bStats](https://bstats.org/plugin/bukkit/grim-ml/35441) to collect anonymous usage statistics
+(server count, Minecraft version, models version, whether punishments and the webhook are on). No player data is
+sent. You can opt out in `plugins/bStats/config.yml`.
+
+---
 
 ## License
 
-- Source code: [MIT](LICENSE)
-- Trained models (`models/`, also bundled in the detector jar and served by auto-update): [CC BY-NC-SA 4.0](models/LICENSE.md). Free to run on any server; no commercial use, including in or for paid clients.
+- **Source code:** [MIT](LICENSE).
+- **Trained models** (`models/`, the copies inside the jar and the ones served by auto-update):
+  [GrimML Model License](models/LICENSE.md). Free to run on any server through the official GrimML plugin.
+  **No paid use, no copying them into other repositories, plugins or services, and no retraining or building other
+  models from them.**

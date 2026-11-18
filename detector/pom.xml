@@ -55,6 +55,13 @@
             <version>${grimapi.version}</version>
             <scope>provided</scope>
         </dependency>
+        <!-- bStats: the only bundled library, relocated below (https://bstats.org/plugin/bukkit/grim-ml/35441) -->
+        <dependency>
+            <groupId>org.bstats</groupId>
+            <artifactId>bstats-bukkit</artifactId>
+            <version>3.2.1</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -125,6 +132,10 @@
                                 <relocation>
                                     <pattern>com.github.retrooper.packetevents</pattern>
                                     <shadedPattern>ac.grim.grimac.shaded.com.github.retrooper.packetevents</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.bstats</pattern>
+                                    <shadedPattern>dev.grimml.detect.libs.bstats</shadedPattern>
                                 </relocation>
                             </relocations>
                         </configuration>

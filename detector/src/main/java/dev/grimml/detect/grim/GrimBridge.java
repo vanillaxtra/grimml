@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  *  - one short chat line with a confidence %, details on hover, to players allowed and opted in,
  *  - an optional sound ping (permission grimml.alerts.sound),
  *  - a Discord webhook laid out exactly like Grim's own (discord.yml),
- *  - optional punishment commands at violation counts.
+ *  - optional punishment commands at violation counts (per group of checks), each also posted to the webhook.
  * Called from the scan thread; chat, sounds and commands run on the main thread, webhooks on their own thread.
  */
 public final class GrimBridge {
@@ -53,8 +53,9 @@ public final class GrimBridge {
             float soundVolume,
             float soundPitch,
             double decayPerMinute,
-            Map<Integer, List<String>> punishments,
-            Webhook webhook
+            List<Punishments.Group> punishments,
+            Webhook webhook,
+            Webhook punishmentWebhook // null = punishments are not posted
     ) {
     }
 
@@ -82,6 +83,8 @@ public final class GrimBridge {
     private final Logger log;
     private final Predicate<Player> receives;
     private final Map<UUID, Map<String, MlCheck>> checks = new ConcurrentHashMap<>();
+    /** Kept when a player leaves, so relogging does not reset punishment counts (they decay instead). */
+    private final Punishments punish = new Punishments();
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
     private final ExecutorService webhookThread = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<>(100), r -> {
@@ -100,6 +103,14 @@ public final class GrimBridge {
 
     public void settings(Settings s) {
         this.settings = s;
+    }
+
+    public List<Punishments.Group> groups() {
+        return settings.punishments();
+    }
+
+    public double groupViolations(UUID player, String group) {
+        return punish.violations(player, group);
     }
 
     public void forget(UUID player) {
@@ -141,7 +152,9 @@ public final class GrimBridge {
                 log.fine("FlagEvent failed: " + t);
             }
         }
-        int vl = (int) Math.round(check.flag(System.currentTimeMillis()));
+        long now = System.currentTimeMillis();
+        int vl = (int) Math.round(check.flag(now));
+        List<Punishments.Fired> fired = s.punishments().isEmpty() ? List.of() : punish.flag(uuid, checkName, s.punishments(), now);
         int pct = (int) Math.round(Math.max(0.0, Math.min(1.0, confidence)) * 100);
 
         Map<String, String> ph = new HashMap<>();
@@ -173,19 +186,43 @@ public final class GrimBridge {
             if (s.consoleAlerts()) {
                 Bukkit.getConsoleSender().sendMessage(msg);
             }
-            List<String> cmds = s.punishments().get(vl);
-            if (cmds != null && check.isEnabled()) {
-                for (String c : cmds) {
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), apply(c, ph, false));
-                }
-            }
             Webhook w = s.webhook();
             String hook = !w.url().isBlank() ? w.url() : (w.useGrimWebhook() ? grimString(api(), "webhook", "") : "");
             if (w.enabled() && hook.startsWith("https://")) {
                 String body = embed(w, ph, verbose);
                 webhookThread.execute(() -> post(hook, body));
             }
+            for (Punishments.Fired f : fired) {
+                Map<String, String> pph = punishmentPlaceholders(ph, f);
+                for (String c : f.commands()) {
+                    String cmd = apply(c, pph, false);
+                    log.info("punishment " + f.group().name() + " at " + f.violations() + " violations: " + cmd);
+                    try {
+                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+                    } catch (Exception e) {
+                        log.warning("punishment command failed: " + cmd + " (" + e.getMessage() + ")");
+                    }
+                }
+                Webhook pw = s.punishmentWebhook();
+                if (pw != null && hook.startsWith("https://")) {
+                    String body = embed(pw, pph, verbose);
+                    webhookThread.execute(() -> post(hook, body));
+                }
+            }
         });
+    }
+
+    /** The alert placeholders plus %group% %group_vl% and %commands% (the commands run, filled in, joined by "; "). */
+    static Map<String, String> punishmentPlaceholders(Map<String, String> ph, Punishments.Fired f) {
+        Map<String, String> out = new HashMap<>(ph);
+        out.put("%group%", f.group().name());
+        out.put("%group_vl%", Integer.toString(f.violations()));
+        List<String> ran = new java.util.ArrayList<>();
+        for (String c : f.commands()) {
+            ran.add(apply(c, out, false));
+        }
+        out.put("%commands%", ran.isEmpty() ? "(none)" : String.join("; ", ran));
+        return out;
     }
 
     private static String nz(String s) {

@@ -22,6 +22,7 @@ permissions:
       grimml.alerts: true
       grimml.alerts.sound: true
       grimml.notify: true
+      grimml.update.notify: true
   grimml.admin:
     description: /grimml status, reload and update
     default: op
@@ -33,6 +34,9 @@ permissions:
     default: op
   grimml.notify:
     description: Be told when new models are downloaded
+    default: op
+  grimml.update.notify:
+    description: Be told on join (once a day) when a new GrimML release is out
     default: op
   grimml.bypass:
     description: Never scanned by any GrimML check
