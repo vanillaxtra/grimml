@@ -24,7 +24,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 11/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 4:51 | m1900082b | notauthorised | amariia | 3 |
 | 11/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 5:15 | m98f0b9c2 | notauthorised | amariia | 3 |
 | 11/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 6:58 | m1cde4c02 | notauthorised | cebbo | 3 |
-| 13/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.90 MISS_CHANCE:2 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 6:09 | m648246aa | notauthorised | bot | 3 |
+| 13/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.90 MISS_CHANCE:2 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 6:09 | m648546aa | notauthorised | bot | 3 |
 | 13/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.80 MISS_CHANCE:5 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 8:15 | m42852fa8 | notauthorised | bot | 3 |
 | 14/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.9 MISS_CHANCE:3 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 10:22 | m4ca53577 | notauthorised | bot | 4 |
 |  |  |  |  |  |  |  |  |
@@ -56,7 +56,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 02/11/26 | Triggerbot | DELAY_MIN_MS:25 DELAY_MAX_MS:50 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:80 COOLDOWN_MAX_PERCENT:100 | 2:49 | m109c3312 | notauthorised | afk alt | 3 |
 | 03/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:94 COOLDOWN_MAX_PERCENT:100 | 4:34 | m70c1ef87 | notauthorised | afk alt | 3 |
 | 13/11/26 | Triggerbot | DELAY_MIN_MS:15 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 2:06 | m3ed146aa | notauthorised | cebbo | 3 |
-| 13/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 5:05 | m52ce330e | notauthorised | bot | 3 |
+| 13/11/26 | Triggerbot | DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 5:05 | m62ce330e | notauthorised | bot | 3 |
 | 13/11/26 | Triggerbot | DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 8:45 | m16f82554 | notauthorised | bot | 3 |
 | 13/11/26 | Triggerbot | DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 9:19 | md8c4ad84 | notauthorised | bot | 3 |
 | 13/11/26 | Triggerbot | DELAY_MIN_MS:30 DELAY_MAX_MS:80 MISS_CHANCE:5 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100 | 6:44 | m45e840bd | notauthorised | bot | 3 |
@@ -203,7 +203,7 @@ For this I have also put this on many different servers as to collect legit play
 | 18/11/26 | Dueling diamondsmp | 10:04 | ma5d4f2d5 | qbicks | cebbo & qbicks | 4 |
 | 18/11/26 | Dueling diamondsmp | 11:48 | mb5401894 | cebbo | qbicks | 4 |
 | 18/11/26 | Dueling diamondsmp | 11:46 | m8c9075f7 | qbicks | cebbo | 4 |
-| 18/11/26 | Dueling diamondsmp | 8:41 | m6de5b30a | cebbo | qbicks | 4 |
+| 18/11/26 | Dueling diamondsmp | 8:41 | m9578757d | cebbo | qbicks | 4 |
 | 18/11/26 | Dueling diamondsmp | 8:41 | m6de5b30a | cebbo | qbicks | 4 |
 | 18/11/26 | Dueling diamondsmp | 13:21 | md0cf19f5 | notauthorised | cebbo | 4 |
 | 18/11/26 | Dueling diamondsmp | 13:24 | m8cfcc3b0 | cebbo | notauthorised | 4 |
