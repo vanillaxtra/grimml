@@ -157,3 +157,28 @@ m9b2c5f40,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:FALSE,1795013518871,17950
 # 2026-11-18 legit duels vs the strong friend, operator account only (CHEATTRAINING lists the friend in By)
 mb30fdc1a,LEGIT_CONFIRMED,,LEGIT,,1795014090871,1795014596871,false,false,"schema 4, duel DiamondSMP vs a friend (8:27); start/end = first/last window"
 m7da6aae9,LEGIT_CONFIRMED,,LEGIT,,1795014834871,1795015428871,false,false,"schema 4, duel DiamondSMP vs a friend (9:55); start/end = first/last window"
+
+# 2026-11-13 Prestige vs the pvp bot, schema 3; logged with a one-digit typo, files match on date and length
+m648546aa,CHEAT,prestige,Kill Aura,HUMANIZED:TRUE REACH:2.90 MISS_CHANCE:2 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100,1794569959551,1794570327551,false,false,"vs the pvp bot (6:09); logged as m648246aa (typo), the files say m648546aa; start/end = first/last window"
+m62ce330e,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100,1794571469551,1794571771551,false,false,"vs the pvp bot (5:05); logged as m52ce330e (typo), the files say m62ce330e; start/end = first/last window"
+
+# 2026-11-16 Prestige Auto Shield Breaker vs the pvp bot, schema 4; start/end = first/last window
+mc653123f,CHEAT,prestige,Auto Shield Breaker,CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:0 BREAK_COOLDOWN_MIN_MS:0,1794856025376,1794856445376,false,false,vs the pvp bot (7:01)
+m88e02374,CHEAT,prestige,Auto Shield Breaker,CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:15 HIT_DELAY_MAX_MS:40 BREAK_COOLDOWN_MAX_MS:500 BREAK_COOLDOWN_MIN_MS:250,1794865061376,1794865391376,false,false,vs the pvp bot (5:32)
+meef9a752,CHEAT,prestige,Auto Shield Breaker,CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:1200 BREAK_COOLDOWN_MIN_MS:900,1794866019376,1794866189376,false,false,vs the pvp bot (2:52)
+m2ebed745,CHEAT,prestige,Auto Shield Breaker,ON_HIT:TRUE,1794867727376,1794868057376,false,false,vs the pvp bot (5:32)
+m5d184039,CHEAT,prestige,Auto Shield Breaker,ON_HIT:TRUE,1794868605376,1794869031376,false,false,vs the pvp bot (7:08)
+mc6c469ee,CHEAT,prestige,Auto Shield Breaker,ON_HIT:TRUE,1794869155376,1794869501376,false,false,vs the pvp bot (5:47)
+
+# 2026-11-18 evening legit duels between friends, schema 4; start/end = first/last window. Overlapping recordings are
+# one fight (same_fight in labels.yaml).
+m83664a11,LEGIT_CONFIRMED,,LEGIT,,1795038115728,1795038571728,false,false,"schema 4, 3-player DiamondSMP fight (7:38); start/end = first/last window"
+m34fa109c,LEGIT_CONFIRMED,,LEGIT,,1795038117728,1795038999728,false,false,"friend account, schema 4, 3-player DiamondSMP fight (14:44); start/end = first/last window"
+ma5d4f2d5,LEGIT_CONFIRMED,,LEGIT,,1795038395728,1795038997728,false,false,"friend account, schema 4, 3-player DiamondSMP fight (10:04); start/end = first/last window"
+mb5401894,LEGIT_CONFIRMED,,LEGIT,,1795039197728,1795039905728,false,false,"friend account, schema 4, duel DiamondSMP between friends (11:48); same fight as m8c9075f7; start/end = first/last window"
+m8c9075f7,LEGIT_CONFIRMED,,LEGIT,,1795039201728,1795039905728,false,false,"friend account, schema 4, duel DiamondSMP between friends (11:46); same fight as mb5401894; start/end = first/last window"
+m6de5b30a,LEGIT_CONFIRMED,,LEGIT,,1795039995728,1795040515728,false,false,"friend account, schema 4, duel DiamondSMP between friends (8:41); start/end = first/last window"
+md0cf19f5,LEGIT_CONFIRMED,,LEGIT,,1795040577728,1795041377728,false,false,"schema 4, duel DiamondSMP vs a friend (13:21); same fight as m8cfcc3b0; start/end = first/last window"
+m8cfcc3b0,LEGIT_CONFIRMED,,LEGIT,,1795040575728,1795041377728,false,false,"friend account, schema 4, duel DiamondSMP vs a friend (13:24); same fight as md0cf19f5; start/end = first/last window"
+m48bdf2df,LEGIT_CONFIRMED,,LEGIT,,1795042419728,1795042933728,false,false,"schema 4, duel DiamondSMP vs a friend (8:34); same fight as mce66011a; start/end = first/last window"
+mce66011a,LEGIT_CONFIRMED,,LEGIT,,1795042417728,1795042933728,false,false,"friend account, schema 4, duel DiamondSMP vs a friend (8:37); same fight as m48bdf2df; start/end = first/last window"
