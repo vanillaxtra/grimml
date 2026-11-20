@@ -55,11 +55,11 @@ the player's recent swaps or hits that matched the cheat's pattern.
 | `grimml.*` | op | everything below except bypass |
 | `grimml.alerts` | op | see alerts in chat |
 | `grimml.alerts.sound` | op | hear a ping with every alert (`alerts.sound`) |
-| `grimml.notify` | op | be told when new models are downloaded |
+| `grimml.notify` | op | be told once when new models are downloaded (on next join if offline) |
 | `grimml.update.notify` | op | be told on join (once a day) when a new GrimML release is on GitHub (`update-checker`) |
 | `grimml.admin` | op | status, reload, update |
 | `grimml.bypass` | nobody | never scanned by any check |
-| `grimml.bypass.<check>` | nobody | never flagged by one check: `mlkillaura`, `mlaimassist`, `mltriggerbot`, `mlsilentaim`, `aimgrid`, `lungerate`, `lungehold`, `swaporder`, `axehold` (`grimml.bypass.*` = all) |
+| `grimml.bypass.<check>` | nobody | never flagged by one check: `mlkillaura`, `mlaimassist`, `mltriggerbot`, `mlsilentaim`, `aimgrid`, `lungerate`, `lungehold`, `swaporder`, `axehold`, `stunrepeat`, `slamrepeat`, `webrepeat` (`grimml.bypass.*` = all) |
 
 Creative/spectator and Floodgate (Bedrock) players are skipped.
 
@@ -71,8 +71,15 @@ Creative/spectator and Floodgate (Bedrock) players are skipped.
    (last 160 frames + attacks), computes the 13 features and scores every enabled model. Nothing runs on the main thread
    except a tick counter and sending chat.
 3. A window counts as flagged when its score passes the model's window threshold (5% of legit windows).
-4. A **fight** is flagged when at least 10 windows were scored and the flagged share reaches `alert_share`, which is set
-   above every legit fight seen in testing. Then the count restarts, so a long fight can flag again.
+4. A **fight** is judged once per block of 120 windows (4 min of fighting) and once when it ends (20 s without a
+   scored window). It is flagged when that stretch has at least 20 windows and its flagged share reaches
+   `alert_share`, which is set above every legit fight seen in testing. Judging whole stretches is how training
+   measures a fight; re-testing after every window (GrimML before 1.1.0) gave long legit fights a new chance to cross
+   the line every 2 s. `scan.fight-block-windows` and `scan.fight-min-windows` in `config.yml`.
+   **Early alert:** after 10 windows (~20 s) a fight is flagged at once if it is clearly over the line: the low end
+   of its share's confidence interval (Wilson, z = 3) already reaches `alert_share`. Then that block is not judged
+   again. On recorded fights this flags most cheaters in 20-30 s instead of 4 min with no extra legit alerts.
+   `scan.early-alert-z` (0 turns it off) and `scan.early-alert-min-windows`.
 
 The Java feature code and model reader are checked against Python on real windows every build
 (`ParitySelfCheck`: features within 1e-9, scores identical).
@@ -126,18 +133,52 @@ because a lunge-only player never sends an attack. One `LungeRate` object per pl
 | `LungeRate` | gaps between swap-lunges in [`min-ms`, `fast-ms`) | 6 within 30 s, 75-300 ms | fastest gap 345 ms (3 sessions, 2 players), 0 alerts | 100-250 ms apart, alerted in all 7 sessions |
 | `LungeHold` | spear held exactly one client tick | 5 of the last 10 swap-lunges | 2 of 182 (1.1%), 0 alerts | 0-0: 100%, 20-70: 63%, 30-90: 34% / 0% |
 | `SwapOrder` | a hotbar swap after an attack or STAB in the same client tick (vanilla sends hotbar changes first) | 2 within 60 s | 0 in ~1400 hits and swaps | rare for Prestige; any client doing the chain inside one tick does it every lunge |
-| `AxeHold` | swap away from the axe one client tick after the last axe hit (Auto Shield Breaker) | 6 of the last 10 axe holds | 3-8% of ~220 fast hand stuns on a shielding bot, 0 alerts | Prestige 63-98% (6 sessions, 6-17 alerts each); Grim (2 ticks) not caught |
+| `AxeHold` (**off by default**) | swap away from the axe one client tick after the last axe hit (Auto Shield Breaker) | 6 of the last 10 axe holds | 3-8% of ~220 fast hand stuns on a shielding bot, 0 alerts; but strong players in real duels 86-95%, 6-9 alerts per fight | Prestige 63-98% (6 sessions, 6-17 alerts each); Grim (2 ticks) not caught |
 
 LungeHold, SwapOrder and AxeHold need client ticks (1.21.2+ clients); older clients are skipped by those. Settings:
 the `lunge-rate`, `lunge-hold`, `swap-order` and `axe-hold` sections of `config.yml`. Calibrated with training `spearmace.LiveLunge`
 (same code) replayed over every recorded session; the Java port is checked against Python on every build
 (`live_lunge.txt`).
 
+## Combo repeat checks: StunRepeat, SlamRepeat, WebRepeat (no model needed)
+
+Every axe combo a player does is written down as the client ticks between its steps (its timing signature):
+
+| check | combo | signature |
+|---|---|---|
+| `StunRepeat` | swap to the axe, axe hit, swap to another weapon, follow-up hit on the same target | swap-in → hit, hit → swap away, swap away → follow-up (none if no hit within 500 ms) |
+| `SlamRepeat` | axe hit, swap to the mace, mace hit on the same target within 500 ms (stun slam) | swap-in (none if already holding the axe), hit → mace swap, mace swap → mace hit |
+| `WebRepeat` | axe hit, swap to cobwebs, cobweb placed within 1 s (stun web) | swap-in (or none), hit → cobweb swap, cobweb swap → place |
+
+By hand the same chain lands on different ticks from one combo to the next; a macro or a cheat with fixed delays
+repeats it exactly. A check alerts when `combo-repeat.count` (8) combos of its kind among the last
+`combo-repeat.of` (10) have exactly the same signature; the alert shows that signature, e.g. *80% of the last 10
+stun slams identical to the tick: swap-in none, swap away 1t, mace hit 0t*. The swap away must come within 1 s of the
+axe hit. Needs client ticks (1.21.2+ clients). Settings: the `combo-repeat` section of `config.yml`.
+
+Replayed over every recorded fight (training `spearmace.LiveCombo`, same code):
+
+| check | default | legit (recorded) | cheat (recorded) |
+|---|---|---|---|
+| `WebRepeat` | on | at most 43% of one player's webs identical (~15 sessions, 12-40 webs each), 0 alerts | no recordings (UNVERIFIED) |
+| `StunRepeat` | **off** | strong players: 86-95% of stuns are swap+hit in one tick, swap away the next (2-6 alerts per fight) | Prestige Auto Shield Breaker 95-98% the same pattern, Grim Kill Aura stun 67-79% |
+| `SlamRepeat` | **off** | 6 slams in one fight, 4 identical | no recordings with client ticks (UNVERIFIED) |
+
+A stun is too short to tell a fast hand from a macro: both land on the 0-1 tick floor every time. Adding the gap from
+the previous hit to the signature breaks the cheats' repetition as well (11-29%), so it does not help.
+The Java port is checked against Python (`spearmace.LiveCombo`) on every build (`live_combo.txt`).
+
 ## Update checker and bStats
 
-On start, and when someone with `grimml.update.notify` joins (re-checked at most hourly), GrimML asks GitHub for the
-latest release of `vanillaxtra/grimml` off the main thread. A newer tag prints a console banner and gives those
-players a clickable download link once a day. `update-checker: false` turns it off.
+On start, and when someone with `grimml.update.notify` joins (re-checked at most hourly), GrimML asks Modrinth
+(project `grimml`) and GitHub (`vanillaxtra/grimml`) for their newest release, in parallel and off the main thread.
+A newer version prints a console banner and gives those players a clickable download link once a day. The link is
+Modrinth's whenever Modrinth has that version; GitHub is only offered when Modrinth does not have it yet.
+`update-checker: false` turns it off.
+
+**Model updates:** every `models.check-every-minutes` GrimML fetches the manifest and switches to a newer model set
+(sha256-checked). Everyone with `grimml.notify` is told once per update: in chat at once if online, otherwise the
+next time they join, also after a restart (`plugins/GrimML/model-notices.yml`).
 
 bStats id [35441](https://bstats.org/plugin/bukkit/grim-ml/35441), shaded and relocated to
 `dev.grimml.detect.libs.bstats`. Custom charts: models version, punishments on/off, webhook on/off. Opt out in

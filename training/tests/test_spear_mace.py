@@ -278,3 +278,76 @@ def test_axe_hold_hand_speed_and_no_hit_never_alert():
     assert _replay(no_hit)[0] == []
     no_ct = [dict(a, ct=0) for a in _axe_holds([1] * 20)]                     # pre-1.21.2 clients
     assert _replay(no_ct)[0] == []
+
+
+# ---------------------------------------------------------------- live combo repeat (StunRepeat, SlamRepeat, WebRepeat)
+
+def _combo(kind, start_ms, gaps, ct0, target=7):
+    """One combo: swap-in (gaps[0] ticks before the axe hit, None = no swap-in), axe hit, swap away (gaps[1] ticks
+    later), follow-up (gaps[2] ticks after the swap away). 50 ms per tick."""
+    from grimml_train.features.spearmace import COBWEB, MACE, PLACE
+    acts, ct, t = [], ct0, start_ms
+    if gaps[0] is not None:
+        acts.append({"k": 1, "n": int(t * MS), "to": AXE, "from": SWORD, "ct": ct})
+        ct += gaps[0]
+        t += gaps[0] * 50
+    acts.append({"k": 2, "n": int(t * MS), "ct": ct, "cat": AXE, "target": target})
+    ct += gaps[1]
+    t += gaps[1] * 50
+    to = {"stun": SWORD, "slam": MACE, "web": COBWEB}[kind]
+    acts.append({"k": 1, "n": int(t * MS), "to": to, "from": AXE, "ct": ct})
+    ct += gaps[2]
+    t += gaps[2] * 50
+    if kind == "web":
+        acts.append({"k": PLACE, "n": int(t * MS), "ct": ct})
+    else:
+        acts.append({"k": 2, "n": int(t * MS), "ct": ct, "cat": MACE if kind == "slam" else SWORD, "target": target})
+    return acts
+
+
+def _combos(kind, gap_list, **kw):
+    from grimml_train.features.spearmace import LiveCombo
+    acts = []
+    for i, g in enumerate(gap_list):
+        acts += _combo(kind, 1000.0 + i * 3000, g, 100 + i * 60)
+    c = LiveCombo(**kw)
+    return [b for b in (c.feed(a) for a in acts) if b], c
+
+
+def test_live_combo_identical_slams_alert():
+    from grimml_train.features.spearmace import SLAM
+    bits, c = _combos("slam", [(None, 1, 1)] * 10)
+    assert bits == [SLAM] and c.sig[SLAM] == (-1, 1, 1) and c.share[SLAM] == 1.0
+
+
+def test_live_combo_identical_webs_and_stuns_alert():
+    from grimml_train.features.spearmace import STUN, WEB
+    assert _combos("web", [(2, 1, 2)] * 8)[0] == [WEB]
+    bits, c = _combos("stun", [(3, 1, 2)] * 9)    # the 9th stun's follow-up closes it: 8 identical by then
+    assert bits == [STUN] and c.combos[STUN] == 9
+
+
+def test_live_combo_varied_hand_timing_does_not_alert():
+    import itertools
+    hand = list(itertools.islice(itertools.cycle([(2, 2, 1), (3, 2, 2), (2, 3, 1), (4, 2, 3), (2, 2, 2)]), 60))
+    for kind in ("stun", "slam", "web"):
+        assert _combos(kind, hand)[0] == []
+
+
+def test_live_combo_stun_needs_swap_in_and_client_ticks():
+    assert _combos("stun", [(None, 1, 1)] * 20)[0] == []      # holding the axe and swapping to the sword
+    from grimml_train.features.spearmace import LiveCombo
+    acts = []
+    for i in range(20):
+        acts += [dict(a, ct=0) for a in _combo("slam", 1000.0 + i * 3000, (None, 1, 1), 0)]
+    c = LiveCombo()
+    assert [b for b in (c.feed(a) for a in acts) if b] == [] and c.combos == {1: 0, 2: 0, 4: 0}
+
+
+def test_live_combo_slam_needs_mace_hit_on_same_target_in_time():
+    from grimml_train.features.spearmace import LiveCombo
+    acts = []
+    for i in range(10):
+        acts += _combo("slam", 1000.0 + i * 3000, (None, 1, 20), 100 + i * 60)   # mace hit 1 s later: too slow
+    c = LiveCombo()
+    assert [b for b in (c.feed(a) for a in acts) if b] == [] and c.combos[2] == 0

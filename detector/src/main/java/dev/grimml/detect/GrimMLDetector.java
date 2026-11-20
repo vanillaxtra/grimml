@@ -37,7 +37,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Live ML checks for Grim. Threads:
+ * Live ML checks for Grim. Threads: 
  *  - netty (PacketTap): copies a few numbers per packet into the player's ring,
  *  - "GrimML-scan": features + model scoring every scan interval,
  *  - "GrimML-update": model downloads,
@@ -66,6 +66,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
     private PacketListenerCommon tap;
     private ScheduledExecutorService scanExec;
     private ScheduledExecutorService updateExec;
+    private dev.grimml.detect.update.ModelNotices modelNotices;
 
     @Override
     public void onEnable() {
@@ -75,6 +76,8 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
 
         store = new ModelStore(getDataFolder().toPath().resolve("models"), getLogger());
         store.loadLocal();
+        modelNotices = new dev.grimml.detect.update.ModelNotices(this,
+                () -> GrimBridge.colour(getConfig().getString("alerts.prefix", "&bGrimML &8»")));
         grim = new GrimBridge(this, bridgeSettings(),
                 p -> p.hasPermission("grimml.alerts") && !alertsOff.contains(p.getUniqueId()));
         scanner = new Scanner(tracks, exempt, store::current, (id, check, description, confidence, verbose) -> {
@@ -169,11 +172,13 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         return t;
     }
 
+    /** Background thread. A newer set is told to staff with grimml.notify once each (now, or when they next join). */
     private void checkForModels() {
+        int before = store.current().version();
         store.update(getConfig().getString("models.manifest-url", ""), set ->
                 Bukkit.getScheduler().runTask(this, () -> {
                     getLogger().info("Now detecting with models v" + set.version());
-                    notifyStaff("&7Now detecting with models &fv" + set.version() + "&7.");
+                    modelNotices.updated(before, set.version());
                 }));
     }
 
@@ -193,7 +198,9 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 c.getBoolean("lunge-hold.enabled", true), c.getInt("lunge-hold.count", 5), c.getInt("lunge-hold.of", 10),
                 c.getBoolean("swap-order.enabled", true), c.getInt("swap-order.count", 2),
                 c.getDouble("swap-order.window-ms", 60_000.0),
-                c.getBoolean("axe-hold.enabled", true), c.getInt("axe-hold.count", 6), c.getInt("axe-hold.of", 10),
+                c.getBoolean("axe-hold.enabled", false), c.getInt("axe-hold.count", 6), c.getInt("axe-hold.of", 10),
+                c.getBoolean("combo-repeat.stun", false), c.getBoolean("combo-repeat.slam", false),
+                c.getBoolean("combo-repeat.web", true), c.getInt("combo-repeat.count", 8), c.getInt("combo-repeat.of", 10),
                 c.getLong("lunge-rate.alert-cooldown-ms", 15_000L));
     }
 
@@ -201,7 +208,11 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         return new Scanner.Settings(frameCap,
                 getConfig().getInt("scan.min-attacks", 2),
                 getConfig().getInt("scan.min-frames", 40),
-                getConfig().getLong("scan.fight-gap-ms", 20_000L));
+                getConfig().getLong("scan.fight-gap-ms", 20_000L),
+                getConfig().getInt("scan.fight-block-windows", 120),
+                getConfig().getInt("scan.fight-min-windows", 20),
+                getConfig().getDouble("scan.early-alert-z", 3.0),
+                getConfig().getInt("scan.early-alert-min-windows", 10));
     }
 
     private GrimBridge.Settings bridgeSettings() {
@@ -332,16 +343,6 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                         "**Client Version**: %version%", "**Ping**: %ping%"));
     }
 
-    /** Staff with grimml.notify see model updates. */
-    private void notifyStaff(String text) {
-        var msg = GrimBridge.colour(getConfig().getString("alerts.prefix", "&bGrimML &8»") + " " + text);
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            if (p.hasPermission("grimml.notify")) {
-                p.sendMessage(msg);
-            }
-        }
-    }
-
     /** Every check name this server can flag: the loaded models plus the rule checks. */
     private List<String> allChecks() {
         List<String> out = new ArrayList<>();
@@ -453,6 +454,9 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         if (n.equals("MACE")) {
             return PlayerTrack.CAT_MACE;
         }
+        if (n.equals("COBWEB")) {
+            return PlayerTrack.CAT_COBWEB; // stun web (WebRepeat); no feature looks at it
+        }
         return n.equals("SHIELD") ? PlayerTrack.CAT_SHIELD : 0;
     }
 
@@ -558,7 +562,8 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 }
                 Scanner.GridSettings g = gridSettings();
                 Scanner.LungeSettings l = lungeSettings();
-                boolean[] on = {g.enabled(), l.rateEnabled(), l.holdEnabled(), l.orderEnabled(), l.axeEnabled()};
+                boolean[] on = {g.enabled(), l.rateEnabled(), l.holdEnabled(), l.orderEnabled(), l.axeEnabled(),
+                        l.stunEnabled(), l.slamEnabled(), l.webEnabled()};
                 List<String> rules = new ArrayList<>(List.of(Scanner.GridSettings.CHECK));
                 rules.addAll(List.of(Scanner.LungeSettings.CHECKS));
                 for (int i = 0; i < rules.size(); i++) {

@@ -68,6 +68,7 @@ def main() -> None:
     export_schema4()
     export_live()
     export_lunge()
+    export_combo()
 
 
 # schema 4 sessions for the schema 4 feature parity (add legit and other modules here as they are recorded)
@@ -285,3 +286,43 @@ def export_lunge() -> None:
         lines.append(f"N|{g.lunges},{g.order_total}")
         print(f"lunge stream {m}: {len(seq)} events, {g.lunges} swap-lunges, {len(alerts)} alerts")
     (OUT / "live_lunge.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+# live combo repeat checks (StunRepeat, SlamRepeat, WebRepeat): swap / hit / place streams replayed through Python
+# LiveCombo; the detector replays the same events through ComboRepeat and must return the same alert bits.
+COMBO_MARKS = ["md5c80410", "m83664a11", "m34fa109c", "m2ebed745", "m88e02374"]  # stuns (legit, cheat), webs
+COMBO_ACTIONS = 4000
+
+
+def export_combo() -> None:
+    from grimml_train.features.spearmace import HIT, PLACE, SWAP, LiveCombo, combo_actions
+
+    lines = ["# live combo streams: E|kind,nanos,x,y,clientTick (1 swap: to,from; 2 hit: cat,target; 4 place: 0,0) ... "
+             "then A|nanos:bits per alert, N|stuns,slams,webs"]
+    for m in COMBO_MARKS:
+        seen: dict[tuple, dict] = {}
+        for p in sorted(f.path for f in os.scandir(FOLDER) if f"_{m}_" in f.name):
+            for a in combo_actions(decode_file(Path(p))["events"]):
+                if a["k"] in (SWAP, HIT, PLACE):
+                    seen[(a["n"], a["k"], a.get("to"), a.get("target"))] = a
+        seq = [seen[k] for k in sorted(seen, key=lambda k: k[0])][:COMBO_ACTIONS]
+        if not seq:
+            continue
+        g = LiveCombo()
+        alerts = []
+        for a in seq:
+            bits = g.feed(a)
+            if bits:
+                alerts.append(f"{a['n']}:{bits}")
+
+        def xy(a: dict) -> str:
+            if a["k"] == SWAP:
+                return f"{a['to']},{a['from']}"
+            if a["k"] == HIT:
+                return f"{a['cat']},{a['target']}"
+            return "0,0"
+        lines.append("E|" + ";".join(f"{a['k']},{a['n']},{xy(a)},{a.get('ct') or 0}" for a in seq))
+        lines.append("A|" + ",".join(alerts))
+        lines.append(f"N|{g.combos[1]},{g.combos[2]},{g.combos[4]}")
+        print(f"combo stream {m}: {len(seq)} events, combos {g.combos}, {len(alerts)} alerts")
+    (OUT / "live_combo.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")

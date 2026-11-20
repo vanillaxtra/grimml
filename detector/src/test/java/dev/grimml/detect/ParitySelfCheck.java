@@ -93,6 +93,7 @@ public final class ParitySelfCheck {
         schema4(fixture.resolveSibling("windows4.txt"), byCheck);
         live(fixture.resolveSibling("live_grid.txt"));
         lunge(fixture.resolveSibling("live_lunge.txt"));
+        combo(fixture.resolveSibling("live_combo.txt"));
         System.out.printf("parity: %d windows, %d scores match Python (worst feature diff %.1e, worst score diff %.1e)%n",
                 windows, scores, worstFeat, worstScore);
     }
@@ -277,6 +278,47 @@ public final class ParitySelfCheck {
             streams++;
         }
         System.out.printf("parity: live lunge checks match Python on %d streams (%d events, %d alerts)%n", streams, events, alerts);
+    }
+
+    /** Live combo repeat checks: the same swap / hit / place streams must return the same alert bits on the same events. */
+    private static void combo(Path file) throws Exception {
+        if (!Files.exists(file)) {
+            System.out.println("parity: no live combo fixture; skipped");
+            return;
+        }
+        List<String> lines = Files.readAllLines(file);
+        int streams = 0, alerts = 0, events = 0;
+        for (int li = 0; li < lines.size(); li++) {
+            if (!lines.get(li).startsWith("E|")) {
+                continue;
+            }
+            String exp = lines.get(li + 1).substring(2);
+            String expN = lines.get(li + 2).substring(2);
+            var r = new dev.grimml.detect.features.ComboRepeat();
+            StringBuilder got = new StringBuilder();
+            for (String e : lines.get(li).substring(2).split(";")) {
+                String[] v = e.split(",");
+                long n = Long.parseLong(v[1]);
+                int x = Integer.parseInt(v[2]), y = Integer.parseInt(v[3]), ct = Integer.parseInt(v[4]);
+                int bits = switch (v[0]) {
+                    case "1" -> r.swap(n, x, y, ct);
+                    case "2" -> r.hit(n, ct, x, y);
+                    default -> r.place(n, ct);
+                };
+                if (bits != 0) {
+                    got.append(got.length() == 0 ? "" : ",").append(n).append(':').append(bits);
+                    alerts++;
+                }
+                events++;
+            }
+            String gotN = r.combos(1) + "," + r.combos(2) + "," + r.combos(4);
+            if (!got.toString().equals(exp) || !gotN.equals(expN)) {
+                throw new AssertionError("live combo stream " + streams + " differs: python [" + exp + "] " + expN
+                        + " java [" + got + "] " + gotN);
+            }
+            streams++;
+        }
+        System.out.printf("parity: live combo checks match Python on %d streams (%d events, %d alerts)%n", streams, events, alerts);
     }
 
     private static int[] ints(String s) {

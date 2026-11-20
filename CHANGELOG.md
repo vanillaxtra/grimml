@@ -16,7 +16,10 @@ First public release.
 - **ML checks** (LightGBM, scored off the main thread every 2 s on the last 8 s of a fight): Kill Aura, Aim Assist,
   Triggerbot, Silent Aim. A fight is flagged only when enough of its windows look like cheating.
 - **Rule checks**: AimGrid (off-grid mouse rotation toward the opponent), Instant Lunge (`LungeRate`, `LungeHold`),
-  Swap Macro (`SwapOrder`), Auto Shield Breaker (`AxeHold`).
+  Swap Macro (`SwapOrder`), Auto Shield Breaker (`AxeHold`), and combo repeat checks (`StunRepeat`, `SlamRepeat`,
+  `WebRepeat`): the same stun, stun slam or stun web timed to the client tick again and again (macros).
+  `AxeHold`, `StunRepeat` and `SlamRepeat` are off by default: strong players stun on the same tick pattern as the
+  cheat.
 - **Alerts** through Grim: one line with a confidence %, hover details, click to teleport, sound for
   `grimml.alerts.sound`, `/grimml alerts` toggle. Grim's `FlagEvent` is fired, so other Grim add-ons see GrimML flags.
 - **Discord webhook** laid out like Grim's own, using Grim's webhook URL by default.
@@ -25,7 +28,9 @@ First public release.
   the counts.
 - **Model auto-update**: new models are downloaded from this repository, checked with sha256 and switched in without
   a restart. A broken download keeps the old models running.
-- **Update checker** for new GrimML releases (console and `grimml.update.notify`, at most once a day).
+- **Update checker** for new GrimML releases on Modrinth and GitHub (console and `grimml.update.notify`, at most once a
+  day). The download link is Modrinth's whenever Modrinth has the newest version.
+- Staff with `grimml.notify` are told about a model update once each: at once if online, else when they next join.
 - **bStats** (plugin id 35441): models version, punishments on/off, webhook on/off.
 - `config-version` in `config.yml`, with a startup warning when the file is older than the plugin.
 - `training/`: the `grimml-train` command (`train`, `loco`, `publish`, `parity`, `sessions`, `modules`), one module
@@ -35,6 +40,11 @@ First public release.
 
 ### Changed
 
+- ML checks judge a fight once per 4-minute block and once when it ends, instead of re-testing it after every
+  window. Long legit fights no longer cross the alert line by chance (`scan.fight-block-windows`,
+  `scan.fight-min-windows`).
+- A fight that is clearly over the line is flagged early, after ~20 s of fighting, instead of waiting for the block
+  to end (`scan.early-alert-z`, `scan.early-alert-min-windows`).
 - Models are under the [GrimML Model License](models/LICENSE.md): free to run through the official plugin on any
   server, no paid use, redistribution or derived models. Models published before this (models v9 and earlier) keep
   the license they were published with.

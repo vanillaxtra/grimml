@@ -66,16 +66,19 @@ public final class GrimBridge {
     }
 
     /** Short names people understand, shown instead of the internal check name. */
-    private static final Map<String, String> FRIENDLY = Map.of(
-            "MLKillAura", "Kill Aura",
-            "MLAimAssist", "Aim Assist",
-            "MLTriggerbot", "Triggerbot",
-            "MLSilentAim", "Silent Aim",
-            "AimGrid", "Aim Assist",
-            "LungeRate", "Instant Lunge",
-            "LungeHold", "Instant Lunge",
-            "SwapOrder", "Swap Macro",
-            "AxeHold", "Shield Breaker");
+    private static final Map<String, String> FRIENDLY = Map.ofEntries(
+            Map.entry("MLKillAura", "Kill Aura"),
+            Map.entry("MLAimAssist", "Aim Assist"),
+            Map.entry("MLTriggerbot", "Triggerbot"),
+            Map.entry("MLSilentAim", "Silent Aim"),
+            Map.entry("AimGrid", "Aim Assist"),
+            Map.entry("LungeRate", "Instant Lunge"),
+            Map.entry("LungeHold", "Instant Lunge"),
+            Map.entry("SwapOrder", "Swap Macro"),
+            Map.entry("AxeHold", "Shield Breaker"),
+            Map.entry("StunRepeat", "Stun Macro"),
+            Map.entry("SlamRepeat", "Stun Slam"),
+            Map.entry("WebRepeat", "Stun Web"));
 
     private static final String BACKTICK_REPLACEMENT = "ˋ"; // Grim's default backtick-replacement-char
 

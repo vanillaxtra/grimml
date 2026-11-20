@@ -19,7 +19,7 @@ public final class PlayerTrack {
     // live flags
     public static final int L_SPRINT = 1, L_SNEAK = 2, L_BLOCKING = 4, L_GLIDING = 8, L_USING = 16;
     // item categories (the recorder's ItemCategories numbers that the features look at)
-    public static final int CAT_AXE = 2, CAT_MACE = 3, CAT_SPEAR = 4, CAT_SHIELD = 8;
+    public static final int CAT_AXE = 2, CAT_MACE = 3, CAT_SPEAR = 4, CAT_SHIELD = 8, CAT_COBWEB = 15;
     /** Digging action STAB (spear jab), written as a BREAK event like the recorder does. */
     public static final int DIG_STAB = 8;
 

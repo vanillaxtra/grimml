@@ -12,10 +12,9 @@ Legend: ⬜ todo · 🔶 partial / needs verifying · 👤 you (servers, account
 
 ### Blockers: the release looks broken or untrustworthy without these
 
-- [ ] ⬜ **False flags: judge each fight once.** `Scanner` re-tests `share >= alertShare` after every window from window
-  10 on (`detector/.../scan/Scanner.java:228`), but training measures the share once per whole fight. Re-testing on
-  every window keeps rolling the dice, so long legit fights eventually cross the line (28 live alerts on 5 legit
-  players). Fix: decide at fight end or in fixed ~30-window blocks, minimum ~20 windows. Then retrain and republish.
+- [x] **False flags: judge each fight once.** `Scanner` now judges a fight once per 120-window block and once when it
+  ends (min 20 windows), the way training measures it (`scan/Fight.java`, `FightSelfCheck`). 🔶 Check the alert rate
+  on the live server after updating.
 - [ ] 👤 **Record the falsely flagged players as legit** on that server and add them to `training/config/sessions.csv`
   (different server, Lunar/Fabric 1.21.11: the training data has none of that).
 - [ ] 👤 Spectate the player flagged AimAssist 98% + AimGrid before treating that one as a false flag.
@@ -66,6 +65,8 @@ Legend: ⬜ todo · 🔶 partial / needs verifying · 👤 you (servers, account
   - [ ] social preview image
   - [ ] protect `main`
 - [ ] 👤 List on **Modrinth / Hangar / SpigotMC** with the README text and GIFs.
+  The Modrinth project slug must be `grimml` (the update checker looks it up by that name; change
+  `MODRINTH_SLUG` in `update/UpdateChecker.java` if it differs). Use the same version numbers as the GitHub tags.
 - [ ] 👤 Commit messages: follow CONTRIBUTING (`area: message`). Avoid strings of "Update CHEATTRAINING.md".
 
 ### Later: engineering polish

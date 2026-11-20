@@ -454,3 +454,146 @@ class LiveLunge:
     @property
     def recent_fast(self) -> int:
         return len(self.fast)
+
+
+# ---------------------------------------------------------------- live combo repeat checks (detector rules)
+
+COBWEB = 15
+PLACE = 4  # combo_actions kind: a block place
+STUN, SLAM, WEB = 1, 2, 4  # LiveCombo alert bits
+COMBO_SWAP_IN_MS = 500.0   # a swap to the axe at most this long before the axe hit is the stun's swap-in
+COMBO_OUT_MS = 1000.0      # the swap away from the axe must come this soon after the axe hit
+COMBO_HIT_MS = 500.0       # the follow-up hit (stun) or mace hit (slam) at most this long after the axe hit / swap
+COMBO_PLACE_MS = 1000.0    # the cobweb place at most this long after the swap to the cobweb
+
+
+def combo_actions(events: list[dict]) -> list[dict]:
+    """actions() plus block places (kind PLACE), in event order. Kept apart from actions() so the features, which look
+    at the next non-swap action, do not see places."""
+    out = []
+    for e in events:
+        if e.get("event_type") == "block_place":
+            out.append({"k": PLACE, "n": e["nanos"], "ct": e.get("client_tick") or 0})
+        else:
+            out.extend(actions([e]))
+    return out
+
+
+class LiveCombo:
+    """The detector's combo repeat checks, event by event (Java: dev.grimml.detect.features.ComboRepeat).
+
+    A combo starts with a hit with the axe and ends with the swap away from it plus what follows:
+      * STUN (StunRepeat): axe swapped in, axe hit, swapped to another weapon, follow-up hit on the same target
+      * SLAM (SlamRepeat): axe hit, swapped to the mace, mace hit on the same target (stun slam)
+      * WEB (WebRepeat): axe hit, swapped to cobwebs, cobweb placed (stun web)
+    Each combo is written down as the client ticks between its steps (its signature): swap-in -> axe hit, axe hit ->
+    swap away, swap away -> follow-up (hit, mace hit or place); -1 where a step is missing (no swap-in for a slam or
+    web, no follow-up hit for a stun). A hand never does the same chain to the tick every time; a macro with fixed
+    delays does. `count` combos of one kind sharing one signature among that kind's last `of` alert, and that kind's
+    list restarts. A stun needs the swap-in (holding an axe and swapping to a sword is not a stun).
+
+    Needs client ticks (1.21.2+ clients, ct > 0): combos with a step at ct 0 are not written down. Cobwebs are known
+    from the swap (the last hotbar swap went to cobwebs). All times are integer nanoseconds, so Python and Java agree.
+    """
+
+    def __init__(self, count: int = 8, of: int = 10):
+        self.count = int(count)
+        self.of = max(1, int(of))
+        self.lists: dict[int, list[tuple]] = {STUN: [], SLAM: [], WEB: []}
+        self.share = {STUN: 0.0, SLAM: 0.0, WEB: 0.0}   # top signature share at the last alert of each kind
+        self.sig = {STUN: (), SLAM: (), WEB: ()}         # that signature
+        self.combos = {STUN: 0, SLAM: 0, WEB: 0}
+        self.swap_to, self.swap_ns, self.swap_ct = -1, 0, 0
+        self.stage = 0           # 0 none, 1 after the axe hit, 2 wait follow-up hit, 3 wait mace hit, 4 wait place
+        self.in_ct = -1          # swap-in client tick (-1 none)
+        self.axe_ns = self.axe_ct = self.target = 0
+        self.out_ns = self.out_ct = 0
+
+    def _add(self, kind: int, sig: tuple | None) -> int:
+        self.stage = 0
+        if sig is None:
+            return 0
+        self.combos[kind] += 1
+        lst = self.lists[kind]
+        lst.append(sig)
+        if len(lst) > self.of:
+            lst.pop(0)
+        c = Counter(lst)
+        top = min(c, key=lambda s: (-c[s], lst.index(s)))
+        if c[top] >= self.count:
+            self.share[kind] = c[top] / len(lst)
+            self.sig[kind] = top
+            lst.clear()
+            return kind
+        return 0
+
+    def _gaps(self, end_ct: int) -> tuple | None:
+        """(swap-in -> axe hit, axe hit -> swap away, swap away -> end) in client ticks, or None at ct 0."""
+        if self.axe_ct == 0 or self.out_ct == 0 or end_ct == 0 or self.in_ct == 0:
+            return None
+        return (self.axe_ct - self.in_ct if self.in_ct > 0 else -1, self.out_ct - self.axe_ct,
+                end_ct - self.out_ct if end_ct > 0 else -1)
+
+    def _close_stun(self) -> int:
+        """A pending stun with no follow-up hit: written down with -1 for the follow-up."""
+        return self._add(STUN, self._gaps(-1))
+
+    def swap(self, nanos: int, to_cat: int, from_cat: int = -1, ct: int = 0) -> int:
+        nanos, ct = int(nanos), int(ct)
+        out = 0
+        if self.stage == 1:
+            if from_cat == AXE and nanos - self.axe_ns <= int(COMBO_OUT_MS * 1e6):
+                self.out_ns, self.out_ct = nanos, ct
+                self.stage = 3 if to_cat == MACE else 4 if to_cat == COBWEB else 2 if self.in_ct >= 0 else 0
+            else:
+                self.stage = 0
+        elif self.stage == 2:
+            out |= self._close_stun()
+        else:
+            self.stage = 0
+        self.swap_to, self.swap_ns, self.swap_ct = to_cat, nanos, ct
+        return out
+
+    def hit(self, nanos: int, ct: int = 0, cat: int = 0, target: int = 0) -> int:
+        nanos, ct = int(nanos), int(ct)
+        out = 0
+        if self.stage == 2:
+            if cat != AXE and target == self.target and nanos - self.out_ns <= int(COMBO_HIT_MS * 1e6):
+                return self._add(STUN, self._gaps(ct))
+            out |= self._close_stun()
+        elif self.stage == 3:
+            ok = cat == MACE and target == self.target and nanos - self.axe_ns <= int(COMBO_HIT_MS * 1e6)
+            self.stage = 0
+            if ok:
+                return self._add(SLAM, self._gaps(ct))
+        else:
+            self.stage = 0
+        if cat == AXE:
+            swapped_in = self.swap_to == AXE and nanos - self.swap_ns <= int(COMBO_SWAP_IN_MS * 1e6)
+            self.in_ct = self.swap_ct if swapped_in else -1
+            self.axe_ns, self.axe_ct, self.target = nanos, ct, target
+            self.stage = 1
+        return out
+
+    def place(self, nanos: int, ct: int = 0) -> int:
+        nanos, ct = int(nanos), int(ct)
+        if self.stage == 4:
+            ok = self.swap_to == COBWEB and nanos - self.out_ns <= int(COMBO_PLACE_MS * 1e6)
+            self.stage = 0
+            return self._add(WEB, self._gaps(ct)) if ok else 0
+        if self.stage == 2:
+            return self._close_stun()
+        if self.stage != 1:  # placing while holding the axe keeps the axe hit
+            self.stage = 0
+        return 0
+
+    def feed(self, a: dict) -> int:
+        """Feeds one action from combo_actions()."""
+        ct = a.get("ct") or 0
+        if a["k"] == SWAP:
+            return self.swap(a["n"], a["to"], a["from"], ct)
+        if a["k"] == HIT:
+            return self.hit(a["n"], ct, a["cat"], a["target"])
+        if a["k"] == PLACE:
+            return self.place(a["n"], ct)
+        return 0

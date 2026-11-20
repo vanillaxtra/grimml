@@ -41,6 +41,9 @@ exclude:
     - m0bca2310
     - mc9a8d071
     - m3f63358f   # Doomsday Triggerbot (10/11)
+    - m63659df6   # Prestige Auto Shield Breaker (03/11)
+    - m94403eea
+    - mf97e1a20
 
 # Legit duels recorded from both players' accounts are the same fight twice, so they must never be split across
 # train and test. Every mark id listed under a group id is held out together with it.
@@ -57,6 +60,7 @@ same_fight:
   # 2026-11-18 evening friend fights: a 3-player fight, then duels recorded from both accounts
   m83664a11: [m34fa109c, ma5d4f2d5]
   mb5401894: [m8c9075f7]
+  m6de5b30a: [m9578757d]
   md0cf19f5: [m8cfcc3b0]
   m48bdf2df: [mce66011a]
 

@@ -51,7 +51,7 @@ cd grimml
 mvn clean package
 ```
 
-1. Copy `recorder/target/grimml-0.1.0-SNAPSHOT.jar` and PacketEvents into `plugins/`.
+1. Copy `recorder/target/grimmlrecorder-<version>.jar` and PacketEvents into `plugins/`.
 2. Start the server once to generate `plugins/grimmlrecorder/config.yml`, `taxonomy.yml`, `grim-weights.yml`.
 3. **Change `anonymize-salt`** to a random secret value, then run `/grimmlrecorder reload` or restart.
 

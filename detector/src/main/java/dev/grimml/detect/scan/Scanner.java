@@ -1,6 +1,7 @@
 package dev.grimml.detect.scan;
 
 import dev.grimml.detect.features.AimGrid;
+import dev.grimml.detect.features.ComboRepeat;
 import dev.grimml.detect.features.Features;
 import dev.grimml.detect.features.LungeRate;
 import dev.grimml.detect.features.Schema4Features;
@@ -20,9 +21,10 @@ import java.util.function.Supplier;
  * overlap the way training windows did). For each player who attacked within the last window:
  *   window (last 160 frames + attacks in the last 8 s) -> 13 features -> each module's score.
  * A window counts as flagged when its score passes the module's window threshold. Windows are grouped into
- * fights (a gap of fightGapMs without attacks starts a new one). A fight is flagged once at least minWindows
- * were scored and the flagged share reaches the module's alert share; the counters then restart, so a long
- * fight can flag again.
+ * fights (a gap of fightGapMs without a scored window ends one). Each fight is judged once per block of
+ * blockWindows windows and once more when it ends ({@link Fight}): flagged when the stretch has at least
+ * minWindows windows and its flagged share reaches the module's alert share. A long fight is judged again for
+ * every full block.
  */
 public final class Scanner implements Runnable {
 
@@ -34,7 +36,20 @@ public final class Scanner implements Runnable {
         void flag(UUID player, String checkName, String description, double confidence, String verbose);
     }
 
-    public record Settings(int frameCap, int minAttacks, int minFrames, long fightGapMs) {
+    /**
+     * blockWindows: a fight is judged every this many scored windows (120 = 4 min at one window per 2 s, the length of
+     * a Kill Aura / Silent Aim legit chunk in training). judgeMinWindows: a shorter stretch is never judged (raised to the model's own
+     * fight_min_windows if that is higher). earlyZ / earlyMinWindows: alert a stretch before its block is full once
+     * it has this many windows and is clearly above the line (see {@link Fight}); earlyZ 0 turns it off.
+     */
+    public record Settings(int frameCap, int minAttacks, int minFrames, long fightGapMs, int blockWindows,
+                           int judgeMinWindows, double earlyZ, int earlyMinWindows) {
+        public Settings {
+            judgeMinWindows = Math.max(1, judgeMinWindows);
+            earlyZ = Math.max(0.0, earlyZ);
+            earlyMinWindows = Math.max(1, earlyMinWindows);
+            blockWindows = Math.max(judgeMinWindows, blockWindows);
+        }
     }
 
     /** The AimGrid check (features/AimGrid.Live): a fight-level sequential test on off-grid mouse rotation. */
@@ -46,21 +61,28 @@ public final class Scanner implements Runnable {
     /**
      * The live lunge checks (features/LungeRate): LungeRate (swap-lunges chained faster than a hand can), LungeHold
      * (the spear held for exactly one client tick, again and again) and SwapOrder (a hotbar swap after an attack in the
-     * same client tick, which vanilla never sends).
+     * same client tick, which vanilla never sends). The combo repeat checks (features/ComboRepeat): StunRepeat,
+     * SlamRepeat and WebRepeat (the same stun, stun slam or stun web to the client tick, again and again).
      */
     public record LungeSettings(boolean rateEnabled, double fastMs, double minMs, int count, double windowMs,
                                 boolean holdEnabled, int holdCount, int holdOf,
                                 boolean orderEnabled, int orderCount, double orderWindowMs,
-                                boolean axeEnabled, int axeCount, int axeOf, long cooldownMs) {
-        public static final String[] CHECKS = {"LungeRate", "LungeHold", "SwapOrder", "AxeHold"};
+                                boolean axeEnabled, int axeCount, int axeOf,
+                                boolean stunEnabled, boolean slamEnabled, boolean webEnabled, int comboCount, int comboOf,
+                                long cooldownMs) {
+        public static final String[] CHECKS = {"LungeRate", "LungeHold", "SwapOrder", "AxeHold",
+                "StunRepeat", "SlamRepeat", "WebRepeat"};
         public static final String[] DESCRIPTIONS = {
                 "Spear swap-lunges chained faster than a hand can (Instant Lunge)",
                 "Spear swapped in, jabbed and swapped out within one client tick, again and again (Instant Lunge)",
                 "Hotbar swap sent after an attack in the same client tick, which the vanilla client never does",
-                "Axe swapped away one client tick after the shield hit, again and again (Auto Shield Breaker)"};
+                "Axe swapped away one client tick after the shield hit, again and again (Auto Shield Breaker)",
+                "The same stun (axe in, hit, swap, hit) to the client tick, again and again (macro)",
+                "The same stun slam (axe hit, mace swap, mace hit) to the client tick, again and again (Auto Stun Slam)",
+                "The same stun web (axe hit, cobweb swap, place) to the client tick, again and again (macro)"};
 
         public boolean enabled() {
-            return rateEnabled || holdEnabled || orderEnabled || axeEnabled;
+            return rateEnabled || holdEnabled || orderEnabled || axeEnabled || stunEnabled || slamEnabled || webEnabled;
         }
 
         boolean on(int check) {
@@ -68,18 +90,23 @@ public final class Scanner implements Runnable {
                 case 0 -> rateEnabled;
                 case 1 -> holdEnabled;
                 case 2 -> orderEnabled;
-                default -> axeEnabled;
+                case 3 -> axeEnabled;
+                case 4 -> stunEnabled;
+                case 5 -> slamEnabled;
+                default -> webEnabled;
             };
         }
     }
 
     private static final class Lunge {
         final LungeRate rate;
-        final long[] lastAlertNanos = new long[4];
+        final ComboRepeat combo;
+        final long[] lastAlertNanos = new long[LungeSettings.CHECKS.length];
 
         Lunge(LungeSettings l) {
             rate = new LungeRate(l.fastMs(), l.minMs(), l.count(), l.windowMs(), 150.0,
                     l.holdCount(), l.holdOf(), l.orderCount(), l.orderWindowMs(), l.axeCount(), l.axeOf());
+            combo = new ComboRepeat(l.comboCount(), l.comboOf());
         }
     }
 
@@ -90,13 +117,6 @@ public final class Scanner implements Runnable {
         Grid(GridSettings g) {
             live = new AimGrid.Live(g.p0(), g.p1(), g.h(), g.minBias());
         }
-    }
-
-    private static final class Fight {
-        long lastSeenNanos;
-        int windows;
-        int flagged;
-        double scoreSum;
     }
 
     private final Map<UUID, PlayerTrack> tracks;
@@ -168,7 +188,8 @@ public final class Scanner implements Runnable {
         long gapNs = s.fightGapMs() * 1_000_000L;
         GridSettings g = gridSettings;
         LungeSettings ls = lungeSettings;
-        fights.keySet().removeIf(id -> !tracks.containsKey(id));
+        fights.keySet().removeIf(id -> !tracks.containsKey(id)); // a player who left is not judged: bypass etc. are gone
+        endFights(set, s, now, gapNs);
         grids.keySet().removeIf(id -> !tracks.containsKey(id));
         lunges.keySet().removeIf(id -> !tracks.containsKey(id));
 
@@ -213,29 +234,46 @@ public final class Scanner implements Runnable {
                 }
                 double score = m.score(f);
                 Fight fight = mine.computeIfAbsent(m.checkName(), k -> new Fight());
-                if (fight.lastSeenNanos != 0 && now - fight.lastSeenNanos > gapNs) {
-                    fight.windows = 0;
-                    fight.flagged = 0;
-                    fight.scoreSum = 0;
-                }
-                fight.lastSeenNanos = now;
-                fight.windows++;
-                fight.scoreSum += score;
-                if (score >= m.windowThreshold()) {
-                    fight.flagged++;
-                }
-                double share = (double) fight.flagged / fight.windows;
-                if (fight.windows >= m.minWindows() && share >= m.alertShare()) {
-                    String verbose = String.format("%d of %d fight windows flagged (%.0f%%, alert line %.0f%%)",
-                            fight.flagged, fight.windows, share * 100, m.alertShare() * 100);
-                    flagsRaised.incrementAndGet();
-                    sink.flag(id, m.checkName(), m.description(), fight.scoreSum / fight.windows, verbose);
-                    fight.windows = 0;
-                    fight.flagged = 0;
-                    fight.scoreSum = 0;
-                }
+                report(id, m, fight.add(now, score, m.windowThreshold(), m.alertShare(), s.blockWindows(),
+                        minWindows(s, m), gapNs, s.earlyZ(), s.earlyMinWindows()));
             }
         }
+    }
+
+    private static int minWindows(Settings s, ModuleModel m) {
+        return Math.max(s.judgeMinWindows(), m.minWindows());
+    }
+
+    /** Judges every fight that ended since the last scan (no scored window for longer than the fight gap). */
+    private void endFights(ModelSet set, Settings s, long now, long gapNs) {
+        Map<String, ModuleModel> byCheck = new HashMap<>();
+        for (ModuleModel m : set.models()) {
+            if (m.enabled()) {
+                byCheck.put(m.checkName(), m);
+            }
+        }
+        for (var e : fights.entrySet()) {
+            var it = e.getValue().entrySet().iterator();
+            while (it.hasNext()) {
+                var f = it.next();
+                ModuleModel m = byCheck.get(f.getKey());
+                if (m == null) {
+                    it.remove(); // the check was switched off or its model is gone
+                    continue;
+                }
+                report(e.getKey(), m, f.getValue().expire(now, m.alertShare(), minWindows(s, m), gapNs));
+            }
+        }
+    }
+
+    private void report(UUID id, ModuleModel m, Fight.Verdict v) {
+        if (v == null || !v.alert()) {
+            return;
+        }
+        String verbose = String.format("%d of %d fight windows flagged (%.0f%%, alert line %.0f%%)",
+                v.flagged(), v.windows(), v.share() * 100, m.alertShare() * 100);
+        flagsRaised.incrementAndGet();
+        sink.flag(id, m.checkName(), m.description(), v.meanScore(), verbose);
     }
 
     /** Feeds the frames this player made since the last scan (the ring holds 8 s, scans run every 2 s). */
@@ -259,11 +297,13 @@ public final class Scanner implements Runnable {
         }
     }
 
-    /** Feeds the swaps, attacks and spear STABs this player sent since the last scan. */
+    /** Feeds the swaps, attacks, spear STABs and block places this player sent since the last scan. */
     private void lunge(UUID id, LungeSettings l, long now) {
         Lunge lu = lunges.computeIfAbsent(id, k -> new Lunge(l));
         LungeRate r = lu.rate;
+        ComboRepeat co = lu.combo;
         int alerts = 0;
+        int combo = 0;
         long last = r.lastNanos;
         for (int i = 0; i < w4.m; i++) {
             long n = w4.eNanos[i];
@@ -273,17 +313,24 @@ public final class Scanner implements Runnable {
             int type = w4.eType[i];
             int ct = w4.eClientTick[i];
             if (type == Window4.HOTBAR_SWAP && w4.eA[i] != 40) {
-                alerts |= r.swap(n, (w4.eC[i] >> 8) & 0xFF, w4.eC[i] & 0xFF, ct);
+                int to = (w4.eC[i] >> 8) & 0xFF, from = w4.eC[i] & 0xFF;
+                alerts |= r.swap(n, to, from, ct);
+                combo |= co.swap(n, to, from, ct);
                 r.lastNanos = n;
             } else if (type == Window4.BREAK && w4.eA[i] == 8) {
                 alerts |= r.stab(n, ct);
                 r.lastNanos = n;
             } else if (type == Window4.ATTACK && ((w4.eG[i] & 0xFF) == 1 || (w4.eG[i] == 0 && w4.eA[i] != 0))) {
                 r.hit(n, ct);
+                combo |= co.hit(n, ct, (w4.eC[i] >> 8) & 0xFF, w4.eB[i]);
+                r.lastNanos = n;
+            } else if (type == Window4.BLOCK_PLACE) {
+                combo |= co.place(n, ct);
                 r.lastNanos = n;
             }
         }
-        for (int c = 0; c < 4; c++) {
+        alerts |= combo << 4; // StunRepeat, SlamRepeat, WebRepeat are checks 4-6
+        for (int c = 0; c < LungeSettings.CHECKS.length; c++) {
             if ((alerts & (1 << c)) == 0 || !l.on(c) || now - lu.lastAlertNanos[c] < l.cooldownMs() * 1_000_000L) {
                 continue;
             }
@@ -296,17 +343,33 @@ public final class Scanner implements Runnable {
                         r.holdShare * 100, l.holdOf());
                 case 2 -> String.format("%d hotbar swaps sent after an attack in the same tick within %.0f s",
                         l.orderCount(), l.orderWindowMs() / 1000);
-                default -> String.format("axe swapped away one tick after the hit on %.0f%% of the last %d axe hits",
+                case 3 -> String.format("axe swapped away one tick after the hit on %.0f%% of the last %d axe hits",
                         r.axeShare * 100, l.axeOf());
+                default -> comboVerbose(co, c - 4, l.comboOf());
             };
             double conf = switch (c) {
                 case 0 -> r.rateShare;
                 case 1 -> r.holdShare;
                 case 2 -> 1.0; // vanilla never sends this order
-                default -> r.axeShare;
+                case 3 -> r.axeShare;
+                default -> co.share[c - 4];
             };
             sink.flag(id, LungeSettings.CHECKS[c], LungeSettings.DESCRIPTIONS[c], conf, verbose);
         }
+    }
+
+    private static final String[] COMBO_STEPS = {"follow-up hit", "mace hit", "cobweb place"};
+
+    /** e.g. "8 of the last 10 stuns identical: swap-in 2t, swap away 1t, follow-up hit 3t". */
+    private static String comboVerbose(ComboRepeat co, int k, int of) {
+        int[] g = co.sig[k];
+        String kind = k == 0 ? "stuns" : k == 1 ? "stun slams" : "stun webs";
+        return String.format("%.0f%% of the last %d %s identical to the tick: swap-in %s, swap away %s, %s %s",
+                co.share[k] * 100, of, kind, ticks(g[0]), ticks(g[1]), COMBO_STEPS[k], ticks(g[2]));
+    }
+
+    private static String ticks(int t) {
+        return t < 0 ? "none" : t + "t";
     }
 
     /** Learned step and current score per player, for /gmld status. */

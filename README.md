@@ -163,11 +163,11 @@ punishments:
 | `grimml.*` | OP | Everything below except bypass |
 | `grimml.alerts` | OP | See alerts in chat |
 | `grimml.alerts.sound` | OP | Hear a ping with every alert |
-| `grimml.notify` | OP | Be told when new models are downloaded |
+| `grimml.notify` | OP | Be told once when new models are downloaded (on next join if offline) |
 | `grimml.update.notify` | OP | Be told when a new GrimML release is out |
 | `grimml.admin` | OP | Status, reload, update |
 | `grimml.bypass` | false | Never scanned by any check |
-| `grimml.bypass.<check>` | false | Never flagged by one check (`mlkillaura`, `mlaimassist`, `mltriggerbot`, `mlsilentaim`, `aimgrid`, `lungerate`, `lungehold`, `swaporder`, `axehold`) |
+| `grimml.bypass.<check>` | false | Never flagged by one check (`mlkillaura`, `mlaimassist`, `mltriggerbot`, `mlsilentaim`, `aimgrid`, `lungerate`, `lungehold`, `swaporder`, `axehold`, `stunrepeat`, `slamrepeat`, `webrepeat`) |
 
 ---
 
@@ -198,7 +198,7 @@ Main config: `plugins/GrimML/config.yml`
 - `alerts` – Format, hover, click command, sound, decay
 - `webhook` – Discord embed, and `webhook.punishments` for the punishment embed
 - `punishments` – Groups, checks, commands per violation count
-- `aim-grid`, `lunge-rate`, `lunge-hold`, `swap-order`, `axe-hold` – Rule check tuning
+- `aim-grid`, `lunge-rate`, `lunge-hold`, `swap-order`, `axe-hold`, `combo-repeat` – Rule check tuning
 - `models` – Auto-update and manifest URL
 - `update-checker` – Plugin release notices
 

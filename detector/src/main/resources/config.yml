@@ -25,7 +25,15 @@ scan:
   interval-ms: 2000      # how often windows are scored (the recorder wrote a window every 2 s)
   min-attacks: 2         # windows with fewer attacks are not scored
   min-frames: 40
-  fight-gap-ms: 20000    # this long without attacking starts a new fight
+  fight-gap-ms: 20000    # this long without attacking ends a fight (and it is judged)
+  # ML checks judge a fight once per block of windows and once when it ends, as training measures it:
+  # flagged when the share of flagged windows in that stretch reaches the model's alert line
+  fight-block-windows: 120 # 120 windows = 4 min of fighting (the length of a legit chunk in training)
+  fight-min-windows: 20    # shorter stretches (under ~40 s of fighting) are never judged
+  # Early alert: flag before the block is full when a fight is clearly over the line (most cheaters in ~20-30 s).
+  # Higher z = surer before flagging early (2.0 faster but more false flags, 3.0 tested safe, 0 = only judge blocks)
+  early-alert-z: 3.0
+  early-alert-min-windows: 10 # at least this many windows (~20 s of fighting) before an early alert
   skip-bedrock: true     # Floodgate players are never scanned
 
 # AimGrid: real mouse rotation is a whole number of sensitivity steps; aim assist adds rotation that is not.
@@ -78,10 +86,28 @@ swap-order:
 # Shield Breaker does it 1 tick later on 63-98% (6 sessions, every setting, 6-17 alerts each). Grim's shield breaker
 # swaps back after 2 ticks, like a fast hand, and is not caught by this. Needs 1.21.2+ clients (client ticks).
 # Shares lunge-rate.alert-cooldown-ms.
+# OFF BY DEFAULT: strong players in real duels swap away one tick after the hit on 86-95% of stuns, the same as the
+# cheat, and were flagged 6-9 times per fight (3 fights). The bot fights above did not show this.
 axe-hold:
-  enabled: true
+  enabled: false
   count: 6                 # one-tick swap-outs after an axe hit ...
   of: 10                   # ... among this many latest axe holds
+
+# StunRepeat / SlamRepeat / WebRepeat: every stun (axe swapped in, axe hit, swap to another weapon, follow-up hit),
+# stun slam (axe hit, swap to the mace, mace hit) and stun web (axe hit, swap to cobwebs, cobweb placed) is written
+# down as the client ticks between its steps. A hand never does the same chain to the tick every time; a macro or a
+# cheat with fixed delays does. Needs 1.21.2+ clients (client ticks). Shares lunge-rate.alert-cooldown-ms.
+# Recorded fights (~20 legit sessions, 8 cheat sessions):
+#  - Stun webs are never repeated by hand: at most 43% of one player's webs had the same timing, 0 alerts.
+#  - Stuns are NOT safe: strong players swap and hit in the same tick and swap away the next tick on 86-95% of
+#    stuns, exactly like Prestige Auto Shield Breaker (95-98%), so StunRepeat would flag them. Off by default.
+#  - Stun slams are chained at the same tick floor as stuns and there are no usable recordings; off by default.
+combo-repeat:
+  stun: false              # StunRepeat (flags strong legit players, see above)
+  slam: false              # SlamRepeat (not calibrated)
+  web: true                # WebRepeat
+  count: 8                 # combos of one kind with exactly the same timing ...
+  of: 10                   # ... among this many latest combos of that kind
 
 alerts:
   # Who sees alerts: players with grimml.alerts (op by default); /grimml alerts turns your own on or off.

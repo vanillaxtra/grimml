@@ -33,7 +33,7 @@ permissions:
     description: Hear a ping sound with every alert you see
     default: op
   grimml.notify:
-    description: Be told when new models are downloaded
+    description: Be told once when new models are downloaded (on next join if offline)
     default: op
   grimml.update.notify:
     description: Be told on join (once a day) when a new GrimML release is out
@@ -54,6 +54,9 @@ permissions:
       grimml.bypass.lungehold: true
       grimml.bypass.swaporder: true
       grimml.bypass.axehold: true
+      grimml.bypass.stunrepeat: true
+      grimml.bypass.slamrepeat: true
+      grimml.bypass.webrepeat: true
   grimml.bypass.mlkillaura:
     description: Never flagged for Kill Aura (MLKillAura)
     default: false
@@ -80,4 +83,13 @@ permissions:
     default: false
   grimml.bypass.axehold:
     description: Never flagged for Shield Breaker (AxeHold)
+    default: false
+  grimml.bypass.stunrepeat:
+    description: Never flagged for Stun Macro (StunRepeat)
+    default: false
+  grimml.bypass.slamrepeat:
+    description: Never flagged for Stun Slam (SlamRepeat)
+    default: false
+  grimml.bypass.webrepeat:
+    description: Never flagged for Stun Web (WebRepeat)
     default: false
