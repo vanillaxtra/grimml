@@ -98,6 +98,8 @@ This is where i can keep track of the different clients i have run cheats on and
 | 16/11/26 | Auto Shield Breaker | ON_HIT:TRUE | 5:32 | m2ebed745 | notauthorised | bot | 4 |
 | 16/11/26 | Auto Shield Breaker | ON_HIT:TRUE | 7:08 | m5d184039 | notauthorised | bot | 4 |
 | 16/11/26 | Auto Shield Breaker | ON_HIT:TRUE | 5:47 | mc6c469ee | notauthorised | bot | 4 |
+| 20/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:0 BREAK_COOLDOWN_MIN_MS:0 ON_HIT:TRUE | 7:21 | mfcea5ed4 | notauthorised | bot | 4 |
+| 20/11/26 | Auto Shield Breaker | CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:0 BREAK_COOLDOWN_MIN_MS:0 ON_HIT:TRUE | 2:23 | mb51208a3 | notauthorised | bot | 4 |
 
 ## Grim
 | Date | Module | Settings | Duration | ID | By | Opponent | Schema Version |
@@ -210,3 +212,5 @@ For this I have also put this on many different servers as to collect legit play
 | 18/11/26 | Dueling diamondsmp | 13:24 | m8cfcc3b0 | cebbo | notauthorised | 4 |
 | 18/11/26 | Dueling diamondsmp | 8:34 | m48bdf2df | notauthorised | dandan | 4 |
 | 18/11/26 | Dueling diamondsmp | 8:37 | mce66011a | dandan | notauthorised | 4 |
+| 20/11/26 | Dueling diamondsmp | 7:29 | mb967ac6a | goobus | notauthorised | 4 |
+| 20/11/26 | Dueling diamondsmp | 2:22 | m22da8cd6 | goobus | notauthorised | 4 |
