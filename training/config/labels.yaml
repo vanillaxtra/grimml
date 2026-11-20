@@ -48,6 +48,8 @@ exclude:
 # Legit duels recorded from both players' accounts are the same fight twice, so they must never be split across
 # train and test. Every mark id listed under a group id is held out together with it.
 same_fight:
+  mfcea5ed4: [mb967ac6a]   # 2026-11-20 Shield Breaker vs a friend, both sides recorded
+  mb51208a3: [m22da8cd6]
   me9366054: [ma9691d79]
   m69a17c52: [mc27105be]
   # 2026-11-12 23:56 friend duels: overlapping in time with shared opponents
