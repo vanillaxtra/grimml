@@ -32,6 +32,7 @@ modules:
     families: [trig_, click_]
     schema4: true
     chunk_min: 2.0
+    train_clients: [prestige, doomsday, grim, newclient]   # newclient: m40fa3bb0 (2026-11-21), name not logged
   Autoclicker:
     families: [click_]
   Auto W Tap:

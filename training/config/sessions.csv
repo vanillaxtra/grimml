@@ -189,3 +189,5 @@ mfcea5ed4,CHEAT,prestige,Auto Shield Breaker,CHANCE:100 STUN:TRUE HIT_DELAY_MIN_
 mb51208a3,CHEAT,prestige,Auto Shield Breaker,CHANCE:100 STUN:TRUE HIT_DELAY_MIN_MS:0 HIT_DELAY_MAX_MS:0 BREAK_COOLDOWN_MAX_MS:0 BREAK_COOLDOWN_MIN_MS:0 ON_HIT:TRUE,1795176394499,1795176536499,false,false,"vs a friend (2:23); same fight as m22da8cd6; start/end = first/last window"
 mb967ac6a,LEGIT_CONFIRMED,,LEGIT,,1795175918499,1795176366499,false,false,"friend account, schema 4, duel DiamondSMP vs the Shield Breaker account (7:29); same fight as mfcea5ed4; start/end = first/last window"
 m22da8cd6,LEGIT_CONFIRMED,,LEGIT,,1795176396499,1795176536499,false,false,"friend account, schema 4, duel DiamondSMP vs the Shield Breaker account (2:22); same fight as mb51208a3; start/end = first/last window"
+# 2026-11-21 Triggerbot on a new client (name not logged; in-game marker says cheat, module 16); schema 4
+m40fa3bb0,CHEAT,newclient,Triggerbot,,1795223208499,1795223510499,false,false,"schema 4, new client (name and settings not logged), opponent not logged (5:02); start/end = first/last window"
