@@ -158,10 +158,16 @@ This is where i can keep track of the different clients i have run cheats on and
 | -------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- |
 |  |  |  |  |  |  |  |  |
 
+## Vape V4
+| Date | Module | Settings | Duration | ID | By | Opponent | Schema Version |
+| -------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- |
+| 21/11/26 | Killaura | ALL:0 | 6:29 | me72e2bd4 | notauthorised | r_uzk | 4 |
+
 ## MISC
 | Date | Module | Settings | Duration | ID | By | Opponent | Schema Version |
 | -------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- |
 | 21/11/26 | Triggerbot | Unknwown | 5:02 | m40fa3bb0 | r_uzk | notauthorised | 4 |
+| 21/11/26 | Triggerbot | Unknwown | 6:59 | m29a86dee | r_uzk | notauthorised | 4 |
 
 ## Legit
 For this I have also put this on many different servers as to collect legit player data.
