@@ -28,6 +28,7 @@ modules:
     families: [aim_, grid_]
   Kill Aura:
     families: [aim_, grid_, trig_, click_]
+    train_clients: [prestige, doomsday, grim, vape]   # vape: me72e2db4 (2026-11-21, Vape V4)
   Triggerbot:
     families: [trig_, click_]
     schema4: true

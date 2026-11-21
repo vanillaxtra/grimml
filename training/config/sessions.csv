@@ -190,4 +190,7 @@ mb51208a3,CHEAT,prestige,Auto Shield Breaker,CHANCE:100 STUN:TRUE HIT_DELAY_MIN_
 mb967ac6a,LEGIT_CONFIRMED,,LEGIT,,1795175918499,1795176366499,false,false,"friend account, schema 4, duel DiamondSMP vs the Shield Breaker account (7:29); same fight as mfcea5ed4; start/end = first/last window"
 m22da8cd6,LEGIT_CONFIRMED,,LEGIT,,1795176396499,1795176536499,false,false,"friend account, schema 4, duel DiamondSMP vs the Shield Breaker account (2:22); same fight as mb51208a3; start/end = first/last window"
 # 2026-11-21 Triggerbot on a new client (name not logged; in-game marker says cheat, module 16); schema 4
-m40fa3bb0,CHEAT,newclient,Triggerbot,,1795223208499,1795223510499,false,false,"schema 4, new client (name and settings not logged), opponent not logged (5:02); start/end = first/last window"
+m40fa3bb0,CHEAT,newclient,Triggerbot,,1795223208499,1795223510499,false,false,"schema 4, new client (name and settings not logged), recorded by a friend vs the main account (5:02); start/end = first/last window"
+m29a86dee,CHEAT,newclient,Triggerbot,higher delay than m40fa3bb0 (exact settings unknown),1795226947137,1795227365137,false,false,"schema 4, same new client as m40fa3bb0, recorded by a friend vs the main account running Vape Kill Aura (6:59); same fight as me72e2db4; start/end = first/last window"
+# 2026-11-21 Vape V4 Kill Aura; schema 4. The log says me72e2bd4 (typo), the files say me72e2db4
+me72e2db4,CHEAT,vape,Kill Aura,ALL:0,1795226977137,1795227365137,false,false,"schema 4, Vape V4, vs a friend running the new-client Triggerbot (6:29); same fight as m29a86dee; logged as me72e2bd4 (typo); start/end = first/last window"
