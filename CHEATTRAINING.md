@@ -158,6 +158,11 @@ This is where i can keep track of the different clients i have run cheats on and
 | -------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- |
 |  |  |  |  |  |  |  |  |
 
+## MISC
+| Date | Module | Settings | Duration | ID | By | Opponent | Schema Version |
+| -------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- |
+| 21/11/26 | Triggerbot | Unknwown | 5:02 | m40fa3bb0 | r_uzk | notauthorised | 4 |
+
 ## Legit
 For this I have also put this on many different servers as to collect legit player data.
 | Date | What were you doing? | Duration | ID | By | Opponent | Schema Version |
