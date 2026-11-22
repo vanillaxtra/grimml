@@ -167,7 +167,16 @@ class LiveGrid:
     re-checked every CHECK samples on the latest CHECK: no step fits (cinematic camera, controller) -> abstain until
     one fits again; a clearly different step (sensitivity changed) -> adopt it and restart. An alert needs the CUSUM
     over off-grid samples to reach h AND off-grid yaw to lean toward the opponent (aim assist pulls toward the target;
-    zoom, cinematic camera and odd mice are off-grid in both directions)."""
+    zoom, cinematic camera and odd mice are off-grid in both directions).
+
+    Per-player baseline: mouse acceleration (Windows "Enhance pointer precision", Raw Accel, custom curves) puts some
+    legit rotation off the grid. The assist only acts with a target, so rotation outside fights shows the player's own
+    off-grid rate. The last BASE_KEEP out-of-fight samples (on the current step) give that rate; the test's legit rate
+    becomes max(p0, rate * base_margin) (rounded to 0.001) and its cheat rate max(p1, 2 * that). A player whose rate is
+    over base_max is skipped (their mouse cannot be told from an assist). Until base_min out-of-fight samples exist,
+    fight rotation is not tested at all. Moves over max_mult steps are ignored (baseline and test): a tiny error in the
+    learned step grows with the size of the move, and acceleration curves bend fast flicks the most, while an assist's
+    corrections are small."""
 
     LEARN = 200
     CHECK = 200
@@ -175,10 +184,18 @@ class LiveGrid:
     RING = 300
     MIN_SIDE = 10
     STEP_CHANGE = 0.005
+    BASE_KEEP = 600
 
-    def __init__(self, p0: float = 0.01, p1: float = 0.10, h: float = 20.0, min_bias: float = 0.05):
+    def __init__(self, p0: float = 0.01, p1: float = 0.10, h: float = 20.0, min_bias: float = 0.05,
+                 base_margin: float = 1.5, base_max: float = 0.08, base_min: int = 100, max_mult: float = 20.0):
+        self.max_mult = max_mult
+        self.p0, self.p1 = p0, p1
         self.cusum = Cusum(p0, p1, h)
         self.min_bias = min_bias
+        self.base_margin, self.base_max, self.base_min = base_margin, base_max, base_min
+        self.base: list[bool] = []   # off-grid flags of out-of-fight samples on the current step
+        self.base_off = 0
+        self.legit_rate = p0         # the test's current legit rate (p0 raised to the player's baseline)
         self.buf: list[float] = []
         self.step = NAN
         self.since = 0
@@ -189,6 +206,27 @@ class LiveGrid:
     def _restart(self) -> None:
         self.cusum.s = 0.0
         self.ring.clear()
+        self.base.clear()
+        self.base_off = 0
+
+    def baseline(self) -> float:
+        """Off-grid share of the player's out-of-fight rotation, NaN before base_min samples."""
+        return self.base_off / len(self.base) if len(self.base) >= self.base_min else NAN
+
+    def _base_add(self, off: bool) -> None:
+        self.base.append(off)
+        self.base_off += off
+        if len(self.base) > self.BASE_KEEP:
+            self.base_off -= self.base.pop(0)
+        b = self.baseline()
+        if math.isnan(b) or b > self.base_max:
+            return   # untested player (see _sample): keep the last rates
+        q = min(0.49, max(self.p0, math.floor(b * self.base_margin * 1000.0 + 0.5) / 1000.0))
+        if q != self.legit_rate:
+            self.legit_rate = q
+            p1 = max(self.p1, 2.0 * q)
+            self.cusum.up = math.log(p1 / q)
+            self.cusum.down = math.log((1.0 - p1) / (1.0 - q))
 
     def _sample(self, d: float, toward: bool | None, fight: bool) -> None:
         self.buf.append(d)
@@ -213,9 +251,16 @@ class LiveGrid:
                 self.step = s2
                 self._restart()
                 return
-        if not fight:
-            return
+        if d > self.max_mult * self.step:
+            return   # big flicks: a tiny step error and mouse acceleration both scale with the size of the move
         off = off_grid(d, self.step)
+        if not fight:
+            self._base_add(off)
+            return
+        b = self.baseline()
+        if math.isnan(b) or b > self.base_max:
+            self.cusum.s = 0.0   # no baseline yet, or a mouse too noisy to test
+            return
         self.cusum.add(off)
         if toward is not None:
             self.ring.append((toward, off))

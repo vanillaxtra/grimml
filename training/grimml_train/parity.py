@@ -219,15 +219,17 @@ def export_schema4() -> None:
 
 # live AimGrid check: continuous frame streams (deduplicated across overlapping windows) replayed through Python
 # LiveGrid; the detector replays the same frames through AimGrid.Live and must alert on the same ticks.
-LIVE_MARKS = ["m8f52a835", "m1c38d70b"]
-LIVE_TICKS = 4000
+# aim assist (bot fight), legit bot fight, aim assist with a baseline, legit friend duels with mouse acceleration
+LIVE_MARKS = ["m8f52a835", "m1c38d70b", "m1eaa1d2d", "md5c80410", "mb967ac6a"]
+LIVE_TICKS = 6000
 
 
 def export_live() -> None:
     from grimml_train.features.aimgrid import LiveGrid
     from grimml_train.features.schema4 import _aim_track
 
-    lines = ["# live AimGrid streams: F|tick,rot,yaw,pitch,opp,aim,err ... then A|alert ticks and S|final step"]
+    lines = ["# live AimGrid streams: F|tick,rot,yaw,pitch,opp,aim,err ... then A|alert ticks, S|final step, "
+             "B|final baseline, R|final legit rate"]
     for m in LIVE_MARKS:
         ticks: dict[int, tuple] = {}
         for p in sorted(f.path for f in os.scandir(FOLDER) if f"_{m}_" in f.name):
@@ -248,7 +250,10 @@ def export_live() -> None:
         lines.append("F|" + ";".join(f"{t},{rot},{y!r},{pt!r},{opp},{aim},{err!r}" for t, rot, y, pt, opp, aim, err in seq))
         lines.append("A|" + ",".join(map(str, alerts)))
         lines.append("S|" + num(g.step))
-        print(f"live stream: {len(seq)} frames, {len(alerts)} alerts, step {g.step}")
+        lines.append("B|" + num(g.baseline()))
+        lines.append("R|" + num(g.legit_rate))
+        print(f"live stream: {len(seq)} frames, {len(alerts)} alerts, step {g.step}, baseline {g.baseline()}, "
+              f"legit rate {g.legit_rate}")
     (OUT / "live_grid.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

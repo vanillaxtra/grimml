@@ -53,7 +53,8 @@ public final class Scanner implements Runnable {
     }
 
     /** The AimGrid check (features/AimGrid.Live): a fight-level sequential test on off-grid mouse rotation. */
-    public record GridSettings(boolean enabled, double p0, double p1, double h, double minBias, long cooldownMs) {
+    public record GridSettings(boolean enabled, double p0, double p1, double h, double minBias, long cooldownMs,
+                               double baseMargin, double baseMax, int baseMin, double maxSteps) {
         public static final String CHECK = "AimGrid";
         public static final String DESCRIPTION = "Rotation off the player's mouse sensitivity grid, pulling toward the opponent";
     }
@@ -115,7 +116,8 @@ public final class Scanner implements Runnable {
         long lastAlertNanos;
 
         Grid(GridSettings g) {
-            live = new AimGrid.Live(g.p0(), g.p1(), g.h(), g.minBias());
+            live = new AimGrid.Live(g.p0(), g.p1(), g.h(), g.minBias(), g.baseMargin(), g.baseMax(), g.baseMin(),
+                    g.maxSteps());
         }
     }
 
@@ -292,8 +294,8 @@ public final class Scanner implements Runnable {
             flagsRaised.incrementAndGet();
             double toward = Math.max(0.0, Math.min(1.0, (1.0 + gr.live.bias()) / 2.0));
             sink.flag(id, GridSettings.CHECK, GridSettings.DESCRIPTION, toward, String.format(
-                    "%.0f%% of recent rotation off the mouse grid, %.0f%% of that toward the opponent",
-                    gr.live.offShare() * 100, toward * 100));
+                    "%.0f%% of recent rotation off the mouse grid (their own rate outside fights %.1f%%), %.0f%% of that toward the opponent",
+                    gr.live.offShare() * 100, gr.live.baseline() * 100, toward * 100));
         }
     }
 
@@ -375,6 +377,7 @@ public final class Scanner implements Runnable {
     /** Learned step and current score per player, for /gmld status. */
     public String gridStatus(UUID id) {
         Grid gr = grids.get(id);
-        return gr == null ? null : String.format("step %.5f score %.1f", gr.live.step(), gr.live.score());
+        return gr == null ? null : String.format("step %.5f score %.1f baseline %.1f%% legit rate %.1f%%",
+                gr.live.step(), gr.live.score(), gr.live.baseline() * 100, gr.live.legitRate() * 100);
     }
 }

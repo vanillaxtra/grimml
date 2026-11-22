@@ -178,7 +178,8 @@ public final class AimGrid {
 
     /** One-sided CUSUM over off-grid indicators. */
     static final class Cusum {
-        final double up, down, h;
+        double up, down;
+        final double h;
         double s;
 
         Cusum(double p0, double p1, double h) {
@@ -192,13 +193,26 @@ public final class AimGrid {
         }
     }
 
-    /** The live AimGrid check for one player (Python LiveGrid). Not thread safe: one scan thread feeds it. */
+    /**
+     * The live AimGrid check for one player (Python LiveGrid). Not thread safe: one scan thread feeds it.
+     *
+     * Per-player baseline: mouse acceleration (Windows "Enhance pointer precision", Raw Accel, custom curves) puts some
+     * legit rotation off the grid. The assist only acts with a target, so the off-grid share of the last BASE_KEEP
+     * out-of-fight samples is the player's own rate: the test's legit rate becomes max(p0, rate * baseMargin) (rounded
+     * to 0.001) and its cheat rate max(p1, 2 * that). Players over baseMax are skipped; until baseMin out-of-fight
+     * samples exist fight rotation is not tested. Moves over maxMult steps are ignored (baseline and test): a tiny step
+     * error grows with the size of the move and acceleration curves bend fast flicks the most.
+     */
     public static final class Live {
-        static final int LEARN = 200, CHECK = 200, KEEP = 600, RING = 300, MIN_SIDE = 10;
+        static final int LEARN = 200, CHECK = 200, KEEP = 600, RING = 300, MIN_SIDE = 10, BASE_KEEP = 600;
         static final double STEP_CHANGE = 0.005;
 
         private final Cusum cusum;
-        private final double minBias;
+        private final double minBias, p0, p1, baseMargin, baseMax, maxMult;
+        private final int baseMin;
+        private final boolean[] base = new boolean[BASE_KEEP];
+        private int baseStart, baseN, baseOff;
+        private double legitRate;
         private final double[] buf = new double[KEEP];
         private int bufN;
         private double step = Double.NaN;
@@ -212,9 +226,55 @@ public final class AimGrid {
         public long samples;
         public int lastTick = Integer.MIN_VALUE;
 
-        public Live(double p0, double p1, double h, double minBias) {
+        public Live(double p0, double p1, double h, double minBias, double baseMargin, double baseMax, int baseMin,
+                    double maxMult) {
             this.cusum = new Cusum(p0, p1, h);
             this.minBias = minBias;
+            this.p0 = p0;
+            this.p1 = p1;
+            this.baseMargin = baseMargin;
+            this.baseMax = baseMax;
+            this.baseMin = Math.max(1, baseMin);
+            this.maxMult = maxMult;
+            this.legitRate = p0;
+        }
+
+        /** Defaults as in config.yml (and Python LiveGrid()). */
+        public Live(double p0, double p1, double h, double minBias) {
+            this(p0, p1, h, minBias, 1.5, 0.08, 100, 20.0);
+        }
+
+        /** Off-grid share of the player's out-of-fight rotation, NaN before baseMin samples. */
+        public double baseline() {
+            return baseN >= baseMin ? (double) baseOff / baseN : Double.NaN;
+        }
+
+        /** The test's current legit off-grid rate (p0 raised to the player's baseline). */
+        public double legitRate() {
+            return legitRate;
+        }
+
+        private void baseAdd(boolean off) {
+            if (baseN == BASE_KEEP) {
+                if (base[baseStart]) baseOff--;
+                base[baseStart] = off;
+                baseStart = (baseStart + 1) % BASE_KEEP;
+            } else {
+                base[(baseStart + baseN) % BASE_KEEP] = off;
+                baseN++;
+            }
+            if (off) baseOff++;
+            double b = baseline();
+            if (Double.isNaN(b) || b > baseMax) {
+                return; // untested player (see sample): keep the last rates
+            }
+            double q = Math.min(0.49, Math.max(p0, Math.floor(b * baseMargin * 1000.0 + 0.5) / 1000.0));
+            if (q != legitRate) {
+                legitRate = q;
+                double c = Math.max(p1, 2.0 * q);
+                cusum.up = Math.log(c / q);
+                cusum.down = Math.log((1.0 - c) / (1.0 - q));
+            }
         }
 
         public double step() {
@@ -229,6 +289,9 @@ public final class AimGrid {
             cusum.s = 0.0;
             ringStart = 0;
             ringN = 0;
+            baseStart = 0;
+            baseN = 0;
+            baseOff = 0;
         }
 
         private void push(double d) {
@@ -265,10 +328,19 @@ public final class AimGrid {
                     return;
                 }
             }
-            if (!fight) {
-                return;
+            if (d > maxMult * step) {
+                return; // big flicks: a tiny step error and mouse acceleration both scale with the size of the move
             }
             boolean off = offGrid(d, step);
+            if (!fight) {
+                baseAdd(off);
+                return;
+            }
+            double b = baseline();
+            if (Double.isNaN(b) || b > baseMax) {
+                cusum.s = 0.0; // no baseline yet, or a mouse too noisy to test
+                return;
+            }
             cusum.add(off);
             if (toward >= 0) {
                 int idx;

@@ -49,6 +49,19 @@ aim-grid:
   alert-score: 20.0
   min-toward-bias: 0.05
   alert-cooldown-ms: 15000
+  # Per-player baseline, so non-linear mice (Windows "Enhance pointer precision", Raw Accel, custom curves) do not
+  # flag: the assist only pulls when there is a target, so rotation OUTSIDE fights shows the player's own off-grid
+  # rate. The legit rate above is raised to (that rate x baseline-margin), and fight rotation is only tested once
+  # baseline-samples out-of-fight rotation samples exist (~5 s of moving the mouse outside a fight).
+  # Replayed on every recording: legit fights alerting 7/30 -> 2/30 (a spear fight and a cinematic-camera stretch).
+  # Bot-fight cheat recordings have almost no time outside the fight, so 2 of the 4 aim assist sessions that alerted
+  # before never build a baseline there; real players spend time outside fights (UNVERIFIED live).
+  baseline-margin: 1.5     # how far above their own rate a fight must be (higher = fewer false flags, slower)
+  baseline-max: 0.08       # players whose rotation is more off-grid than this outside fights are skipped
+  baseline-samples: 100
+  # Moves bigger than this many sensitivity steps per tick are ignored: a tiny error in the learned step grows with
+  # the size of the move, and acceleration curves bend fast flicks the most. Assist corrections are small.
+  max-steps: 20
 
 # LungeRate: Instant Lunge (Prestige, Grim) swaps to the spear, jabs and swaps back as one macro. A swap-lunge is a
 # spear jab within 150 ms of a hotbar swap to the spear. By hand the swap -> jab -> swap back chain takes time:

@@ -187,7 +187,9 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         return new Scanner.GridSettings(c.getBoolean("aim-grid.enabled", true),
                 c.getDouble("aim-grid.legit-off-rate", 0.01), c.getDouble("aim-grid.cheat-off-rate", 0.10),
                 c.getDouble("aim-grid.alert-score", 20.0), c.getDouble("aim-grid.min-toward-bias", 0.05),
-                c.getLong("aim-grid.alert-cooldown-ms", 15_000L));
+                c.getLong("aim-grid.alert-cooldown-ms", 15_000L),
+                c.getDouble("aim-grid.baseline-margin", 1.5), c.getDouble("aim-grid.baseline-max", 0.08),
+                c.getInt("aim-grid.baseline-samples", 100), c.getDouble("aim-grid.max-steps", 20.0));
     }
 
     private Scanner.LungeSettings lungeSettings() {

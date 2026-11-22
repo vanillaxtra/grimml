@@ -112,10 +112,24 @@ Real mouse rotation is a whole number of sensitivity steps (`(sens*0.6+0.2)^3 * 
 (CUSUM) on off-grid rotation while they fight. It alerts when the score reaches `aim-grid.alert-score` and the
 off-grid rotation leans toward the opponent, so zoom, cinematic camera and unusual mice (off-grid both ways)
 do not flag. Players whose rotation fits no grid (controllers, cinematic camera) are skipped. Settings: the
-`aim-grid` section of `config.yml`. `/grimml status <player>` shows a player's learned step and current score.
+`aim-grid` section of `config.yml`. `/grimml status <player>` shows a player's learned step, current score, baseline
+and legit rate.
 
-Calibrated on recorded fights (training `aimgrid.py`, same code): legit fights never scored above 2.3; aim
-assist sessions reached 20 within 1.5-6 s once the step was known. The Java port is checked against Python on
+**Non-linear mice** (Windows "Enhance pointer precision", Raw Accel, custom curves) put some legit rotation off the
+grid. Two things keep them from flagging:
+
+- **Per-player baseline.** The assist only pulls when there is a target, so rotation outside fights shows the
+  player's own off-grid rate. The test's legit rate becomes that rate x `baseline-margin` (1.5), fight rotation is
+  only tested once `baseline-samples` (100) out-of-fight samples exist, and players over `baseline-max` (8%) are
+  skipped.
+- **Big flicks are ignored** (over `max-steps`, 20 steps per tick). A tiny error in the learned step grows with the
+  size of the move, and acceleration curves bend fast flicks the most; assist corrections are small.
+
+Replayed on every recording (training `aimgrid.py`, same code): legit fights that alerted went from 7 of 30 to 2 of
+30 (a spear fight against an afk player and a stretch of smooth, cinematic-like camera). Two friend accounts with
+acceleration (5% and 9% off-grid outside fights) no longer alert. Aim assist: 2 of the 4 sessions that alerted before
+still alert; the other 2 are bot fights with almost no time outside the fight, so no baseline forms there. Real
+players spend time outside fights, but that is UNVERIFIED live. The Java port is checked against Python on
 every build (`live_grid.txt`). The same grid measurement feeds the ML models as `grid_off_frac`,
 `grid_off_toward`, `grid_off_away`, `grid_toward_minus_away`.
 

@@ -7,6 +7,13 @@ servers through auto-update, so they are listed under the plugin release they sh
 
 ## [Unreleased]
 
+### Changed
+
+- **AimGrid no longer flags non-linear mice** (Enhance pointer precision, Raw Accel, custom curves): each player's
+  own off-grid rate outside fights sets their legit rate, fights are only tested once that baseline exists, players
+  over 8% are skipped, and flicks over 20 steps per tick are ignored. New `aim-grid` settings: `baseline-margin`,
+  `baseline-max`, `baseline-samples`, `max-steps`.
+
 ## [1.1.0] - unreleased
 
 First public release.

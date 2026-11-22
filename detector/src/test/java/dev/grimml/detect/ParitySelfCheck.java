@@ -201,7 +201,14 @@ public final class ParitySelfCheck {
                 + "%d spear-mace values%n", windows, compared, worst, scores4, spearMace);
     }
 
-    /** Live AimGrid check: the same frame streams must alert on the same ticks and learn the same step. */
+    /** "B|0.05" or "B|nan" -> the number (NaN for nan). */
+    private static double nanOr(String line) {
+        String v = line.substring(2);
+        return v.equals("nan") ? Double.NaN : Double.parseDouble(v);
+    }
+
+    /** Live AimGrid check: the same frame streams must alert on the same ticks and learn the same step, baseline and
+     * legit rate. */
     private static void live(Path file) throws Exception {
         if (!Files.exists(file)) {
             System.out.println("parity: no live AimGrid fixture; skipped");
@@ -233,6 +240,15 @@ public final class ParitySelfCheck {
             }
             if (Double.isNaN(expStep) != Double.isNaN(g.step()) || (!Double.isNaN(expStep) && Math.abs(expStep - g.step()) > 1e-12)) {
                 throw new AssertionError("live AimGrid stream " + streams + " step: python " + expStep + " java " + g.step());
+            }
+            double[] expBase = {nanOr(lines.get(li + 3)), nanOr(lines.get(li + 4))};
+            double[] gotBase = {g.baseline(), g.legitRate()};
+            for (int k = 0; k < 2; k++) {
+                if (Double.isNaN(expBase[k]) != Double.isNaN(gotBase[k])
+                        || (!Double.isNaN(expBase[k]) && Math.abs(expBase[k] - gotBase[k]) > 1e-12)) {
+                    throw new AssertionError("live AimGrid stream " + streams + (k == 0 ? " baseline" : " legit rate")
+                            + ": python " + expBase[k] + " java " + gotBase[k]);
+                }
             }
             streams++;
         }
