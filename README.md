@@ -30,7 +30,7 @@ is flagged only when enough of it looks like cheating, so one lucky flick never 
 | **Silent Aim** | Server-side aim that differs from what the player sees |
 
 <!-- GIF: killaura - a Kill Aura player getting flagged, chat alert visible -->
-![Kill Aura detection](assets/killaura.gif)
+![Kill Aura detection](https://raw.githubusercontent.com/vanillaxtra/grimml/refs/heads/main/assets/killaura.gif)
 
 <!-- GIF: aimassist - aim assist on a strafing opponent, alert appears -->
 ![Aim Assist detection](assets/aimassist.gif)
