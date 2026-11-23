@@ -9,32 +9,11 @@
 [![Status](https://img.shields.io/badge/status-beta-yellow.svg)](#beta-read-this)
 
 Machine-learning combat checks for **[Grim Anticheat](https://github.com/GrimAnticheat/Grim)**. GrimML catches the
-combat cheats fixed rules struggle with: **Kill Aura, Aim Assist, Triggerbot, Silent Aim, Instant Lunge and Auto
-Shield Breaker**. It alerts staff with one short line and a confidence %, posts to the same Discord webhook as
-Grim, and can run your own punishment commands.
+combat cheats using machine learning models struggle with: **Kill Aura, Aim Assist, Triggerbot, Silent Aim, Instant Lunge and Auto
+Shield Breaker**.
 
 <!-- GIF: hero - a cheater getting flagged in chat, hover open -->
 ![GrimML in action](assets/hero.gif)
-
----
-
-## Requirements
-
-- **Server:** Paper 1.21+ (or a fork such as Purpur or Leaf)
-- **Java:** 21+
-- **Required plugin:** [GrimAC](https://github.com/GrimAnticheat/Grim) 2.3+ (GrimML uses the PacketEvents bundled inside Grim)
-
----
-
-## Installation
-
-1. Download the latest `GrimML-<version>.jar` from [Releases](https://github.com/vanillaxtra/grimml/releases).
-2. Put it in your server's `plugins` folder next to Grim.
-3. Restart the server.
-4. Check `plugins/GrimML/config.yml`; the defaults are safe (alerts on, punishments off).
-5. Reload with `/grimml reload`.
-
----
 
 # 🧠 What It Detects
 
