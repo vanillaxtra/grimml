@@ -210,9 +210,7 @@ This repository also holds the tools used to build the models:
 
 ## Statistics
 
-This plugin uses [bStats](https://bstats.org/plugin/bukkit/grim-ml/35441) to collect anonymous usage statistics
-(server count, Minecraft version, models version, whether punishments and the webhook are on). No player data is
-sent. You can opt out in `plugins/bStats/config.yml`.
+[![bStats: servers using GrimML](https://bstats.org/signatures/bukkit/grim-ml.svg)](https://bstats.org/plugin/bukkit/grim-ml/34985)
 
 ---
 
