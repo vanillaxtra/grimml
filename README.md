@@ -45,7 +45,7 @@ is flagged only when enough of it looks like cheating, so one lucky flick never 
 | **Shield Breaker** | Swapping away from the axe exactly one tick after breaking a shield, every time |
 
 <!-- GIF: lunge - Instant Lunge macro getting flagged -->
-![Instant Lunge detection]([assets/lunge.gif](https://raw.githubusercontent.com/vanillaxtra/grimml/refs/heads/main/assets/instantlunge.gif))
+![Instant Lunge detection](https://raw.githubusercontent.com/vanillaxtra/grimml/refs/heads/main/assets/instantlunge.gif)
 
 ---
 
