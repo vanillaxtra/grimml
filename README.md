@@ -33,7 +33,7 @@ is flagged only when enough of it looks like cheating, so one lucky flick never 
 ![Kill Aura detection](https://raw.githubusercontent.com/vanillaxtra/grimml/refs/heads/main/assets/killaura.gif)
 
 <!-- GIF: aimassist - aim assist on a strafing opponent, alert appears -->
-![Aim Assist detection](assets/aimassist.gif)
+![Aim Assist detection](https://raw.githubusercontent.com/vanillaxtra/grimml/refs/heads/main/assets/aimassist.gif)
 
 ### Rule checks (no model, exact)
 
@@ -45,10 +45,7 @@ is flagged only when enough of it looks like cheating, so one lucky flick never 
 | **Shield Breaker** | Swapping away from the axe exactly one tick after breaking a shield, every time |
 
 <!-- GIF: lunge - Instant Lunge macro getting flagged -->
-![Instant Lunge detection](assets/lunge.gif)
-
-<!-- GIF: shieldbreaker - Auto Shield Breaker getting flagged -->
-![Shield Breaker detection](assets/shieldbreaker.gif)
+![Instant Lunge detection]([assets/lunge.gif](https://raw.githubusercontent.com/vanillaxtra/grimml/refs/heads/main/assets/instantlunge.gif))
 
 ---
 
@@ -63,7 +60,7 @@ is flagged only when enough of it looks like cheating, so one lucky flick never 
 * **Grim-friendly** – fires Grim's `FlagEvent`, so other Grim add-ons see and can cancel GrimML flags.
 
 <!-- GIF: alerts - hovering over an alert, then clicking it to teleport -->
-![Alerts](assets/alerts.gif)
+![Alerts](https://raw.githubusercontent.com/vanillaxtra/grimml/refs/heads/main/assets/alerts.png)
 
 ---
 
@@ -75,7 +72,7 @@ is flagged only when enough of it looks like cheating, so one lucky flick never 
   that ran (kicks, bans, anything).
 
 <!-- IMAGE: webhook - an alert embed and a punishment embed in Discord -->
-![Discord webhook](assets/webhook.png)
+![Discord webhook](https://raw.githubusercontent.com/vanillaxtra/grimml/refs/heads/main/assets/discord.png)
 
 ---
 
