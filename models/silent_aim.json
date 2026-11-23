@@ -15,16 +15,16 @@
     "click_gap_mean_ms",
     "click_gap_cv"
   ],
-  "window_threshold_fpr5": 0.6997351928777683,
-  "window_threshold_fpr1": 0.8471948004962458,
-  "fight_line_share": 0.13401380103507765,
+  "window_threshold_fpr5": 0.6935185142725758,
+  "window_threshold_fpr1": 0.8319478039550046,
+  "fight_line_share": 0.13092105263157894,
   "fight_min_windows": 10,
-  "held_out_core_auc": 0.8210465841943442,
-  "cheat_windows": 1774,
+  "held_out_core_auc": 0.8239104504943695,
+  "cheat_windows": 1798,
   "cheat_segments": 9,
-  "legit_windows": 1774,
-  "legit_chunks": 44,
+  "legit_windows": 1798,
+  "legit_chunks": 67,
   "use": "score each 8 s window; flag a fight when >= fight_line_share of its windows (min fight_min_windows) score >= window_threshold_fpr5",
-  "warning": "PIPELINE TEST ONLY: one cheat operator on one client. Do not ban on this model.",
-  "built": ""
+  "warning": "Trained on one cheat operator's sessions. Do not ban on this model alone.",
+  "built": "20261123_153944"
 }

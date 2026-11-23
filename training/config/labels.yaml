@@ -65,6 +65,9 @@ same_fight:
   m6de5b30a: [m9578757d]
   md0cf19f5: [m8cfcc3b0]
   m48bdf2df: [mce66011a]
+  # 2026-11-23 duels vs a friend, both accounts
+  m18f92367: [mad98911a]
+  m1c4b76c4: [me90c2577]
 
 # Recorder builds before the per-window validity fix OR'd the event bits over the player's whole session, so
 # valid_death/respawn/teleport/... were set on almost every window after the first such event. Set this to the UTC

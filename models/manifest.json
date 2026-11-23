@@ -1,7 +1,7 @@
 {
-  "version": 9,
-  "published": "2026-11-18 15:48 UTC",
-  "source_run": "v10run",
+  "version": 10,
+  "published": "2026-11-23 15:45 UTC",
+  "source_run": "aim_assist/20261123_153853, silent_aim/20261123_153944",
   "models": [
     {
       "module": "Aim Assist",
@@ -10,11 +10,12 @@
       "model": "aim_assist.txt",
       "meta": "aim_assist.json",
       "enabled": true,
-      "alert_share": 0.34,
-      "held_out_core_auc": 0.916,
+      "alert_share": 0.33,
+      "held_out_core_auc": 0.941,
       "cheat_sessions_caught": "10/11",
-      "model_sha256": "271e4df4b7f7f67eca153ab64f6cd0fe439442d6578f23d574948715c83bf678",
-      "meta_sha256": "8e1018b76e1f7310502a8ef98f9e350d4bc72fbf43a449fed5d886f2fc70473d"
+      "source_run": "aim_assist/20261123_153853",
+      "model_sha256": "488e4815c02a8b700ff1d8ce310f59095be3fba6060e63dfa758c3c691059c9f",
+      "meta_sha256": "8c9eda7a5500cda55c4db79dbaf660155bdec363f7a242677725297bf6fa7baa"
     },
     {
       "module": "Triggerbot",
@@ -36,11 +37,12 @@
       "model": "silent_aim.txt",
       "meta": "silent_aim.json",
       "enabled": true,
-      "alert_share": 0.21,
-      "held_out_core_auc": 0.821,
+      "alert_share": 0.27,
+      "held_out_core_auc": 0.824,
       "cheat_sessions_caught": "8/9",
-      "model_sha256": "b2dbd7b5fba679f992d73ec3be79e0a97bfb9626b6ae41bacb76610769528ce6",
-      "meta_sha256": "0698971503b15a50aa654cb7035803556f3430d5ace1dc60d6dc800bbf743484"
+      "source_run": "silent_aim/20261123_153944",
+      "model_sha256": "1aceb32b62113dc1de04ace038b6bbe5c9ddd3afd2b651a999fafc4fb18a8e31",
+      "meta_sha256": "dc639220ba5205a17d10bc3c57a6ffe6d27db54610027ce05e72afc1f2d7e6ea"
     },
     {
       "module": "Kill Aura",

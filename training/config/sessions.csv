@@ -194,3 +194,9 @@ m40fa3bb0,CHEAT,newclient,Triggerbot,,1795223208499,1795223510499,false,false,"s
 m29a86dee,CHEAT,newclient,Triggerbot,higher delay than m40fa3bb0 (exact settings unknown),1795226947137,1795227365137,false,false,"schema 4, same new client as m40fa3bb0, recorded by a friend vs the main account running Vape Kill Aura (6:59); same fight as me72e2db4; start/end = first/last window"
 # 2026-11-21 Vape V4 Kill Aura; schema 4. The log says me72e2bd4 (typo), the files say me72e2db4
 me72e2db4,CHEAT,vape,Kill Aura,ALL:0,1795226977137,1795227365137,false,false,"schema 4, Vape V4, vs a friend running the new-client Triggerbot (6:29); same fight as m29a86dee; logged as me72e2bd4 (typo); start/end = first/last window"
+# 2026-11-22/23 legit DiamondSMP duels vs friends; schema 4; start/end = first/last window
+m9f521610,LEGIT_CONFIRMED,,LEGIT,,1795378379137,1795378911137,false,false,"friend account, schema 4, duel DiamondSMP vs the main account (8:54); main side not recorded; start/end = first/last window"
+m18f92367,LEGIT_CONFIRMED,,LEGIT,,1795444887137,1795445441137,false,false,"schema 4, duel DiamondSMP vs a friend (9:16); same fight as mad98911a; start/end = first/last window"
+mad98911a,LEGIT_CONFIRMED,,LEGIT,,1795444885137,1795445443137,false,false,"friend account, schema 4, duel DiamondSMP vs the main account (9:20); same fight as m18f92367; start/end = first/last window"
+m1c4b76c4,LEGIT_CONFIRMED,,LEGIT,,1795445467137,1795445905137,false,false,"schema 4, duel DiamondSMP vs a friend (7:20); same fight as me90c2577; start/end = first/last window"
+me90c2577,LEGIT_CONFIRMED,,LEGIT,,1795445465137,1795445903137,false,false,"friend account, schema 4, duel DiamondSMP vs the main account (7:21); same fight as m1c4b76c4; start/end = first/last window"
