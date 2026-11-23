@@ -225,4 +225,8 @@ For this I have also put this on many different servers as to collect legit play
 | 18/11/26 | Dueling diamondsmp | 8:37 | mce66011a | dandan | notauthorised | 4 |
 | 20/11/26 | Dueling diamondsmp | 7:29 | mb967ac6a | goobus | notauthorised | 4 |
 | 20/11/26 | Dueling diamondsmp | 2:22 | m22da8cd6 | goobus | notauthorised | 4 |
-| 22/11/26 | Dueling diamondsmp (hes really good) | 8:54 | m9f521610 | croimc | notauthorised | 4 |
+| 22/11/26 | Dueling diamondsmp | 8:54 | m9f521610 | croimc | notauthorised | 4 |
+| 23/11/26 | Dueling diamondsmp | 9:16 | m18f92367 | notauthorised | gh2l | 4 |
+| 23/11/26 | Dueling diamondsmp | 9:20 | mad98911a | gh2l | notauthorised | 4 |
+| 23/11/26 | Dueling diamondsmp | 7:20 | m1c4b76c4 | notauthorised | gh2l | 4 |
+| 23/11/26 | Dueling diamondsmp | 7:21 | me90c2577 | gh2l | notauthorised | 4 |
