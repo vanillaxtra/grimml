@@ -17,9 +17,9 @@ This is where i can keep track of the different clients i have run cheats on and
 | 14/11/26  | Aim Assist | FOV:90 SPEED:15 SMOOTHING:75 RANDOMNESS:0 | 7:25 | mff6051d6 | notauthorised | bot | 4 |
 | 14/11/26  | Aim Assist | FOV:90 SPEED:60 SMOOTHING:0 RANDOMNESS:0 | 8:51 | m1eaa1d2d| notauthorised | bot | 4 |
 | 15/11/26  | Aim Assist | FOV:90 SPEED:20 SMOOTHING:50 RANDOMNESS:0 ONLY_ON_ROTATE:TRUE| 8:27 | m0ee3763e | notauthorised | bot | 4 |
-| 24/11/26  | Aim Assist | FOV:90 SPEED:20 SMOOTHING:50 RANDOMNESS:0 ONLY_ON_ROTATE:TRUE | 8:33 | m23f2b7a7 | notauthorised | bot | 4 |
-| 24/11/26  | Aim Assist | FOV:60 SPEED:15 SMOOTHING:75 RANDOMNESS:30 ONLY_ON_ROTATE:TRUE | 8:25 | m37c52816 | notauthorised | bot | 4 |
-| 24/11/26  | Aim Assist | FOV:120 SPEED:45 SMOOTHING:0 RANDOMNESS:0 ONLY_ON_ROTATE:TRUE | 9:10 | me775aea8 | notauthorised | bot | 4 |
+| 24/11/26  | Aim Assist | FOV:90 SPEED:20 SMOOTHING:50 RANDOMNESS:0 ONLY_ON_ROTATE:TRUE | 8:33 | m23f2b7a7 | notauthorised | bot2 | 4 |
+| 24/11/26  | Aim Assist | FOV:60 SPEED:15 SMOOTHING:75 RANDOMNESS:30 ONLY_ON_ROTATE:TRUE | 8:25 | m37c52816 | notauthorised | bot2 | 4 |
+| 24/11/26  | Aim Assist | FOV:120 SPEED:45 SMOOTHING:0 RANDOMNESS:0 ONLY_ON_ROTATE:TRUE | 9:10 | me775aea8 | notauthorised | bot2 | 4 |
 |  |  |  |  |  |  |  |  |
 | 02/11/26 | Kill Aura | HUMANIZED:FALSE REACH:3 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 5:25 | m22700b10 | notauthorised | afk alt | 3 |
 | 02/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 3:57 | mf2dd0754 | notauthorised | afk alt | 3 |
@@ -121,7 +121,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 16/11/26 | Killaura | ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:FALSE | 4:57 | m9a84bf96 | notauthorised | bot | 4 |
 | 16/11/26 | Killaura | ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:TRUE | 5:46 | m3ce1354f | notauthorised | bot | 4 |
 | 16/11/26 | Killaura | ROTATIONS:SNAP REACH:3 MISS_CHANCE:0 STUN:TRUE | 4:53 | m038a401a | notauthorised | bot | 4 |
-| 24/11/26 | Killaura | ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:FALSE | 8:38 | m8ec6ae7a | notauthorised | bot | 4 |
+| 24/11/26 | Killaura | ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:FALSE | 8:38 | m8ec6ae7a | notauthorised | bot2 | 4 |
 |  |  |  |  |  |  |  |  |
 | 07/11/26 | Aim Assist | SPEED:50 | 8:37 | m365353b1 | notauthorised | afk alt | 3 |
 |  |  |  |  |  |  |  |  |
@@ -236,4 +236,4 @@ For this I have also put this on many different servers as to collect legit play
 | 23/11/26 | Dueling diamondsmp | 7:21 | me90c2577 | gh2l | notauthorised | 4 |
 | 23/11/26 | Dueling diamondsmp | 9:25 | m22a2c3e3 | sh2rp | notauthorised | 4 |
 | 23/11/26 | Dueling diamondsmp | 9:23 | mae085340 | notauthorised | sh2rp | 4 |
-| 24/11/26 | Dueling diamondsmp | 8:00 | m20be5df2 | notauthorised | bot | 4 |
+| 24/11/26 | Dueling diamondsmp | 8:00 | m20be5df2 | notauthorised | bot2 | 4 |
