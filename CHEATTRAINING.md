@@ -17,6 +17,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 14/11/26  | Aim Assist | FOV:90 SPEED:15 SMOOTHING:75 RANDOMNESS:0 | 7:25 | mff6051d6 | notauthorised | bot | 4 |
 | 14/11/26  | Aim Assist | FOV:90 SPEED:60 SMOOTHING:0 RANDOMNESS:0 | 8:51 | m1eaa1d2d| notauthorised | bot | 4 |
 | 15/11/26  | Aim Assist | FOV:90 SPEED:20 SMOOTHING:50 RANDOMNESS:0 ONLY_ON_ROTATE:TRUE| 8:27 | m0ee3763e | notauthorised | bot | 4 |
+| 24/11/26  | Aim Assist | FOV:90 SPEED:20 SMOOTHING:50 RANDOMNESS:0 ONLY_ON_ROTATE:TRUE | 8:33 | m23f2b7a7 | notauthorised | bot | 4 |
 |  |  |  |  |  |  |  |  |
 | 02/11/26 | Kill Aura | HUMANIZED:FALSE REACH:3 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 5:25 | m22700b10 | notauthorised | afk alt | 3 |
 | 02/11/26 | Kill Aura | HUMANIZED:TRUE REACH:2.95 MISS_CHANCE:0 COOLDOWN_RANGE_MIN:88 COOLDOWN_RANGE_MAX:100 | 3:57 | mf2dd0754 | notauthorised | afk alt | 3 |
