@@ -149,6 +149,7 @@ This is where i can keep track of the different clients i have run cheats on and
 | 16/11/26 | Aim Assist | SPEED:3 SENSITIVITY:3 PREDICTION:1 AIM_POSITION:RANDOM VERTICAL_AIM:TRUE | 5:02 | mcf36f647 | notauthorised | bot | 4 |
 | 16/11/26 | Aim Assist | SPEED:5 SENSITIVITY:4 PREDICTION:1 AIM_POSITION:CENTER VERTICAL_AIM:FALSE | 5:34 | mac127aec | notauthorised | bot | 4 |
 | 24/11/26 | Aim Assist | SPEED:3 SENSITIVITY:1 PREDICTION:1 AIM_POSITION:CENTER VERTICAL_AIM:FALSE | 9:12 | m072c9810 | notauthorised | bot2 | 4 |
+| 24/11/26 | Aim Assist | SPEED:1 SENSITIVITY:1 PREDICTION:1 AIM_POSITION:CENTER VERTICAL_AIM:FALSE | 8:41 | m2fb6453b | notauthorised | bot2 | 4 |
 |  |  |  |  |  |  |  |  |
 
 ## Meteor
