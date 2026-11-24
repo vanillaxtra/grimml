@@ -12,9 +12,6 @@ Machine-learning combat checks for **[Grim Anticheat](https://github.com/GrimAnt
 combat cheats using machine learning models struggle with: **Kill Aura, Aim Assist, Triggerbot, Silent Aim, Instant Lunge and Auto
 Shield Breaker**.
 
-<!-- GIF: hero - a cheater getting flagged in chat, hover open -->
-![GrimML in action](assets/hero.gif)
-
 # 🧠 What It Detects
 
 ### ML checks (trained models)
