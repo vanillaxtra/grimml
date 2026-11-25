@@ -156,6 +156,11 @@ public final class PlayerTrack {
         openTick = tick;
     }
 
+    // the last position the client sent, in blocks {x, y, z}
+    public synchronized double[] position() {
+        return new double[]{xMilli / 1000.0, yMilli / 1000.0, zMilli / 1000.0};
+    }
+
     // the client finished a tick: save the frame and count the tick
     public synchronized void clientTickEnd() {
         flush();

@@ -4,6 +4,7 @@ import ac.grim.grimac.api.GrimAPIProvider;
 import ac.grim.grimac.api.GrimAbstractAPI;
 import ac.grim.grimac.api.GrimUser;
 import ac.grim.grimac.api.event.events.FlagEvent;
+import dev.grimml.detect.history.AlertHistory;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.kyori.adventure.text.Component;
@@ -29,6 +30,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -47,7 +50,9 @@ public final class GrimBridge {
             double decayPerMinute,
             List<Punishments.Group> punishments,
             Webhook webhook,
-            Webhook punishmentWebhook // null = punishments are not posted
+            Webhook punishmentWebhook, // null = punishments are not posted
+            int punishDelayMinSeconds, // a random wait in this range before punishment commands run
+            int punishDelayMaxSeconds
     ) {
     }
 
@@ -87,12 +92,18 @@ public final class GrimBridge {
         return t;
     }, new ThreadPoolExecutor.DiscardPolicy());
     private volatile Settings settings;
+    private volatile Consumer<AlertHistory.Entry> history = e -> { };
 
     public GrimBridge(Plugin plugin, Settings settings, Predicate<Player> receives) {
         this.plugin = plugin;
         this.log = plugin.getLogger();
         this.settings = settings;
         this.receives = receives;
+    }
+
+    // gets every alert and punishment (the alert history)
+    public void history(Consumer<AlertHistory.Entry> history) {
+        this.history = history;
     }
 
     public void settings(Settings s) {
@@ -127,7 +138,9 @@ public final class GrimBridge {
         }
     }
 
-    public void flag(UUID uuid, String playerName, String checkName, String description, double confidence, String verbose) {
+    // flagged and windows: the fight's counts for ML checks, -1 for rule checks
+    public void flag(UUID uuid, String playerName, String checkName, String description, double confidence, String verbose,
+                     int flagged, int windows) {
         Settings s = settings;
         MlCheck check = checks.computeIfAbsent(uuid, k -> new ConcurrentHashMap<>())
                 .computeIfAbsent(checkName, k -> new MlCheck(checkName, description, s.decayPerMinute()));
@@ -149,6 +162,7 @@ public final class GrimBridge {
         int vl = (int) Math.round(check.flag(now));
         List<Punishments.Fired> fired = s.punishments().isEmpty() ? List.of() : punish.flag(uuid, checkName, s.punishments(), now);
         int pct = (int) Math.round(Math.max(0.0, Math.min(1.0, confidence)) * 100);
+        history.accept(new AlertHistory.Entry(now, uuid, playerName, checkName, pct, vl, flagged, windows, null));
 
         Map<String, String> ph = new HashMap<>();
         ph.put("%player%", playerName);
@@ -187,22 +201,45 @@ public final class GrimBridge {
             }
             for (Punishments.Fired f : fired) {
                 Map<String, String> pph = punishmentPlaceholders(ph, f);
-                for (String c : f.commands()) {
-                    String cmd = apply(c, pph, false);
-                    log.info("punishment " + f.group().name() + " at " + f.violations() + " violations: " + cmd);
-                    try {
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
-                    } catch (Exception e) {
-                        log.warning("punishment command failed: " + cmd + " (" + e.getMessage() + ")");
-                    }
-                }
-                Webhook pw = s.punishmentWebhook();
-                if (pw != null && hook.startsWith("https://")) {
-                    String body = embed(pw, pph, verbose);
-                    webhookThread.execute(() -> post(hook, body));
+                long delay = punishDelaySeconds(s);
+                Runnable run = () -> punish(s, f, pph, hook, verbose, uuid, playerName, checkName, pct);
+                if (delay <= 0) {
+                    run.run();
+                } else {
+                    log.info("punishment " + f.group().name() + " for " + playerName + " at " + f.violations()
+                            + " violations runs in " + delay + " s");
+                    Bukkit.getScheduler().runTaskLater(plugin, run, delay * 20L);
                 }
             }
         });
+    }
+
+    // a random whole number of seconds in the configured range, so a cheater cannot tell which hit caught them
+    static long punishDelaySeconds(Settings s) {
+        int lo = Math.max(0, Math.min(s.punishDelayMinSeconds(), s.punishDelayMaxSeconds()));
+        int hi = Math.max(0, Math.max(s.punishDelayMinSeconds(), s.punishDelayMaxSeconds()));
+        return hi == 0 ? 0 : ThreadLocalRandom.current().nextLong(lo, hi + 1L);
+    }
+
+    // main thread: runs one group's commands, posts it and records it
+    private void punish(Settings s, Punishments.Fired f, Map<String, String> pph, String hook, String verbose,
+                        UUID uuid, String playerName, String checkName, int pct) {
+        for (String c : f.commands()) {
+            String cmd = apply(c, pph, false);
+            log.info("punishment " + f.group().name() + " at " + f.violations() + " violations: " + cmd);
+            try {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+            } catch (Exception e) {
+                log.warning("punishment command failed: " + cmd + " (" + e.getMessage() + ")");
+            }
+        }
+        history.accept(new AlertHistory.Entry(System.currentTimeMillis(), uuid, playerName, checkName, pct,
+                f.violations(), -1, -1, f.group().name()));
+        Webhook pw = s.punishmentWebhook();
+        if (pw != null && hook.startsWith("https://")) {
+            String body = embed(pw, pph, verbose);
+            webhookThread.execute(() -> post(hook, body));
+        }
     }
 
    // building placeholders for punishments

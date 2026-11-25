@@ -4,12 +4,19 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerCommon;
 import dev.grimml.detect.grim.GrimBridge;
 import dev.grimml.detect.grim.Punishments;
+import dev.grimml.detect.history.AlertHistory;
 import dev.grimml.detect.model.ModelSet;
 import dev.grimml.detect.model.ModelStore;
 import dev.grimml.detect.model.ModuleModel;
 import dev.grimml.detect.scan.Scanner;
 import dev.grimml.detect.track.PacketTap;
 import dev.grimml.detect.track.PlayerTrack;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.command.Command;
@@ -40,7 +47,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
 
     private static final int ATTACK_CAP = 2048; // events kept per player (about 60-80 a second in a fight)
     // bump this when config.yml keys are added, renamed or change meaning
-    public static final int CONFIG_VERSION = 1;
+    public static final int CONFIG_VERSION = 3;
 
     private final Map<UUID, PlayerTrack> tracks = new ConcurrentHashMap<>();
     private final Map<Integer, PlayerTrack> byEntity = new ConcurrentHashMap<>();
@@ -50,6 +57,8 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
     private final Map<UUID, Set<String>> bypass = new ConcurrentHashMap<>();
     // players who turned alerts off with /grimml alerts 
     private final Set<UUID> alertsOff = ConcurrentHashMap.newKeySet();
+    // when each staff member last left (this run), so alerts on join show only what they missed
+    private final Map<UUID, Long> staffLeft = new ConcurrentHashMap<>();
     private volatile int tick;
     private int frameCap;
 
@@ -57,6 +66,8 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
     private GrimBridge grim;
     private Scanner scanner;
     private PacketListenerCommon tap;
+    private dev.grimml.detect.overlay.Overlay overlay;
+    private AlertHistory history;
     private ScheduledExecutorService scanExec;
     private ScheduledExecutorService updateExec;
     private dev.grimml.detect.update.ModelNotices modelNotices;
@@ -73,10 +84,43 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 () -> GrimBridge.colour(getConfig().getString("alerts.prefix", "&bGrimML &8»")));
         grim = new GrimBridge(this, bridgeSettings(),
                 p -> p.hasPermission("grimml.alerts") && !alertsOff.contains(p.getUniqueId()));
-        scanner = new Scanner(tracks, exempt, store::current, (id, check, description, confidence, verbose) -> {
-            Set<String> b = bypass.get(id);
-            if (b == null || !b.contains(check.toLowerCase(Locale.ROOT))) {
-                grim.flag(id, names.getOrDefault(id, id.toString()), check, description, confidence, verbose);
+        history = new AlertHistory(getDataFolder().toPath().resolve("history"),
+                getConfig().getBoolean("history.enabled", true), getConfig().getInt("history.keep-days", 14), getLogger());
+        grim.history(history::record);
+        // old days are deleted at start and every 6 hours
+        Bukkit.getScheduler().runTaskTimer(this, () -> history.prune(System.currentTimeMillis()), 20L, 6 * 72_000L);
+        overlay = new dev.grimml.detect.overlay.Overlay(overlaySettings(),
+                id -> {
+                    PlayerTrack t = tracks.get(id);
+                    return t == null ? null : t.entityId;
+                },
+                id -> {
+                    PlayerTrack t = tracks.get(id);
+                    return t == null ? null : t.position();
+                },
+                GrimBridge::friendly,
+                () -> Bukkit.getUnsafe().nextEntityId()); // an atomic counter, safe off the main thread
+        scanner = new Scanner(tracks, exempt, store::current, new Scanner.Sink() {
+            @Override
+            public void flag(UUID id, String check, String description, double confidence, String verbose,
+                             int flagged, int windows) {
+                if (!bypasses(id, check)) {
+                    grim.flag(id, names.getOrDefault(id, id.toString()), check, description, confidence, verbose,
+                            flagged, windows);
+                    overlay.alert(id, check, confidence, flagged, windows);
+                }
+            }
+
+            @Override
+            public void live(UUID id, String check, int windows, int flagged, double meanScore) {
+                if (!bypasses(id, check)) {
+                    overlay.live(id, check, windows, flagged, meanScore);
+                }
+            }
+
+            @Override
+            public void scanned() {
+                overlay.refresh();
             }
         }, scanSettings(), gridSettings(), lungeSettings(), ATTACK_CAP);
         var cmd = getCommand("grimml");
@@ -94,6 +138,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         hookGrimTransactions();
 
         tap = PacketEvents.getAPI().getEventManager().registerListener(new PacketTap(tracks, () -> tick));
+        PacketEvents.getAPI().getEventManager().registerListener(overlay);
 
         scanExec = Executors.newSingleThreadScheduledExecutor(r -> daemon(r, "GrimML-scan"));
         long every = Math.max(500L, getConfig().getLong("scan.interval-ms", 2000L));
@@ -130,6 +175,10 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         if (tap != null) {
             PacketEvents.getAPI().getEventManager().unregisterListener(tap);
         }
+        if (overlay != null) {
+            PacketEvents.getAPI().getEventManager().unregisterListener(overlay);
+            overlay.shutdown();
+        }
         if (scanExec != null) {
             scanExec.shutdownNow();
         }
@@ -138,6 +187,9 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         }
         if (grim != null) {
             grim.shutdown();
+        }
+        if (history != null) {
+            history.shutdown();
         }
         tracks.clear();
     }
@@ -212,6 +264,31 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 getConfig().getInt("scan.early-alert-min-windows", 10));
     }
 
+    // the overlay section (MiniMessage line formats)
+    private dev.grimml.detect.overlay.Overlay.Settings overlaySettings() {
+        var c = getConfig();
+        int bg;
+        try {
+            bg = (int) Long.parseLong(c.getString("overlay.background", "40000000").replace("#", ""), 16);
+        } catch (NumberFormatException e) {
+            getLogger().warning("overlay.background must be an ARGB hex colour like 40000000");
+            bg = 0x40000000;
+        }
+        return new dev.grimml.detect.overlay.Overlay.Settings(c.getBoolean("overlay.enabled", true),
+                (float) c.getDouble("overlay.height", 0.55), (float) c.getDouble("overlay.scale", 0.8),
+                Math.max(1, c.getInt("overlay.max-lines", 4)),
+                Math.max(1L, c.getLong("overlay.keep-minutes", 5L)) * 60_000L,
+                c.getBoolean("overlay.show-watching", true), c.getBoolean("overlay.see-through", false), bg,
+                c.getString("overlay.flagged", "<red><check></red> <white><confidence>%</white> <gray><flagged>/<windows>"),
+                c.getString("overlay.watching", "<yellow><check></yellow> <white><confidence>%</white> <gray><flagged>/<windows>"),
+                c.getString("overlay.rule", "<red><check></red> <white><confidence>%</white> <gray>x<count>"));
+    }
+
+    private boolean bypasses(UUID id, String check) {
+        Set<String> b = bypass.get(id);
+        return b != null && b.contains(check.toLowerCase(Locale.ROOT));
+    }
+
     // the alerts, webhook and punishments sections
     private GrimBridge.Settings bridgeSettings() {
         var c = getConfig();
@@ -242,7 +319,9 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 (float) c.getDouble("alerts.sound.volume", 1.0),
                 (float) c.getDouble("alerts.sound.pitch", 1.0),
                 c.getDouble("alerts.decay-per-minute", 0.05),
-                punish, webhook, punishmentWebhook(c, webhook));
+                punish, webhook, punishmentWebhook(c, webhook),
+                c.getInt("punishments.delay-seconds.min", 0),
+                c.getInt("punishments.delay-seconds.max", 0));
     }
 
     private List<Punishments.Group> punishmentGroups(ConfigurationSection ps, double defaultDecay) {
@@ -361,7 +440,16 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
-        add(e.getPlayer());
+        Player p = e.getPlayer();
+        add(p);
+        if (getConfig().getBoolean("history.on-join.enabled", true) && p.hasPermission("grimml.alerts")) {
+            // after the join messages and MOTD, so it is not buried
+            Bukkit.getScheduler().runTaskLater(this, () -> {
+                if (p.isOnline()) {
+                    missedAlerts(p);
+                }
+            }, 60L);
+        }
     }
 
     @EventHandler
@@ -373,7 +461,12 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         names.remove(id);
         bypass.remove(id);
         alertsOff.remove(id);
+        if (e.getPlayer().hasPermission("grimml.alerts")) {
+            staffLeft.put(id, System.currentTimeMillis());
+        }
         grim.forget(id);
+        overlay.viewerQuit(id);
+        overlay.forgetTarget(id);
     }
 
 
@@ -512,11 +605,133 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 }
             }
             bypass.put(p.getUniqueId(), mine);
+            if (overlay.isOn(p.getUniqueId()) && !p.hasPermission("grimml.overlay")) {
+                overlay.turnOff(p.getUniqueId());
+            }
         }
     }
 
 
     private static final String P = "&bGrimML &8» ";
+
+    private static Component mm(String text, TagResolver... r) {
+        return MiniMessage.miniMessage().deserialize(text, r);
+    }
+
+    private Component prefix() {
+        return GrimBridge.colour(getConfig().getString("alerts.prefix", "&bGrimML &8»") + " ");
+    }
+
+    private static String ago(long ms) {
+        long s = Math.max(0, ms / 1000);
+        return s < 60 ? s + "s" : s < 3600 ? (s / 60) + "m" : s < 86_400 ? (s / 3600) + "h" : (s / 86_400) + "d";
+    }
+
+    private record Missed(UUID uuid, String name, String what, boolean punished, int count, int maxConf, long lastMs) {
+    }
+
+    // the alerts a staff member missed since they last left (at most history.on-join.max-minutes back), per player and check
+    private void missedAlerts(Player p) {
+        long now = System.currentTimeMillis();
+        long since = Math.max(staffLeft.getOrDefault(p.getUniqueId(), 0L),
+                now - Math.max(1, getConfig().getLong("history.on-join.max-minutes", 60)) * 60_000L);
+        Map<String, Missed> grouped = new HashMap<>();
+        int alerts = 0;
+        for (AlertHistory.Entry e : history.recentSince(since)) {
+            if (!e.punishment()) {
+                alerts++;
+            }
+            String what = e.punishment() ? e.group() : GrimBridge.friendly(e.check());
+            grouped.merge(e.uuid() + "|" + e.punishment() + "|" + what,
+                    new Missed(e.uuid(), e.name(), what, e.punishment(), 1, e.confidence(), e.ms()),
+                    (a, b) -> new Missed(a.uuid(), b.name(), a.what(), a.punished(), a.count() + 1,
+                            Math.max(a.maxConf(), b.maxConf()), Math.max(a.lastMs(), b.lastMs())));
+        }
+        if (grouped.isEmpty()) {
+            return;
+        }
+        List<Missed> list = new ArrayList<>(grouped.values());
+        list.sort((a, b) -> Long.compare(b.lastMs(), a.lastMs()));
+        long players = list.stream().map(Missed::uuid).distinct().count();
+        p.sendMessage(prefix().append(mm("<gray>While you were away: <white><alerts></white> alerts on <white><players></white> "
+                        + "player<s>.", Placeholder.unparsed("alerts", Integer.toString(alerts)),
+                Placeholder.unparsed("players", Long.toString(players)), Placeholder.unparsed("s", players == 1 ? "" : "s"))));
+        int max = Math.max(1, getConfig().getInt("history.on-join.max-lines", 5));
+        boolean canLook = p.hasPermission("grimml.history");
+        for (Missed m : list.subList(0, Math.min(max, list.size()))) {
+            TagResolver r = TagResolver.resolver(Placeholder.unparsed("player", m.name()),
+                    Placeholder.unparsed("what", m.what()), Placeholder.unparsed("count", Integer.toString(m.count())),
+                    Placeholder.unparsed("conf", Integer.toString(m.maxConf())),
+                    Placeholder.unparsed("ago", ago(now - m.lastMs())));
+            Component line = m.punished()
+                    ? mm("<dark_gray> - </dark_gray><white><player></white> <red>punished</red> <gray>(<what>), <ago> ago", r)
+                    : mm("<dark_gray> - </dark_gray><white><player></white> <aqua><what></aqua> <gray>x<count>, up to "
+                    + "<white><conf>%</white>, <ago> ago", r);
+            if (canLook) {
+                line = line.hoverEvent(HoverEvent.showText(mm("<gray>Click for <white><player></white>'s history", r)))
+                        .clickEvent(ClickEvent.runCommand("/grimml history " + m.name()));
+            }
+            p.sendMessage(line);
+        }
+        if (list.size() > max) {
+            p.sendMessage(mm("<dark_gray> - </dark_gray><gray>and <white><n></white> more"
+                            + (canLook ? ", see /grimml history \\<player>" : ""),
+                    Placeholder.unparsed("n", Integer.toString(list.size() - max))));
+        }
+    }
+
+    private static final java.time.format.DateTimeFormatter WHEN =
+            java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm").withZone(java.time.ZoneId.systemDefault());
+
+    // /grimml history <player> [days]
+    private void showHistory(CommandSender sender, String label, String[] args) {
+        if (!history.enabled()) {
+            say(sender, "&7Alert history is off in config.yml &8(history.enabled)&7.");
+            return;
+        }
+        if (args.length < 2) {
+            say(sender, "&7Usage: &f/" + label + " history <player> [days]");
+            return;
+        }
+        int keep = Math.max(1, getConfig().getInt("history.keep-days", 14));
+        int days = keep;
+        if (args.length > 2) {
+            try {
+                days = Math.max(1, Math.min(keep, Integer.parseInt(args[2])));
+            } catch (NumberFormatException e) {
+                say(sender, "&c" + args[2] + " is not a number of days.");
+                return;
+            }
+        }
+        int d = days;
+        history.search(args[1], days, 15, System.currentTimeMillis(), res -> Bukkit.getScheduler().runTask(this, () -> {
+            String who = res.name() == null ? args[1] : res.name();
+            TagResolver head = TagResolver.resolver(Placeholder.unparsed("player", who),
+                    Placeholder.unparsed("total", Integer.toString(res.total())),
+                    Placeholder.unparsed("days", Integer.toString(d)),
+                    Placeholder.unparsed("shown", Integer.toString(res.entries().size())));
+            if (res.total() == 0) {
+                sender.sendMessage(prefix().append(mm("<white><player></white> <gray>has no alerts in the last <days> days.", head)));
+                return;
+            }
+            sender.sendMessage(prefix().append(mm("<white><player></white><gray>: <white><total></white> in the last "
+                    + "<days> days" + (res.total() > res.entries().size() ? ", newest <shown>" : "") + ".", head)));
+            for (AlertHistory.Entry e : res.entries()) {
+                TagResolver r = TagResolver.resolver(
+                        Placeholder.unparsed("when", WHEN.format(java.time.Instant.ofEpochMilli(e.ms()))),
+                        Placeholder.unparsed("check", GrimBridge.friendly(e.check())),
+                        Placeholder.unparsed("conf", Integer.toString(e.confidence())),
+                        Placeholder.unparsed("vl", Integer.toString(e.vl())),
+                        Placeholder.unparsed("group", e.group() == null ? "" : e.group()),
+                        Placeholder.unparsed("fw", e.windows() >= 0 ? e.flagged() + "/" + e.windows() + " windows, " : ""));
+                sender.sendMessage(e.punishment()
+                        ? mm("<dark_gray> - </dark_gray><gray><when></gray> <red>punished</red> <white><group></white> "
+                        + "<gray>at <vl> violations (<check>)", r)
+                        : mm("<dark_gray> - </dark_gray><gray><when></gray> <aqua><check></aqua> <white><conf>%</white> "
+                        + "<gray><fw>vl <vl>", r));
+            }
+        }));
+    }
 
     private static void say(CommandSender to, String text) {
         to.sendMessage(GrimBridge.colour(P + text));
@@ -544,6 +759,26 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 } else {
                     alertsOff.add(p.getUniqueId());
                     say(sender, "&7Alerts &coff&7.");
+                }
+            }
+            case "overlay" -> {
+                if (!(sender instanceof Player p)) {
+                    say(sender, "&7Only players can see the overlay.");
+                } else if (!p.hasPermission("grimml.overlay")) {
+                    say(sender, "&cYou don't have permission to see the overlay.");
+                } else if (!getConfig().getBoolean("overlay.enabled", true)) {
+                    say(sender, "&7The overlay is off in config.yml &8(overlay.enabled)&7.");
+                } else if (overlay.toggle(p.getUniqueId())) {
+                    say(sender, "&7Overlay &aon&7: flagged players show their checks above their heads.");
+                } else {
+                    say(sender, "&7Overlay &coff&7.");
+                }
+            }
+            case "history" -> {
+                if (!sender.hasPermission("grimml.history")) {
+                    say(sender, "&cYou don't have permission to see alert history.");
+                } else {
+                    showHistory(sender, label, args);
                 }
             }
             case "status" -> {
@@ -604,6 +839,8 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 reloadConfig();
                 checkConfigVersion();
                 grim.settings(bridgeSettings());
+                history.settings(getConfig().getBoolean("history.enabled", true), getConfig().getInt("history.keep-days", 14));
+                overlay.settings(overlaySettings());
                 scanner.settings(scanSettings(), gridSettings(), lungeSettings());
                 say(sender, "&7Config reloaded &8(window size and scan interval need a restart)&7.");
             }
@@ -625,6 +862,12 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 say(sender, "&fv" + getPluginMeta().getVersion() + " &7- machine-learning checks for Grim");
                 if (sender.hasPermission("grimml.alerts")) {
                     line(sender, "&8 - &f/" + label + " alerts &7turn your alerts on or off");
+                }
+                if (sender.hasPermission("grimml.overlay")) {
+                    line(sender, "&8 - &f/" + label + " overlay &7show flagged checks above players' heads");
+                }
+                if (sender.hasPermission("grimml.history")) {
+                    line(sender, "&8 - &f/" + label + " history <player> [days] &7a player's past alerts and punishments");
                 }
                 if (sender.hasPermission("grimml.admin")) {
                     line(sender, "&8 - &f/" + label + " status [player] &7checks, models and a player's state");
@@ -652,10 +895,17 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
             if (sender.hasPermission("grimml.alerts")) {
                 options.add("alerts");
             }
+            if (sender.hasPermission("grimml.overlay")) {
+                options.add("overlay");
+            }
+            if (sender.hasPermission("grimml.history")) {
+                options.add("history");
+            }
             if (sender.hasPermission("grimml.admin")) {
                 options.addAll(List.of("status", "reload", "update"));
             }
-        } else if (args.length == 2 && args[0].equalsIgnoreCase("status") && sender.hasPermission("grimml.admin")) {
+        } else if (args.length == 2 && ((args[0].equalsIgnoreCase("status") && sender.hasPermission("grimml.admin"))
+                || (args[0].equalsIgnoreCase("history") && sender.hasPermission("grimml.history")))) {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 options.add(p.getName());
             }

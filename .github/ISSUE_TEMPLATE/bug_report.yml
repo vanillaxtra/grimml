@@ -46,7 +46,7 @@ body:
     id: version
     attributes:
       label: grimml version or commit
-      placeholder: 1.1.0 / 8f81752
+      placeholder: 1.2.0 / 8f81752
     validations:
       required: true
   - type: input

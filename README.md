@@ -1,7 +1,7 @@
 # GrimML
 
 [![Build](https://github.com/vanillaxtra/grimml/actions/workflows/build.yml/badge.svg)](https://github.com/vanillaxtra/grimml/actions/workflows/build.yml)
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/vanillaxtra/grimml/releases)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/vanillaxtra/grimml/releases)
 [![Platform](https://img.shields.io/badge/Paper-1.21%2B-purple.svg)](https://papermc.io/)
 [![Java](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://adoptium.net/)
 [![Requires Grim](https://img.shields.io/badge/requires-GrimAC-00bcd4.svg)](https://github.com/GrimAnticheat/Grim)
@@ -55,6 +55,20 @@ is flagged only when enough of it looks like cheating, so one lucky flick never 
 * **Sound ping** – for staff with `grimml.alerts.sound`.
 * **Toggle** – `/grimml alerts` turns your own alerts on or off.
 * **Grim-friendly** – fires Grim's `FlagEvent`, so other Grim add-ons see and can cancel GrimML flags.
+* **Missed alerts on join** – staff who log in see what was flagged while they were away, one line per player and
+  check. Click a line to open that player's history.
+* **History** – every alert and punishment is saved for 14 days (`plugins/GrimML/history/`).
+  `/grimml history <player> [days]` shows them, for offline players too and after restarts.
+
+# 👁️ Staff Overlay
+
+`/grimml overlay` puts a small hologram on flagged players' heads that only you can see:
+
+* **Red** – checks they were flagged for in the last few minutes: `Kill Aura 74% 12/30` (confidence, then flagged
+  windows out of the fight's windows; rule checks show how often: `Swap Macro 100% x2`).
+* **Yellow** – a fight in progress with flagged windows that has not alerted yet.
+* It **rides on their head** in your client only (no server entity), so it moves smoothly with them, never teleports
+  on its own and never gets in the way of `/tp`, pearls or other plugins.
 
 <!-- GIF: alerts - hovering over an alert, then clicking it to teleport -->
 ![Alerts](https://raw.githubusercontent.com/vanillaxtra/grimml/refs/heads/main/assets/alerts.png)
@@ -94,6 +108,8 @@ punishments:
 * **Groups** – each group adds up its checks' violations (check names, short names like `Instant Lunge`, or `*`).
 * **Any commands** – kick, tempban, a Discord bot command, a broadcast… as many as you like per count.
 * **Decay** – violations fade over time (per group), and **relogging does not reset them**.
+* **Random delay** – each punishment waits a random 10–45 s (`punishments.delay-seconds`), so a cheater can't tell
+  which hit caught them. It still runs if they log off.
 * **Webhook** – every punishment is posted to Discord.
 * `/grimml status <player>` shows a player's counts.
 
@@ -121,6 +137,8 @@ punishments:
 | Command | Permission | Description |
 |---------|------------|-------------|
 | `/grimml alerts` | `grimml.alerts` | Turn your alerts on or off |
+| `/grimml overlay` | `grimml.overlay` | Show flagged checks above players' heads (only to you) |
+| `/grimml history <player> [days]` | `grimml.history` | A player's past alerts and punishments |
 | `/grimml status [player]` | `grimml.admin` | Models, checks, punishments, and a player's scan state and counts |
 | `/grimml update` | `grimml.admin` | Download newer models now |
 | `/grimml reload` | `grimml.admin` | Reload `config.yml` |
@@ -136,6 +154,8 @@ punishments:
 | `grimml.*` | OP | Everything below except bypass |
 | `grimml.alerts` | OP | See alerts in chat |
 | `grimml.alerts.sound` | OP | Hear a ping with every alert |
+| `grimml.overlay` | OP | Use `/grimml overlay` |
+| `grimml.history` | OP | Use `/grimml history` |
 | `grimml.notify` | OP | Be told once when new models are downloaded (on next join if offline) |
 | `grimml.update.notify` | OP | Be told when a new GrimML release is out |
 | `grimml.admin` | OP | Status, reload, update |
@@ -169,8 +189,10 @@ Used in alerts, hover, click command, webhook and punishments.
 Main config: `plugins/GrimML/config.yml`
 
 - `alerts` – Format, hover, click command, sound, decay
+- `history` – How many days of alerts to keep, and the missed-alerts message on join
+- `overlay` – Staff overlay height, size, lines and MiniMessage formats
 - `webhook` – Discord embed, and `webhook.punishments` for the punishment embed
-- `punishments` – Groups, checks, commands per violation count
+- `punishments` – Groups, checks, commands per violation count, random delay
 - `aim-grid`, `lunge-rate`, `lunge-hold`, `swap-order`, `axe-hold`, `combo-repeat` – Rule check tuning
 - `models` – Auto-update and manifest URL
 - `update-checker` – Plugin release notices

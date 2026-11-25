@@ -7,7 +7,7 @@
     <!-- Build both plugins with `mvn package` from here. Each module is self-contained (no inherited config). -->
     <groupId>dev.grimml</groupId>
     <artifactId>grimml-parent</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <packaging>pom</packaging>
 
     <modules>

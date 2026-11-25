@@ -12,7 +12,7 @@ commands:
   grimml:
     description: GrimML alerts, status, reload and model update
     aliases: [gml]
-    usage: /<command> [alerts|status|reload|update]
+    usage: /<command> [alerts|overlay|history|status|reload|update]
 permissions:
   grimml.*:
     description: Everything below except bypass
@@ -21,6 +21,8 @@ permissions:
       grimml.admin: true
       grimml.alerts: true
       grimml.alerts.sound: true
+      grimml.overlay: true
+      grimml.history: true
       grimml.notify: true
       grimml.update.notify: true
   grimml.admin:
@@ -31,6 +33,12 @@ permissions:
     default: op
   grimml.alerts.sound:
     description: Hear a ping sound with every alert you see
+    default: op
+  grimml.overlay:
+    description: /grimml overlay, see flagged checks above players' heads
+    default: op
+  grimml.history:
+    description: /grimml history, see a player's past alerts and punishments
     default: op
   grimml.notify:
     description: Be told once when new models are downloaded (on next join if offline)

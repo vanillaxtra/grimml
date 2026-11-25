@@ -50,6 +50,16 @@ public final class Fight {
         return windows;
     }
 
+    // returns the number of flagged windows in the stretch so far
+    public int flagged() {
+        return flagged;
+    }
+
+    // returns the average score of the stretch so far (0 before the first window)
+    public double meanScore() {
+        return windows == 0 ? 0.0 : scoreSum / windows;
+    }
+
     // returns the lower end of the Wilson score interval for flagged out of n at z standard deviations.
     static double wilsonLow(int flagged, int n, double z) {
         double p = (double) flagged / n;

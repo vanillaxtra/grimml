@@ -22,7 +22,7 @@ public final class FormatSelfCheck {
         var hook = new GrimBridge.Webhook(true, "", false, "**GrimML Alert**", "#00FFFF", "https://crafthead.net/helm/%uuid%",
                 "", "GrimML v%grimml_version%", "", true, true, java.util.List.of("**Player**: `%player%`", "**Check**: %check_name%"));
         var s = new GrimBridge.Settings("&bGrimML &8»", "%prefix% &f%player% &7flagged &b%check% &8(&f%confidence%%&8) &7x%vl%",
-                java.util.List.of("&7Details: &f%verbose%"), "/tp %player%", true, "", 1f, 1f, 0.05, java.util.List.of(), hook, null);
+                java.util.List.of("&7Details: &f%verbose%"), "/tp %player%", true, "", 1f, 1f, 0.05, java.util.List.of(), hook, null, 0, 0);
         var ph = new java.util.HashMap<String, String>(java.util.Map.of("%player%", "St<red>eve", "%check%", "Kill Aura",
                 "%check_name%", "MLKillAura", "%confidence%", "74", "%vl%", "2", "%verbose%", "7 of 24 windows",
                 "%uuid%", "00000000-0000-0000-0000-000000000001", "%grimml_version%", "1.1.0"));
@@ -35,6 +35,14 @@ public final class FormatSelfCheck {
         check(body.contains("\"title\":\"**GrimML Alert**\"") && body.contains("crafthead.net/helm/00000000")
                 && body.contains("\"name\":\"Verbose\"") && body.contains("Confidence 74%"), "webhook body: " + body);
         punishments(ph);
+        // punishment delay: 0..0 runs right away, otherwise a whole number of seconds inside the range (either order)
+        check(GrimBridge.punishDelaySeconds(s) == 0, "no delay");
+        var d = new GrimBridge.Settings(s.prefix(), s.format(), s.hover(), s.clickCommand(), true, "", 1f, 1f, 0.05,
+                java.util.List.of(), hook, null, 30, 10);
+        for (int i = 0; i < 200; i++) {
+            long w = GrimBridge.punishDelaySeconds(d);
+            check(w >= 10 && w <= 30, "delay in range: " + w);
+        }
         // update checker versions: numeric per part, tolerant of v prefixes and suffixes
         var V = (java.util.function.Function<String, dev.grimml.detect.update.Version>) dev.grimml.detect.update.Version::new;
         check(V.apply("1.0.10").compareTo(V.apply("1.0.9")) > 0, "1.0.10 > 1.0.9");

@@ -28,7 +28,17 @@ public final class Scanner implements Runnable {
 
     public interface Sink {
 
-        void flag(UUID player, String checkName, String description, double confidence, String verbose);
+        // an alert; flagged and windows are the fight's counts for ML checks and -1 for rule checks
+        void flag(UUID player, String checkName, String description, double confidence, String verbose,
+                  int flagged, int windows);
+
+        // an ML fight in progress after each scored window (for the staff overlay); counts reset when it is judged
+        default void live(UUID player, String checkName, int windows, int flagged, double meanScore) {
+        }
+
+        // called after every scan, on the scan thread
+        default void scanned() {
+        }
     }
 
     public record Settings(int frameCap, int minAttacks, int minFrames, long fightGapMs, int blockWindows,
@@ -159,6 +169,7 @@ public final class Scanner implements Runnable {
         long t0 = System.nanoTime();
         try {
             scan(t0);
+            sink.scanned();
         } catch (Throwable t) {
             t.printStackTrace(); // never let the scheduled task die
         }
@@ -220,6 +231,7 @@ public final class Scanner implements Runnable {
                 Fight fight = mine.computeIfAbsent(m.checkName(), k -> new Fight());
                 report(id, m, fight.add(now, score, m.windowThreshold(), m.alertShare(), s.blockWindows(),
                         minWindows(s, m), gapNs, s.earlyZ(), s.earlyMinWindows()));
+                sink.live(id, m.checkName(), fight.windows(), fight.flagged(), fight.meanScore());
             }
         }
     }
@@ -259,7 +271,7 @@ public final class Scanner implements Runnable {
         String verbose = String.format("%d of %d fight windows flagged (%.0f%%, alert line %.0f%%)",
                 v.flagged(), v.windows(), v.share() * 100, m.alertShare() * 100);
         flagsRaised.incrementAndGet();
-        sink.flag(id, m.checkName(), m.description(), v.meanScore(), verbose);
+        sink.flag(id, m.checkName(), m.description(), v.meanScore(), verbose, v.flagged(), v.windows());
     }
 
     // feeds AimGrid the frames since the last scan (the window holds 8 s, scans run every 2 s)
@@ -279,7 +291,7 @@ public final class Scanner implements Runnable {
             double toward = Math.max(0.0, Math.min(1.0, (1.0 + gr.live.bias()) / 2.0));
             sink.flag(id, GridSettings.CHECK, GridSettings.DESCRIPTION, toward, String.format(
                     "%.0f%% of recent rotation off the mouse grid (their own rate outside fights %.1f%%), %.0f%% of that toward the opponent",
-                    gr.live.offShare() * 100, gr.live.baseline() * 100, toward * 100));
+                    gr.live.offShare() * 100, gr.live.baseline() * 100, toward * 100), -1, -1);
         }
     }
 
@@ -340,7 +352,7 @@ public final class Scanner implements Runnable {
                 case 3 -> r.axeShare;
                 default -> co.share[c - 4];
             };
-            sink.flag(id, LungeSettings.CHECKS[c], LungeSettings.DESCRIPTIONS[c], conf, verbose);
+            sink.flag(id, LungeSettings.CHECKS[c], LungeSettings.DESCRIPTIONS[c], conf, verbose, -1, -1);
         }
     }
 

@@ -7,6 +7,32 @@ servers through auto-update, so they are listed under the plugin release they sh
 
 ## [Unreleased]
 
+## [1.2.0] - unreleased
+
+**Update needed for models v11 and later.** The next Silent Aim model uses the new flick features, which 1.1.0 does
+not compute. A 1.1.0 server that downloads it refuses the whole model set and keeps running the models it already has
+(v10), so it also misses the Kill Aura, Aim Assist and Triggerbot updates.
+
+### Added
+
+- **Staff overlay** (`/grimml overlay`, `grimml.overlay`): a hologram riding on flagged players' heads, seen only by
+  staff who turned it on. One line per check: red for alerts in the last `overlay.keep-minutes` (confidence and
+  flagged/total fight windows, or `x<count>` for rule checks), yellow for a fight in progress with flagged windows.
+  It exists only in the staff member's client (packets, no server entity), so it follows the head with no extra
+  packets and never blocks teleports. New `overlay` section in `config.yml` (MiniMessage formats);
+  `config-version` is now 2.
+- **Alert history** (`/grimml history <player> [days]`, `grimml.history`): every alert and punishment is saved to
+  `plugins/GrimML/history/<date>.jsonl` and kept for `history.keep-days` (14). Works for offline players and after
+  restarts.
+- **Missed alerts on join**: staff with `grimml.alerts` see the alerts and punishments from while they were away
+  (at most `history.on-join.max-minutes` back), grouped per player and check; click a line for that player's history.
+- **Punishment delay** (`punishments.delay-seconds`, default 10–45 s): each punishment waits a random time so a
+  cheater can't tell which hit caught them. It is posted to the webhook when it runs. `config-version` is now 3.
+- **Flick features** (`flick_one_tick_frac`, `flick_return_frac`, `flick_snap_frac`) for the ML checks: for every hit,
+  how the view turned over the 3 client ticks before and after it. Silent aim, snap kill auras and knockback
+  displacement turn onto the target on the hit tick and straight back; a real flick builds up over several ticks and
+  keeps tracking. Needs 1.21.2+ clients (client ticks).
+
 ### Changed
 
 - **AimGrid no longer flags non-linear mice** (Enhance pointer precision, Raw Accel, custom curves): each player's
@@ -62,5 +88,6 @@ First public release.
 - The ML checks are in beta and have flagged legit players on servers unlike the training data (other clients,
   versions and play styles). Use their alerts to decide who to watch; keep punishments for them off.
 
-[Unreleased]: https://github.com/vanillaxtra/grimml/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/vanillaxtra/grimml/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/vanillaxtra/grimml/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/vanillaxtra/grimml/releases/tag/v1.1.0
