@@ -646,7 +646,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        List<String> options = new ArrayList<>();
+        List<String> options = new ArrayList<>(); 
         if (args.length == 1) {
             options.add("help");
             if (sender.hasPermission("grimml.alerts")) {
