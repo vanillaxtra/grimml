@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import math
 
+from grimml_train.features.flick import FLICK_FEATURES
 from grimml_train.features.schema4 import SCHEMA4_FEATURES, schema4_features
 from grimml_train.features.spearmace import (
     AXE, MACE, SPEAR, SPEAR_IDS, SPEAR_MACE_FEATURES, item_id, resolve_cat, spear_mace_features,
@@ -45,7 +46,9 @@ def run(events, frames=None, schema=4):
 
 
 def test_names_appended_at_the_end():
-    assert SCHEMA4_FEATURES[-len(SPEAR_MACE_FEATURES):] == SPEAR_MACE_FEATURES
+    # later families (flick_) are appended after spear-mace, so it is the block just before them
+    tail = SPEAR_MACE_FEATURES + FLICK_FEATURES
+    assert SCHEMA4_FEATURES[-len(tail):] == tail
     assert SCHEMA4_FEATURES[47] == "grid_toward_minus_away"  # existing indices did not move
 
 
