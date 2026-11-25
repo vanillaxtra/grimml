@@ -5,22 +5,24 @@ import dev.grimml.detect.features.Window4;
 import java.util.function.IntFunction;
 
 /**
- * Per-player rings, written by that player's netty thread, read by the scan thread.
- * Frame sequencing copies the recorder (recorder/.../PlayerRingBuffer: nextOrder, applyFlying, markClientTickEnd,
- * flushOpenFrame) so live windows contain the same frames the training windows did: one frame per server tick that saw
- * a packet, holding the state at the moment it is flushed. Schema 4 data (docs/schema4.md) is kept the same way:
- * exact rotation, client tick, the opponent block and packet timing per frame, and the events the features use.
- * All netty-side methods are synchronized on this track: the lock is per player and only contended by the scan
- * thread's copy every couple of seconds. Fields other players' threads read are volatile.
+ * This is the player track class that holds one player's recent frames and events.
+ * It is written by the player's netty thread (PacketTap) and copied out by the scan thread every 2 seconds.
+ *
+ * It builds frames the same way the recorder's PlayerRingBuffer does, so the live windows match the training windows:
+ * one frame per server tick that saw a packet, holding the state when it is flushed.
+ * It also keeps the schema 4 data (docs/schema4.md): exact rotation, client tick, the opponent and packet timing.
+ *
+ * The netty methods are synchronized on the track, the lock is per player so only the scan copy ever waits on it.
+ * Fields that other players' threads read are volatile.
  */
 public final class PlayerTrack {
 
     private static final int NONE = Integer.MIN_VALUE;
     // live flags
     public static final int L_SPRINT = 1, L_SNEAK = 2, L_BLOCKING = 4, L_GLIDING = 8, L_USING = 16;
-    // item categories (the recorder's ItemCategories numbers that the features look at)
+    // item categories (same numbers as the recorder's ItemCategories)
     public static final int CAT_AXE = 2, CAT_MACE = 3, CAT_SPEAR = 4, CAT_SHIELD = 8, CAT_COBWEB = 15;
-    /** Digging action STAB (spear jab), written as a BREAK event like the recorder does. */
+    // spear jab digging action, saved as a BREAK event like the recorder does
     public static final int DIG_STAB = 8;
 
     public final int entityId;
@@ -40,7 +42,7 @@ public final class PlayerTrack {
     private int eWrite;
     private int eCount;
 
-    // ---- netty-only state
+    // ---- only the netty thread touches these
     private int yawCenti, pitchCenti;
     private float yawExact, pitchExact;
     private boolean hasExactRot;
@@ -62,9 +64,9 @@ public final class PlayerTrack {
     public volatile int liveFlags;
     public volatile long blockChangeNanos, lastHurtNanos, lastHitPacketNanos, lastAttackNanos;
     public volatile int lastTargetEntityId, lastAttackerEntityId, opponentEntityId, nearby;
-    public volatile int[] hotbarCats = new int[9];   // main thread refreshes
+    public volatile int[] hotbarCats = new int[9];   // set by the main thread
     public volatile int offCat;
-    public volatile Object grimUser;                 // ac.grim.grimac.api.GrimUser (main thread sets)
+    public volatile Object grimUser;                 // the GrimUser, set by the main thread
     public volatile IntFunction<PlayerTrack> peers = id -> null;
 
     public PlayerTrack(int entityId, int frameCap, int eventCap) {
@@ -105,9 +107,9 @@ public final class PlayerTrack {
         return lastAttackNanos;
     }
 
-    // ================================================================ recorder-equivalent capture (netty thread)
+    // ================================================================ capture, same as the recorder (netty thread)
 
-    /** Any recorder-visible packet: a new server tick commits the frame left open by an older tick. */
+    // any packet the recorder sees: a new server tick saves the frame left open by the old one
     public synchronized void packet(int tick) {
         if (orderTick != tick) {
             if (openTick != NONE && openTick != tick) {
@@ -118,7 +120,7 @@ public final class PlayerTrack {
         }
     }
 
-    /** Every inbound packet: longest silence and bursts (PACKET_TIMING). */
+    // every packet from the player: tracks the longest gap and bursts (packets under 2 ms apart)
     public synchronized void inbound(long nanos) {
         if (lastInboundNanos != 0L) {
             long gap = nanos - lastInboundNanos;
@@ -130,6 +132,7 @@ public final class PlayerTrack {
         lastInboundNanos = nanos;
     }
 
+    // movement packet: position, rotation and on ground
     public synchronized void flying(int tick, double x, double y, double z, float yaw, float pitch, boolean onGround,
                                     boolean hasPos, boolean hasRot) {
         packet(tick);
@@ -153,6 +156,7 @@ public final class PlayerTrack {
         openTick = tick;
     }
 
+    // the client finished a tick: save the frame and count the tick
     public synchronized void clientTickEnd() {
         flush();
         clientTick++;
@@ -163,7 +167,7 @@ public final class PlayerTrack {
         event(Window4.INPUT, tick, nanos, bits, 0, 0, 0, 0);
     }
 
-    /** 1 sprint start, 2 sprint stop, 3 sneak start, 4 sneak stop. */
+    // code: 1 sprint start, 2 sprint stop, 3 sneak start, 4 sneak stop
     public synchronized void moveState(int tick, long nanos, int code) {
         switch (code) {
             case 1 -> live(L_SPRINT, true);
@@ -183,7 +187,7 @@ public final class PlayerTrack {
         int g = kind | (cooldownTicks(tick) << 8);
         lastTargetEntityId = targetId;
         lastHitPacketNanos = nanos;
-        // c: held category << 8, as the recorder writes it (spear-mace features read the weapon from it)
+        // c is the held item category << 8 like the recorder, the spear mace features read the weapon from it
         event(Window4.ATTACK, tick, nanos, 0, targetId, cat(hotbarCats, heldSlot) << 8, 0, g);
         lastAttackNanos = nanos;
     }
@@ -217,8 +221,6 @@ public final class PlayerTrack {
         live(L_USING, true);
     }
 
-    /** Digging packet: RELEASE ends item use; SWAP_ITEM_WITH_OFFHAND is a hotbar_swap with c = held category;
-     *  STAB (1.21.11 spear jab, not an attack packet) is a BREAK event with a = 8. */
     public synchronized void dig(int tick, long nanos, boolean release, boolean swap, boolean stab) {
         packet(tick);
         if (stab) {
@@ -242,16 +244,17 @@ public final class PlayerTrack {
         event(Window4.KNOCKBACK, tick, nanos, Math.round(vx * 8000), (int) Math.round(vy * 8000), (int) Math.round(vz * 8000), 0, 0);
     }
 
-    /** kind 1 transaction, 2 keep-alive. Does not open a frame tick (recorder schema 4 behaviour). */
+    // a ping we sent: kind 1 transaction, 2 keep alive (does not open a frame, same as the recorder)
     public synchronized void rttSent(int tick, long nanos, long id, int kind) {
         event(Window4.RTT_SENT, tick, nanos, id, kind, 0, 0, 0);
     }
 
-    /** Transaction reply, from Grim's GrimTransactionReceivedEvent. */
+    // the transaction reply (from Grim's event, Grim eats the packet before we see it)
     public synchronized void pong(int tick, long nanos, int id) {
         event(Window4.RTT, tick, nanos, id, 0, 1, 0, 0);
     }
 
+    // a crystal, wind charge or tnt spawned within 16 blocks (crystal ids are kept to spot crystal hits)
     public synchronized void spawn(int tick, long nanos, int id, int kind, double x, double y, double z) {
         int dx = (int) Math.round(x * 1000) - xMilli;
         int dy = (int) Math.round(y * 1000) - yMilli;
@@ -274,6 +277,7 @@ public final class PlayerTrack {
 
     // ================================================================ internals
 
+    // sets the live flags and saves when blocking changed
     private void live(int bits, boolean on) {
         int prev = liveFlags;
         int next = on ? prev | bits : prev & ~bits;
@@ -290,6 +294,7 @@ public final class PlayerTrack {
         return slot >= 0 && slot < cats.length ? cats[slot] : 0;
     }
 
+    // ticks since the last swing or swap (the attack cooldown), 255 max
     private int cooldownTicks(int tick) {
         return lastResetTick == NONE ? 255 : Math.max(0, Math.min(255, tick - lastResetTick));
     }
@@ -303,6 +308,7 @@ public final class PlayerTrack {
         return false;
     }
 
+    // adds an event to the ring
     private void event(int type, int tick, long nanos, long a, int b, int c, int d, int g) {
         int i = eWrite;
         eType[i] = type;
@@ -318,6 +324,7 @@ public final class PlayerTrack {
         eCount = Math.min(eCount + 1, eType.length);
     }
 
+    // saves the open frame to the ring
     private void flush() {
         if (openTick == NONE) {
             return;
@@ -349,7 +356,7 @@ public final class PlayerTrack {
         openTick = NONE;
     }
 
-    // the recorder's PlayerRingBuffer.fillExt; reads the opponent's volatile fields, never their lock
+    // fills the opponent part of the frame, only reads their volatile fields and never takes their lock
     private void fillOpponent(int i) {
         int oid = opponentEntityId;
         PlayerTrack o = oid == 0 ? null : peers.apply(oid);
@@ -380,7 +387,7 @@ public final class PlayerTrack {
 
     // ================================================================ scan thread
 
-    /** Whole frame ring (oldest first) and the events in [fromNanos, toNanos], into the core window and w4. */
+    // copies all frames (oldest first) and the events between fromNanos and toNanos into the windows
     public synchronized void snapshot(Window w, Window4 w4, long fromNanos, long toNanos) {
         int start = (fWrite - fCount + cap) % cap;
         w.n = fCount;
@@ -436,7 +443,7 @@ public final class PlayerTrack {
         }
     }
 
-    /** Reusable buffers for the 13 core features. */
+    // the window for the 13 core features, reused every scan
     public static final class Window {
         public final int[] yaw;
         public final int[] pitch;

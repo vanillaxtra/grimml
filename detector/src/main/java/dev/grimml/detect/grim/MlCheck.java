@@ -3,9 +3,10 @@ package dev.grimml.detect.grim;
 import ac.grim.grimac.api.AbstractCheck;
 
 /**
- * One ML check for one player, shaped like a Grim check so Grim's FlagEvent listeners
- * (other add-ons, logging plugins) see it like any other check. Grim's API has no way to add
- * third-party checks to its own check list, so violations are counted here.
+ * This is the ML check class for the GrimMLDetector.
+ * It is a check that is used to count the violations of the ML checks.
+ * It is shaped like a Grim check so Grim's FlagEvent listeners see it like any other check.
+ * Grim's API has no way to add third-party checks to its own check list, so violations are counted here.
  */
 public final class MlCheck implements AbstractCheck {
 
@@ -22,7 +23,7 @@ public final class MlCheck implements AbstractCheck {
         this.decayPerMinute = decayPerMinute;
     }
 
-    /** Adds one violation (after decay) and returns the new count. */
+    // adds one violation (after decay) and returns the new count
     public synchronized double flag(long nowMs) {
         decay(nowMs);
         violations += 1.0;
@@ -30,6 +31,7 @@ public final class MlCheck implements AbstractCheck {
         return violations;
     }
 
+    // decays the violations by the decay per minute
     private void decay(long nowMs) {
         if (lastViolation != 0 && decayPerMinute > 0) {
             double minutes = (nowMs - lastViolation) / 60_000.0;
@@ -69,7 +71,7 @@ public final class MlCheck implements AbstractCheck {
 
     @Override
     public double getSetbackVL() {
-        return Double.MAX_VALUE; // ML checks never set players back
+        return Double.MAX_VALUE; // we never set players back
     }
 
     @Override

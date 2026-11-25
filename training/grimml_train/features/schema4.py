@@ -19,6 +19,7 @@ from __future__ import annotations
 import math
 
 from grimml_train.features.aimgrid import grid_features
+from grimml_train.features.flick import FLICK_FEATURES, flick_features
 from grimml_train.features.spearmace import SPEAR_MACE_FEATURES, mace_aim_features, spear_mace_features
 
 import numpy as np
@@ -49,6 +50,8 @@ SCHEMA4_FEATURES = [
     "grid_off_frac", "grid_off_toward", "grid_off_away", "grid_toward_minus_away",
     # spear-mace (spearmace.py): swap_* / lunge_* / mace_* / stun_*, appended last
     *SPEAR_MACE_FEATURES,
+    # flick around each attack (flick.py), appended last
+    *FLICK_FEATURES,
 ]
 
 
@@ -110,6 +113,7 @@ def schema4_features(decoded: dict) -> dict:
     _crystal_anchor(row, events)
     _shield(row, frames, events)
     row.update(mace_aim_features(frames, events, aim))
+    row.update(flick_features(frames, events))
     return row
 
 

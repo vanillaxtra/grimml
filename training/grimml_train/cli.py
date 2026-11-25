@@ -48,6 +48,7 @@ def _add_module_overrides(p: argparse.ArgumentParser) -> None:
     g.add_argument("--match-activity", dest="match_activity", action="store_true", default=None)
     g.add_argument("--no-match-activity", dest="match_activity", action="store_false")
     g.add_argument("--train-clients", help="comma list")
+    g.add_argument("--families", help="comma list of schema 4 feature prefixes, e.g. aim_,grid_")
     g.add_argument("--chunk-min", type=float)
     g.add_argument("--chunk-gap-s", type=float)
     g.add_argument("--trim-s", type=float)
@@ -97,7 +98,7 @@ def _spec(args):
 
     reg = ModuleRegistry.load()
     spec = reg.get(args.module).with_overrides(
-        schema4=args.schema4, match_activity=args.match_activity, train_clients=args.train_clients,
+        schema4=args.schema4, match_activity=args.match_activity, train_clients=args.train_clients, families=args.families,
         chunk_min=args.chunk_min, chunk_gap_s=args.chunk_gap_s, trim_s=args.trim_s, min_secs=args.min_secs,
         roles=args.roles, seed=args.seed)
     return reg, spec

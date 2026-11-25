@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Java port of training/grimml_train/features/schema4.py. Same names, same order, same numbers:
- * ParitySelfCheck compares both on real schema 4 windows. Change both together.
+ * This is the main feature extractor for the features.
+ * It takes the window and the schema4 flag and returns the features. This was ported from python.
  */
 public final class Schema4Features {
 
@@ -28,8 +28,8 @@ public final class Schema4Features {
             "shield_axe_swaps", "shield_axe_reaction_ms_mean", "shield_axe_reaction_ms_std",
             "grid_off_frac", "grid_off_toward", "grid_off_away", "grid_toward_minus_away",
     };
-    // spear-mace family (SpearMace.java / spearmace.py), appended last so the indices above never move
-    public static final String[] NAMES = concat(BASE_NAMES, SpearMace.NAMES);
+    // just have to do a certain append order so the indices above never move
+    public static final String[] NAMES = concat(concat(BASE_NAMES, SpearMace.NAMES), Flick.NAMES);
     private static final Map<String, Integer> INDEX = new HashMap<>();
 
     static {
@@ -70,7 +70,7 @@ public final class Schema4Features {
         Arrays.fill(f.row, Double.NaN);
         f.w = w;
         f.click();
-        double[] sm = SpearMace.features(w);   // schema 3 carries these too (like click)
+        double[] sm = SpearMace.features(w);   // schema 3 carries these too 
         for (int k = 0; k < sm.length; k++) {
             f.set(SpearMace.NAMES[k], sm[k]);
         }
@@ -87,6 +87,10 @@ public final class Schema4Features {
         f.crystalAnchor();
         f.shield();
         f.maceAim();
+        double[] fl = Flick.features(w);
+        for (int k = 0; k < fl.length; k++) {
+            f.set(Flick.NAMES[k], fl[k]);
+        }
         return f.row;
     }
 
@@ -94,7 +98,7 @@ public final class Schema4Features {
         row[INDEX.get(name)] = v;
     }
 
-    // ---------------------------------------------------------------- numpy-like helpers
+    // ---------------------------------------------------------------- numpy-like helpers (as i said ported from python)
 
     static double wrap(double deg) {
         double m = (deg + 180.0) % 360.0;
@@ -128,7 +132,7 @@ public final class Schema4Features {
         return Math.sqrt(s / n);
     }
 
-    /** _std: population std, NaN below 2 values. */
+    // population std NaN below 2 values.
     static double std2(List<Double> x) {
         if (x.size() < 2) return Double.NaN;
         return pstd(toArr(x), x.size());
@@ -147,7 +151,7 @@ public final class Schema4Features {
         return s.length % 2 == 1 ? s[h] : (s[h - 1] + s[h]) / 2.0;
     }
 
-    /** numpy percentile, linear interpolation. */
+    // numpy percentile, linear interpolation.
     static double percentile(double[] x, double q) {
         double[] s = x.clone();
         Arrays.sort(s);
@@ -228,7 +232,7 @@ public final class Schema4Features {
         }
     }
 
-    /** Aim error (yaw - the opponent's bearing) per frame, for the live AimGrid check. */
+    // Aim error per frame for the AimGrid check.
     public static void aimErrors(Window4 w, boolean[] has, double[] err) {
         Schema4Features f = new Schema4Features();
         f.w = w;
@@ -403,7 +407,7 @@ public final class Schema4Features {
 
     // ---------------------------------------------------------------- backtrack
 
-    /** (reply nanos, round trip ms) sorted, like _rtts. */
+    // returning the round trip times
     private List<double[]> rtts() {
         Map<Long, Long> sent = new HashMap<>();
         for (int e = 0; e < w.m; e++) {

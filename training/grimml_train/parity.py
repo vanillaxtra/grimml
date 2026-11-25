@@ -72,7 +72,8 @@ def main() -> None:
 
 
 # schema 4 sessions for the schema 4 feature parity (add legit and other modules here as they are recorded)
-MARKS4 = ["m5123c635", "m8f52a835", "m1eaa1d2d", "m1c38d70b", "ma90a44db", "m4ca53577", "m1ca0279f", "m4f107966"]
+MARKS4 = ["m5123c635", "m8f52a835", "m1eaa1d2d", "m1c38d70b", "ma90a44db", "m4ca53577", "m1ca0279f", "m4f107966",
+          "mb6d13c08", "m038a401a"]   # last two: silent aim tracking off and Grim SNAP aura, for the flick_ family
 PER_MARK4 = 8
 KEEP_EVENTS = {"attack": 2, "swing": 7, "hotbar_swap": 9, "block_place": 11, "knockback": 12, "rtt": 21,
                "break": 22, "input": 27, "move_state": 28, "entity_sent": 29, "rtt_sent": 30, "entity_spawn": 31}

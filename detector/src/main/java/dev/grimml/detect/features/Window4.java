@@ -1,12 +1,13 @@
 package dev.grimml.detect.features;
 
 /**
- * One 8 s window with the schema 4 data the features need, laid out like the decoded training windows
- * (training/grimml_train/decode/gml_common.py). Filled live by PlayerTrack, or from the parity fixture in tests.
+ * This is the window class for the features.
+ * It is a 8 second window with the schema 4 data the features need, laid out like the decoded training windows.
+ * It is filled live by PlayerTrack, or from the parity fixture in tests.
  */
 public final class Window4 {
 
-    // event types: the recorder's RecordTypes numbers
+    // event types
     public static final int ATTACK = 2, SWING = 7, HOTBAR_SWAP = 9, BLOCK_PLACE = 11, KNOCKBACK = 12, RTT = 21,
             BREAK = 22, INPUT = 27, MOVE_STATE = 28, ENTITY_SENT = 29, RTT_SENT = 30, ENTITY_SPAWN = 31;
     public static final int F_ON_GROUND = 1, F_SNEAK = 1 << 7, F_SPRINT = 1 << 8;
@@ -20,7 +21,7 @@ public final class Window4 {
     public final int[] oppDx, oppDy, oppDz, oppState, oppBlockAgo, oppHurtAgo, maxGap, burst;
     public final int[] yMilli;   // player y in mm (spear-mace fall from the apex)
 
-    // events (only the types above are needed; BREAK a = digging action, 8 = spear STAB)
+    // events 
     public int m;
     public final int[] eType, eTick, eB, eC, eD, eG, eClientTick;
     public final long[] eNanos, eA;

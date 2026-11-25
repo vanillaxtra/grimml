@@ -200,3 +200,23 @@ m18f92367,LEGIT_CONFIRMED,,LEGIT,,1795444887137,1795445441137,false,false,"schem
 mad98911a,LEGIT_CONFIRMED,,LEGIT,,1795444885137,1795445443137,false,false,"friend account, schema 4, duel DiamondSMP vs the main account (9:20); same fight as m18f92367; start/end = first/last window"
 m1c4b76c4,LEGIT_CONFIRMED,,LEGIT,,1795445467137,1795445905137,false,false,"schema 4, duel DiamondSMP vs a friend (7:20); same fight as me90c2577; start/end = first/last window"
 me90c2577,LEGIT_CONFIRMED,,LEGIT,,1795445465137,1795445903137,false,false,"friend account, schema 4, duel DiamondSMP vs the main account (7:21); same fight as m1c4b76c4; start/end = first/last window"
+# 2026-11-23 legit DiamondSMP duel vs a friend, both accounts; schema 4; start/end = first/last window
+m22a2c3e3,LEGIT_CONFIRMED,,LEGIT,,1795452943137,1795453505137,false,false,"friend account, schema 4, duel DiamondSMP vs the main account (9:25); same fight as mae085340; start/end = first/last window"
+mae085340,LEGIT_CONFIRMED,,LEGIT,,1795452945137,1795453507137,false,false,"schema 4, duel DiamondSMP vs a friend (9:23); same fight as m22a2c3e3; start/end = first/last window"
+# 2026-11-24 Prestige Aim Assist vs the bot (recorded after the orbit-balance update; log says vs bot2); schema 4
+m23f2b7a7,CHEAT,prestige,Aim Assist,FOV:90 SPEED:20 SMOOTHING:50 RANDOMNESS:0 ONLY_ON_ROTATE:TRUE,1795482055137,1795482567137,false,false,"schema 4, vs the bot (8:33); start/end = first/last window"
+m37c52816,CHEAT,prestige,Aim Assist,FOV:60 SPEED:15 SMOOTHING:75 RANDOMNESS:30 ONLY_ON_ROTATE:TRUE,1795482733137,1795483237137,false,false,"schema 4, vs the bot (8:25); start/end = first/last window"
+me775aea8,CHEAT,prestige,Aim Assist,FOV:120 SPEED:45 SMOOTHING:0 RANDOMNESS:0 ONLY_ON_ROTATE:TRUE,1795483527137,1795484077137,false,false,"schema 4, vs the bot (9:10); start/end = first/last window"
+# 2026-11-24 vs bot2 (orbit-balanced bot); schema 4; start/end = first/last window
+m8ec6ae7a,CHEAT,grim,Kill Aura,ROTATIONS:SMOOTH REACH:3 MISS_CHANCE:0 STUN:FALSE,1795531913137,1795532431137,false,false,"schema 4, vs bot2 (8:38); start/end = first/last window"
+m20be5df2,LEGIT_CONFIRMED,,LEGIT,,1795532797137,1795533277137,false,false,"schema 4, main account vs bot2 (8:00); start/end = first/last window"
+m075c9810,CHEAT,doomsday,Aim Assist,SPEED:3 SENSITIVITY:1 PREDICTION:1 AIM_POSITION:CENTER VERTICAL_AIM:FALSE,1795535851137,1795536401137,false,false,"schema 4, vs bot2 (9:12); logged as m072c9810 (typo), the files say m075c9810"
+m2fb6453b,CHEAT,doomsday,Aim Assist,SPEED:1 SENSITIVITY:1 PREDICTION:1 AIM_POSITION:CENTER VERTICAL_AIM:FALSE,1795538327137,1795538847137,false,false,"schema 4, vs bot2 (8:41); some windows carry grim-weak header label; start/end = first/last window"
+m979c5456,LEGIT_CONFIRMED,,LEGIT,,1795538907137,1795539457137,false,false,"schema 4, main account vs bot2 (9:11); Grim flagged it (header grim-weak), label stays legit from the log; start/end = first/last window"
+# 2026-11-24 evening, vs bot2; schema 4; start/end = first/last window
+mb6d13c08,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:FALSE,1795544085137,1795544567137,false,false,"schema 4, vs bot2 (8:05); start/end = first/last window"
+mcafb9084,LEGIT_CONFIRMED,,LEGIT,,1795544645137,1795545173137,false,false,"schema 4, main account vs bot2 (8:49); start/end = first/last window"
+mcebfac2b,CHEAT,prestige,Silent Aim,CONTINOUS_TRACKING:FALSE,1795551409137,1795551911137,false,false,"schema 4, vs bot2 (8:24); start/end = first/last window"
+m659d4e1d,LEGIT_CONFIRMED,,LEGIT,,1795551965137,1795552519137,false,false,"schema 4, main account vs bot2 (9:15); start/end = first/last window"
+m3bd5b753,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:0 DELAY_MAX_MS:0 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100,1795556111137,1795556633137,false,false,"schema 4, vs bot2 (8:43); start/end = first/last window"
+m20c1d5c4,CHEAT,prestige,Triggerbot,DELAY_MIN_MS:15 DELAY_MAX_MS:40 MISS_CHANCE:0 COOLDOWN_MIN_PERCENT:88 COOLDOWN_MAX_PERCENT:100,1795559251137,1795559803137,false,false,"schema 4, vs bot2 (9:15); start/end = first/last window"

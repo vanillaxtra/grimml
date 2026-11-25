@@ -2,10 +2,6 @@ package dev.grimml.detect.features;
 
 import java.util.Arrays;
 
-/**
- * Java port of training/grimml_train/features/extract.py (features_from_decoded), the 13 core features.
- * Any change there must be made here too; ParitySelfCheck compares both on real windows.
- */
 public final class Features {
 
     public static final String[] NAMES = {
@@ -27,9 +23,9 @@ public final class Features {
     }
 
     /**
-     * @param yaw/pitch  centidegrees per frame, x/z millimetres per frame, flags per frame (bit 0 = on ground)
-     * @param n          number of frames used from the arrays
-     * @param attacks    attack packet times in nanoseconds, m used
+     * 
+     * This is the main feature extractor for the features.
+     * It takes the yaw, pitch, x, z, flags and the number of frames to put into the networks & static detection.
      */
     public static double[] compute(int[] yaw, int[] pitch, int[] x, int[] z, int[] flags, int n, long[] attacks, int m) {
         double[] out = new double[NAMES.length];
@@ -124,7 +120,7 @@ public final class Features {
         return s / v.length;
     }
 
-    // population std (numpy default ddof=0)
+    // population std
     private static double std(double[] v, double mu) {
         double s = 0.0;
         for (double d : v) {
@@ -134,7 +130,7 @@ public final class Features {
         return Math.sqrt(s / v.length);
     }
 
-    // median of |yaw steps| above 1 centidegree, needs at least 4
+    // median of yaw steps (inclusive) above 1 centidegree, needs at least 4 samples
     private static double gcdGrid(double[] abs) {
         double[] d = Arrays.stream(abs).filter(a -> a > 1.0).sorted().toArray();
         if (d.length < 4) {

@@ -9,9 +9,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Reads a LightGBM text model (Booster.save_model) and scores it in plain Java, no native library.
- * Supports what the trainer produces: binary objective, numerical splits, NaN/zero/none missing handling.
- * The decision rule copies LightGBM's Tree::NumericalDecision so scores match the Python booster.
+ * This is the LightGBM model class for the GrimMLDetector.
+ * It reads a LightGBM text model (Booster.save_model) and scores it in plain Java, no native library.
+ * It supports what the trainer produces: binary objective, numerical splits, NaN/zero/none missing handling.
+ * The decision rule copies LightGBM's Tree::NumericalDecision so scores match the Python booster. This is the same as the decision rule in the python model.
+ * i only did this cause i was too lazy to write a native library and it means that any model i train on python and test on python will be exactly the same on the plugin which i think is quite important as i dont want to be debugging issues which i cant find with python.
+ * 
+ * This was ported from python
  */
 public final class LgbmModel {
 

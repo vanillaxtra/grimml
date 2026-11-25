@@ -26,13 +26,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Checks Modrinth and GitHub for a newer GrimML release, in parallel and off the main thread; the newest by version
- * wins. If it is newer than this jar: a console banner on start, and a clickable notice for players with
- * grimml.update.notify, once per player per day, 2 s after they join.
+ * This is the update checker for new GrimML releases.
+ * It checks Modrinth and GitHub at the same time off the main thread, and the newest version wins.
+ * If it is newer than this jar it prints a banner in the console, and players with grimml.update.notify get a
+ * clickable message 2 seconds after they join (once a day each).
  *
- * Modrinth comes first: whenever Modrinth has the newest version, the download link is Modrinth's and GitHub is not
- * shown. GitHub is only offered when Modrinth is missing that version (not listed yet, or Modrinth unreachable).
- * Based on the PluginBrain update checker template.
+ * Modrinth comes first: if Modrinth has the newest version the link goes there.
+ * GitHub is only shown when Modrinth does not have that version yet or is down.
  */
 public final class UpdateChecker implements Listener {
     private static final String MODRINTH_SLUG = "grimml";
@@ -40,7 +40,7 @@ public final class UpdateChecker implements Listener {
     private static final String PERMISSION = "grimml.update.notify";
     private static final MiniMessage MM = MiniMessage.miniMessage();
 
-    /** A release found on one site: its version and the page to download it from. */
+    // a release found on one site and the page to download it from
     record Remote(Version version, String label, String url) {
     }
 
@@ -55,14 +55,14 @@ public final class UpdateChecker implements Listener {
     private volatile String latest = "";
     private volatile String url = "";
     private volatile boolean onModrinth;
-    private volatile long lastCheck; // GitHub allows 60 unauthenticated calls an hour, so joins re-check hourly at most
+    private volatile long lastCheck; // GitHub only allows 60 calls an hour, so joins re-check at most once an hour
     private final Map<UUID, LocalDate> notified = new HashMap<>(); // main thread only
 
     public UpdateChecker(JavaPlugin plugin) {
         this.plugin = plugin;
         this.currentLabel = plugin.getPluginMeta().getVersion();
         this.current = new Version(currentLabel);
-        this.userAgent = "GrimML-UpdateChecker/" + currentLabel; // Modrinth rate-limits requests without a real agent
+        this.userAgent = "GrimML-UpdateChecker/" + currentLabel; // Modrinth rate limits requests without one
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         check().thenAccept(newer -> {
             if (newer) {
@@ -71,7 +71,7 @@ public final class UpdateChecker implements Listener {
         });
     }
 
-    /** Async; true when Modrinth or GitHub has a release newer than this jar. Never throws. */
+    // async, true when Modrinth or GitHub has a newer release than this jar (never throws)
     public CompletableFuture<Boolean> check() {
         lastCheck = System.currentTimeMillis();
         CompletableFuture<Remote> modrinth = modrinth();
@@ -91,7 +91,7 @@ public final class UpdateChecker implements Listener {
         });
     }
 
-    /** The newest release; Modrinth wins a tie, so players are sent to Modrinth whenever it has that version. */
+    // picks the newest release, Modrinth wins a tie
     static Remote pick(Remote modrinth, Remote github) {
         if (modrinth == null) {
             return github;
@@ -102,6 +102,7 @@ public final class UpdateChecker implements Listener {
         return github.version().compareTo(modrinth.version()) > 0 ? github : modrinth;
     }
 
+    // the newest Modrinth version (releases before betas)
     private CompletableFuture<Remote> modrinth() {
         return fetch("https://api.modrinth.com/v2/project/" + MODRINTH_SLUG + "/version", "application/json")
                 .thenApply(body -> {
@@ -122,6 +123,7 @@ public final class UpdateChecker implements Listener {
                 });
     }
 
+    // the latest GitHub release
     private CompletableFuture<Remote> github() {
         return fetch("https://api.github.com/repos/" + GITHUB_REPO + "/releases/latest", "application/vnd.github+json")
                 .thenApply(body -> {
@@ -139,7 +141,7 @@ public final class UpdateChecker implements Listener {
                 });
     }
 
-    /** The body, or null on any failure (404 = nothing published there yet). Never completes exceptionally. */
+    // returns the body, or null if anything fails (404 means nothing is published there yet)
     private CompletableFuture<String> fetch(String uri, String accept) {
         HttpRequest req = HttpRequest.newBuilder(URI.create(uri))
                 .timeout(Duration.ofSeconds(8))
@@ -160,7 +162,7 @@ public final class UpdateChecker implements Listener {
         });
     }
 
-    /** Newest by version number, not by list order or upload date. */
+    // the newest by version number, not by list order or upload date
     private static JsonObject newest(JsonArray versions, boolean releaseOnly) {
         JsonObject best = null;
         Version bestV = Version.ZERO;
@@ -181,6 +183,7 @@ public final class UpdateChecker implements Listener {
         return best;
     }
 
+    // the console banner on start
     private void banner() {
         var log = plugin.getLogger();
         log.info("----------------------------------------------------");
@@ -189,6 +192,7 @@ public final class UpdateChecker implements Listener {
         log.info("----------------------------------------------------");
     }
 
+    // the clickable message for staff
     private void notice(Player p) {
         if (latest.isEmpty() || !p.isOnline() || !p.hasPermission(PERMISSION)) {
             return;

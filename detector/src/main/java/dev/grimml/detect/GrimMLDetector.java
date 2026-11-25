@@ -36,26 +36,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Live ML checks for Grim. Threads: 
- *  - netty (PacketTap): copies a few numbers per packet into the player's ring,
- *  - "GrimML-scan": features + model scoring every scan interval,
- *  - "GrimML-update": model downloads,
- *  - main thread: a tick counter, exemption refresh once a second, and sending alerts.
- */
 public final class GrimMLDetector extends JavaPlugin implements Listener, TabCompleter {
 
-    private static final int ATTACK_CAP = 2048; // per-player event ring (schema 4 events, ~60-80/s in a fight)
-    /** Bump when config.yml keys are added, renamed or change meaning. */
+    private static final int ATTACK_CAP = 2048; // events kept per player (about 60-80 a second in a fight)
+    // bump this when config.yml keys are added, renamed or change meaning
     public static final int CONFIG_VERSION = 1;
 
     private final Map<UUID, PlayerTrack> tracks = new ConcurrentHashMap<>();
     private final Map<Integer, PlayerTrack> byEntity = new ConcurrentHashMap<>();
     private final Map<UUID, Boolean> exempt = new ConcurrentHashMap<>();
     private final Map<UUID, String> names = new ConcurrentHashMap<>();
-    /** Checks each player bypasses through grimml.bypass.<check> (refreshed once a second on the main thread). */
+    // the checks each player bypasses with grimml.bypass.<check> 
     private final Map<UUID, Set<String>> bypass = new ConcurrentHashMap<>();
-    /** Players with grimml.alerts who turned alerts off with /grimml alerts (until they rejoin or turn them on). */
+    // players who turned alerts off with /grimml alerts 
     private final Set<UUID> alertsOff = ConcurrentHashMap.newKeySet();
     private volatile int tick;
     private int frameCap;
@@ -120,7 +113,6 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         setupMetrics();
     }
 
-    /** Missing keys fall back to their defaults, so an old config keeps working; the warning says what to compare. */
     private void checkConfigVersion() {
         int have = getConfig().getInt("config-version", 0);
         if (have < CONFIG_VERSION) {
@@ -150,7 +142,6 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         tracks.clear();
     }
 
-    /** bStats (https://bstats.org/plugin/bukkit/grim-ml/35441). Opt out in plugins/bStats/config.yml. Never fatal. */
     private void setupMetrics() {
         try {
             var metrics = new org.bstats.bukkit.Metrics(this, 35441);
@@ -165,6 +156,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         }
     }
 
+    // a low priority background thread that does not stop the server from shutting down
     private static Thread daemon(Runnable r, String name) {
         Thread t = new Thread(r, name);
         t.setDaemon(true);
@@ -172,7 +164,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         return t;
     }
 
-    /** Background thread. A newer set is told to staff with grimml.notify once each (now, or when they next join). */
+    // checks for new models on the update thread and tells staff if they changed (see ModelNotices)
     private void checkForModels() {
         int before = store.current().version();
         store.update(getConfig().getString("models.manifest-url", ""), set ->
@@ -182,6 +174,8 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 }));
     }
 
+
+    // the aim-grid section
     private Scanner.GridSettings gridSettings() {
         var c = getConfig();
         return new Scanner.GridSettings(c.getBoolean("aim-grid.enabled", true),
@@ -206,6 +200,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 c.getLong("lunge-rate.alert-cooldown-ms", 15_000L));
     }
 
+    // the scan section
     private Scanner.Settings scanSettings() {
         return new Scanner.Settings(frameCap,
                 getConfig().getInt("scan.min-attacks", 2),
@@ -217,6 +212,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 getConfig().getInt("scan.early-alert-min-windows", 10));
     }
 
+    // the alerts, webhook and punishments sections
     private GrimBridge.Settings bridgeSettings() {
         var c = getConfig();
         List<Punishments.Group> punish = punishmentGroups(c.getConfigurationSection("punishments"),
@@ -249,8 +245,6 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 punish, webhook, punishmentWebhook(c, webhook));
     }
 
-    /** punishments.groups.<name>: checks, decay-per-minute, at-violations. The old flat punishments.at-violations
-     *  (from 1.1.0 and earlier) still works, as one group over every check. */
     private List<Punishments.Group> punishmentGroups(ConfigurationSection ps, double defaultDecay) {
         List<Punishments.Group> out = new ArrayList<>();
         if (ps == null || !ps.getBoolean("enabled", false)) {
@@ -329,7 +323,6 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         return out;
     }
 
-    /** webhook.punishments: same look as the alert embed, own title, colour and lines; null = not posted. */
     private static GrimBridge.Webhook punishmentWebhook(org.bukkit.configuration.file.FileConfiguration c, GrimBridge.Webhook w) {
         if (!c.getBoolean("webhook.punishments.enabled", true)) {
             return null;
@@ -345,7 +338,6 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                         "**Client Version**: %version%", "**Ping**: %ping%"));
     }
 
-    /** Every check name this server can flag: the loaded models plus the rule checks. */
     private List<String> allChecks() {
         List<String> out = new ArrayList<>();
         for (ModuleModel m : store.current().models()) {
@@ -356,8 +348,8 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         return out;
     }
 
-    // ---- players
 
+    // starts tracking a player
     private void add(Player p) {
         PlayerTrack t = new PlayerTrack(p.getEntityId(), frameCap, ATTACK_CAP);
         t.peers = byEntity::get;
@@ -384,11 +376,10 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         grim.forget(id);
     }
 
-    // ---- schema 4 main-thread state (the recorder's StateSampler + DamageListener equivalents)
 
-    private static final long OPPONENT_MEMORY_NANOS = 5_000_000_000L;
+    private static final long OPPONENT_MEMORY_NANOS = 5_000_000_000L; // how long a hit keeps someone as the opponent
 
-    /** Every 2 ticks: hotbar categories, gliding, Grim user, and each player's opponent (hit / hit by / nearest in 6). */
+
     private void sample() {
         long now = System.nanoTime();
         for (Player p : Bukkit.getOnlinePlayers()) {
@@ -442,6 +433,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         }
     }
 
+    // the item category the features look at (axe, spear, mace, cobweb, shield or 0)
     private static int category(org.bukkit.inventory.ItemStack item) {
         if (item == null) {
             return 0;
@@ -457,11 +449,12 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
             return PlayerTrack.CAT_MACE;
         }
         if (n.equals("COBWEB")) {
-            return PlayerTrack.CAT_COBWEB; // stun web (WebRepeat); no feature looks at it
+            return PlayerTrack.CAT_COBWEB; // only for WebRepeat, no feature uses it
         }
         return n.equals("SHIELD") ? PlayerTrack.CAT_SHIELD : 0;
     }
 
+    // saves when a player was hurt and by who
     @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
     public void onDamage(org.bukkit.event.entity.EntityDamageEvent e) {
         if (!(e.getEntity() instanceof Player victim)) {
@@ -477,7 +470,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         }
     }
 
-    /** Grim consumes its transaction replies before other listeners see them: take the pong from Grim's event. */
+    // Grim eats its transaction replies before other listeners see them, so we take them from Grim's event
     private void hookGrimTransactions() {
         try {
             var api = ac.grim.grimac.api.GrimAPIProvider.get();
@@ -493,6 +486,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         }
     }
 
+    // true for grimml.bypass, creative, spectator and Bedrock players
     private boolean isExempt(Player p) {
         if (p.hasPermission("grimml.bypass")) {
             return true;
@@ -501,10 +495,11 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         if (gm == GameMode.CREATIVE || gm == GameMode.SPECTATOR) {
             return true;
         }
-        // Bedrock players via Floodgate: different input, the models never saw them
+        // Bedrock players (Floodgate) have different input and the models never saw them
         return getConfig().getBoolean("scan.skip-bedrock", true) && p.getUniqueId().getMostSignificantBits() == 0L;
     }
 
+    // once a second: who is exempt and which checks each player bypasses
     private void refreshExempt() {
         List<String> checks = allChecks();
         for (Player p : Bukkit.getOnlinePlayers()) {
@@ -520,7 +515,6 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         }
     }
 
-    // ---- /grimml
 
     private static final String P = "&bGrimML &8» ";
 

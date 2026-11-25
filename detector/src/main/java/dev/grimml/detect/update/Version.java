@@ -1,6 +1,10 @@
 package dev.grimml.detect.update;
 
-/** Tolerant 4-part version: "v1.2.0-SNAPSHOT" -> 1.2.0. Compared part by part, so 1.0.10 > 1.0.9. */
+/**
+ * This is the version class for the update checker.
+ * It reads a version like "v1.2.0-SNAPSHOT" as 1.2.0 (up to 4 parts).
+ * It compares part by part, so 1.0.10 is newer than 1.0.9.
+ */
 public final class Version implements Comparable<Version> {
     public static final Version ZERO = new Version("0.0.0");
     private static final int PARTS = 4;

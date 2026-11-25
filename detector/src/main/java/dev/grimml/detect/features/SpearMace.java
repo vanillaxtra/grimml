@@ -6,12 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Java port of training/grimml_train/features/spearmace.py (Instant Lunge, Auto Mace, Auto Stun Slam timing).
- * Same names, same order, same numbers: ParitySelfCheck compares both. Change both together.
- *
- * <p>Categories arrive already resolved: live from {@code GrimMLDetector.category} (spears are SPEAR), in the parity
- * fixture from grimml_train/parity.py (old recordings' spears resolved through their item ids). A spear jab is a BREAK event
- * with a = 8 (digging action STAB), not an attack.
+ * This is the main feature extractor for the spear mace modules.
+ * It takes the window and returns the features.
+ * 
+ * Its different to the normal extractor as it measures how fast the player is able to swap. And how consistently they are able to do it.
  */
 public final class SpearMace {
 
@@ -34,13 +32,13 @@ public final class SpearMace {
     private static final int SWAP = 1, HIT = 2, STAB_ACT = 3;
     private static final Map<String, Integer> INDEX = new HashMap<>();
 
-    static {
+    static { // mapping the names to the indices
         for (int i = 0; i < NAMES.length; i++) {
             INDEX.put(NAMES[i], i);
         }
     }
 
-    /** One hotbar swap, player hit or spear stab, in event order. */
+    // one events components
     private static final class Act {
         int k, ct, from, to, cat, tick, target;
         long n;
@@ -124,7 +122,7 @@ public final class SpearMace {
         return (double) t / x.size();
     }
 
-    /** Share of values equal to the most common one (ties: the smallest value). Needs 3 values. */
+    // share of values equal to the most common one
     static double modeFrac(List<Integer> x) {
         if (x.size() < 3) return Double.NaN;
         Map<Integer, Integer> c = new HashMap<>();
@@ -298,7 +296,6 @@ public final class SpearMace {
 
     // ---------------------------------------------------------------- aim on the mace hit (schema 4)
 
-    /** mace_snap_deg_mean, mace_snapback_frac, mace_aim_err_mean; hasAim/errYaw per frame from the aim track. */
     static double[] maceAim(Window4 w, boolean[] hasAim, double[] errYaw) {
         SpearMace s = new SpearMace(w);
         List<Double> snap = new ArrayList<>(), err = new ArrayList<>();

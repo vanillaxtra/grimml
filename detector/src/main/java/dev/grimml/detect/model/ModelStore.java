@@ -17,14 +17,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-/**
- * Where models come from, newest wins:
- *  1. the copy bundled in the jar (models/ at build time),
- *  2. the last downloaded set in plugins/GrimMLDetector/models/,
- *  3. the manifest URL (checked on start and every few minutes, off the main thread).
- * A download is only used once every file passed its sha256 and the whole set parsed; a bad update
- * keeps the old models running.
- */
+
 public final class ModelStore {
 
     private static final int MAX_FILE_BYTES = 32 * 1024 * 1024;
@@ -51,7 +44,7 @@ public final class ModelStore {
         return lastError;
     }
 
-    /** Bundled set, then the cached download if it is newer. */
+    // loads the models from the local cache
     public void loadLocal() {
         try {
             byte[] m = bundled("manifest.json");
@@ -74,7 +67,7 @@ public final class ModelStore {
         }
     }
 
-    /** Fetches the manifest and installs a newer version. Blocking: call from a background thread. */
+    // updates the models from the manifest url
     public boolean update(String manifestUrl, Consumer<ModelSet> onNew) {
         if (manifestUrl == null || manifestUrl.isBlank()) {
             return false;
@@ -107,6 +100,7 @@ public final class ModelStore {
         }
     }
 
+    // uses the models
     private void use(ModelSet set, String from) {
         current = set;
         lastError = "";
@@ -117,11 +111,13 @@ public final class ModelStore {
         log.info("Models v" + set.version() + " (" + from + "):" + sb);
     }
 
+    // fails the models
     private void fail(String msg) {
         lastError = msg;
         log.warning(msg);
     }
 
+    // gets the data from the uri
     private byte[] get(URI uri) throws IOException {
         if (!"https".equalsIgnoreCase(uri.getScheme())) {
             throw new IOException("only https model urls are allowed: " + uri);
@@ -147,18 +143,21 @@ public final class ModelStore {
         }
     }
 
+    // writes the data to the path
     private static void atomicWrite(Path target, byte[] data) throws IOException {
         Path tmp = target.resolveSibling(target.getFileName() + ".tmp");
         Files.write(tmp, data);
         Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
     }
 
+    // gets the data from the bundled file
     private static byte[] bundled(String name) throws IOException {
         try (InputStream in = ModelStore.class.getClassLoader().getResourceAsStream("models/" + name)) {
             return in == null ? null : in.readAllBytes();
         }
     }
 
+    // gets the data from the bundled file or throws an exception
     private byte[] bundledOrThrow(String name) throws IOException {
         byte[] b = bundled(name);
         if (b == null) {

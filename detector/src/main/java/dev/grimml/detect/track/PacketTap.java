@@ -27,9 +27,11 @@ import java.util.UUID;
 import java.util.function.IntSupplier;
 
 /**
- * Netty-thread capture, mirroring the recorder's captures (PacketListener + *Capture classes): the same packets open
- * frame ticks, and the schema 4 events the features need are recorded the same way. Per packet: one map lookup, a
- * PacketEvents wrapper for the types we read, and a few writes under the player's own lock. No Bukkit calls.
+ * This is the packet listener that feeds each player's PlayerTrack.
+ * It copies the recorder's captures, so the same packets open frames and the same events are saved as in training.
+ *
+ * It runs on the netty thread and is kept cheap: one map lookup, a wrapper for the packets we read and a few writes.
+ * It never calls Bukkit.
  */
 public final class PacketTap extends PacketListenerAbstract {
 
@@ -37,7 +39,7 @@ public final class PacketTap extends PacketListenerAbstract {
     private final IntSupplier tick;
 
     public PacketTap(Map<UUID, PlayerTrack> tracks, IntSupplier tick) {
-        super(PacketListenerPriority.LOWEST); // same as the recorder: see packets before anything cancels them
+        super(PacketListenerPriority.LOWEST); // same as the recorder, so we see packets before anything cancels them
         this.tracks = tracks;
         this.tick = tick;
     }
@@ -46,6 +48,7 @@ public final class PacketTap extends PacketListenerAbstract {
         return id == null ? null : tracks.get(id);
     }
 
+    // packets from the player
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
         PlayerTrack t = track(event.getUser().getUUID());
@@ -96,7 +99,7 @@ public final class PacketTap extends PacketListenerAbstract {
         }
     }
 
-    // recorder ActionCapture.onEntityAction
+    // sprint, sneak and elytra (same as the recorder's ActionCapture)
     private static void entityAction(PlayerTrack t, int now, long nanos, WrapperPlayClientEntityAction.Action a) {
         if (a == null) {
             return;
@@ -116,6 +119,7 @@ public final class PacketTap extends PacketListenerAbstract {
         }
     }
 
+    // packets to the player (knockback, totem pops, held slot, spawns, pings)
     @Override
     public void onPacketSend(PacketSendEvent event) {
         if (!(event.getPacketType() instanceof PacketType.Play.Server type)) {

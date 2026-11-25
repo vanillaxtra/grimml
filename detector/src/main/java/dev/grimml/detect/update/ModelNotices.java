@@ -24,11 +24,12 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * Tells every player with grimml.notify (op by default) about a model update exactly once: at once if they are
- * online, else the next time they join, even after a restart. The last update and which version each player was told
- * about are kept in plugins/GrimML/model-notices.yml. A fresh install says nothing, since nothing was updated.
+ * This is the model notices class that tells staff when the models were updated.
+ * Every player with grimml.notify is told once: straight away if they are online, or the next time they join (even after a restart).
  *
- * Main thread only, except the file write.
+ * Who was told about which version is saved in plugins/GrimML/model-notices.yml.
+ * A fresh install says nothing as nothing was updated.
+ * Everything runs on the main thread except writing the file.
  */
 public final class ModelNotices implements Listener {
     private static final String PERMISSION = "grimml.notify";
@@ -37,12 +38,12 @@ public final class ModelNotices implements Listener {
     private final JavaPlugin plugin;
     private final Path file;
     private final Supplier<Component> prefix;
-    private int updatedTo; // newest model version an auto-update installed (0 = none yet)
+    private int updatedTo; // newest model version an update installed (0 = none yet)
     private int updatedFrom;
     private final Map<UUID, Integer> told = new HashMap<>();
     private final Object writeLock = new Object();
     private long saves;   // main thread
-    private long written; // under writeLock: newest snapshot on disk, so an older one finishing late is skipped
+    private long written; // the newest save on disk, so an older save finishing late is skipped
 
     public ModelNotices(JavaPlugin plugin, Supplier<Component> prefix) {
         this.plugin = plugin;
@@ -52,7 +53,7 @@ public final class ModelNotices implements Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
-    /** A model update was installed: tell staff online now, the rest when they next join. Main thread. */
+    // a model update was installed: tells staff online now and the rest when they join (main thread)
     public void updated(int from, int to) {
         if (to <= updatedTo) {
             return;
@@ -78,9 +79,10 @@ public final class ModelNotices implements Listener {
                 tell(p, false);
                 save();
             }
-        }, 60L); // after the join messages and the release notice
+        }, 60L); // after the join messages and the update checker notice
     }
 
+    // sends the message and sound, live = they were online when it updated
     private void tell(Player p, boolean live) {
         String text = live
                 ? "<gray>Models updated <dark_gray>v<from> →</dark_gray> <white>v<to></white>. Now detecting with the new models."
@@ -93,6 +95,7 @@ public final class ModelNotices implements Listener {
         told.put(p.getUniqueId(), updatedTo);
     }
 
+    // loads model-notices.yml, starts fresh if it is missing or broken
     private void load() {
         if (!Files.isRegularFile(file)) {
             return;
@@ -118,7 +121,7 @@ public final class ModelNotices implements Listener {
         }
     }
 
-    /** Snapshot on the main thread, write off it. */
+    // builds the file on the main thread and writes it async (tmp file then move, so it is never half written)
     private void save() {
         YamlConfiguration y = new YamlConfiguration();
         y.options().setHeader(java.util.List.of(

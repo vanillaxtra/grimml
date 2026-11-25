@@ -17,31 +17,20 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 /**
- * Runs on one background thread every scan interval (2 s, the recorder's writer cadence, so live windows
- * overlap the way training windows did). For each player who attacked within the last window:
- *   window (last 160 frames + attacks in the last 8 s) -> 13 features -> each module's score.
- * A window counts as flagged when its score passes the module's window threshold. Windows are grouped into
- * fights (a gap of fightGapMs without a scored window ends one). Each fight is judged once per block of
- * blockWindows windows and once more when it ends ({@link Fight}): flagged when the stretch has at least
- * minWindows windows and its flagged share reaches the module's alert share. A long fight is judged again for
- * every full block.
+ * This is the scanner that runs all the checks.
+ * It runs on one background thread every 2 seconds (same as the recorder, so live windows overlap like the training ones).
+ *
+ * For each player who attacked in the last 8 seconds it builds the window, works out the features and scores every model.
+ * A window is flagged when its score passes the model's window threshold, and the windows are grouped into fights (see Fight).
+ * It also feeds the rule checks (AimGrid, the lunge checks and the combo repeat checks) for every player, fighting or not.
  */
 public final class Scanner implements Runnable {
 
     public interface Sink {
-        /**
-         * confidence (0-1) is what the alert shows players: the model's average cheat score over the fight for ML
-         * checks; for rule checks the share of the player's recent actions that matched the cheat's pattern.
-         */
+
         void flag(UUID player, String checkName, String description, double confidence, String verbose);
     }
 
-    /**
-     * blockWindows: a fight is judged every this many scored windows (120 = 4 min at one window per 2 s, the length of
-     * a Kill Aura / Silent Aim legit chunk in training). judgeMinWindows: a shorter stretch is never judged (raised to the model's own
-     * fight_min_windows if that is higher). earlyZ / earlyMinWindows: alert a stretch before its block is full once
-     * it has this many windows and is clearly above the line (see {@link Fight}); earlyZ 0 turns it off.
-     */
     public record Settings(int frameCap, int minAttacks, int minFrames, long fightGapMs, int blockWindows,
                            int judgeMinWindows, double earlyZ, int earlyMinWindows) {
         public Settings {
@@ -52,19 +41,12 @@ public final class Scanner implements Runnable {
         }
     }
 
-    /** The AimGrid check (features/AimGrid.Live): a fight-level sequential test on off-grid mouse rotation. */
     public record GridSettings(boolean enabled, double p0, double p1, double h, double minBias, long cooldownMs,
                                double baseMargin, double baseMax, int baseMin, double maxSteps) {
         public static final String CHECK = "AimGrid";
         public static final String DESCRIPTION = "Rotation off the player's mouse sensitivity grid, pulling toward the opponent";
     }
 
-    /**
-     * The live lunge checks (features/LungeRate): LungeRate (swap-lunges chained faster than a hand can), LungeHold
-     * (the spear held for exactly one client tick, again and again) and SwapOrder (a hotbar swap after an attack in the
-     * same client tick, which vanilla never sends). The combo repeat checks (features/ComboRepeat): StunRepeat,
-     * SlamRepeat and WebRepeat (the same stun, stun slam or stun web to the client tick, again and again).
-     */
     public record LungeSettings(boolean rateEnabled, double fastMs, double minMs, int count, double windowMs,
                                 boolean holdEnabled, int holdCount, int holdOf,
                                 boolean orderEnabled, int orderCount, double orderWindowMs,
@@ -164,7 +146,7 @@ public final class Scanner implements Runnable {
         this.settings = s;
         this.gridSettings = g;
         if (changed) {
-            grids.clear(); // relearn with the new parameters (next scan, on the scan thread)
+            grids.clear(); // relearn with the new settings on the next scan
         }
         if (!l.equals(lungeSettings)) {
             lunges.clear();
@@ -190,7 +172,7 @@ public final class Scanner implements Runnable {
         long gapNs = s.fightGapMs() * 1_000_000L;
         GridSettings g = gridSettings;
         LungeSettings ls = lungeSettings;
-        fights.keySet().removeIf(id -> !tracks.containsKey(id)); // a player who left is not judged: bypass etc. are gone
+        fights.keySet().removeIf(id -> !tracks.containsKey(id)); // players who left are not judged (their bypass is gone)
         endFights(set, s, now, gapNs);
         grids.keySet().removeIf(id -> !tracks.containsKey(id));
         lunges.keySet().removeIf(id -> !tracks.containsKey(id));
@@ -208,10 +190,10 @@ public final class Scanner implements Runnable {
             }
             t.snapshot(w, w4, now - windowNs, now);
             if (g.enabled()) {
-                grid(id, g, now);   // every player: the step is learned before the first fight
+                grid(id, g, now);   // every player, so the step is learned before the first fight
             }
             if (ls.enabled()) {
-                lunge(id, ls, now); // every player: a spear jab is not an attack, lunge-only players never "attack"
+                lunge(id, ls, now); // every player, a spear jab is not an attack packet
             }
             if (!attacked || w.m < s.minAttacks() || w.n < s.minFrames()) {
                 continue;
@@ -242,11 +224,12 @@ public final class Scanner implements Runnable {
         }
     }
 
+    // the config minimum or the model's own minimum, whichever is higher
     private static int minWindows(Settings s, ModuleModel m) {
         return Math.max(s.judgeMinWindows(), m.minWindows());
     }
 
-    /** Judges every fight that ended since the last scan (no scored window for longer than the fight gap). */
+    // judges every fight that ended since the last scan
     private void endFights(ModelSet set, Settings s, long now, long gapNs) {
         Map<String, ModuleModel> byCheck = new HashMap<>();
         for (ModuleModel m : set.models()) {
@@ -260,7 +243,7 @@ public final class Scanner implements Runnable {
                 var f = it.next();
                 ModuleModel m = byCheck.get(f.getKey());
                 if (m == null) {
-                    it.remove(); // the check was switched off or its model is gone
+                    it.remove(); // the check was turned off or its model is gone
                     continue;
                 }
                 report(e.getKey(), m, f.getValue().expire(now, m.alertShare(), minWindows(s, m), gapNs));
@@ -268,6 +251,7 @@ public final class Scanner implements Runnable {
         }
     }
 
+    // sends the alert if the verdict flagged
     private void report(UUID id, ModuleModel m, Fight.Verdict v) {
         if (v == null || !v.alert()) {
             return;
@@ -278,7 +262,7 @@ public final class Scanner implements Runnable {
         sink.flag(id, m.checkName(), m.description(), v.meanScore(), verbose);
     }
 
-    /** Feeds the frames this player made since the last scan (the ring holds 8 s, scans run every 2 s). */
+    // feeds AimGrid the frames since the last scan (the window holds 8 s, scans run every 2 s)
     private void grid(UUID id, GridSettings g, long now) {
         Grid gr = grids.computeIfAbsent(id, k -> new Grid(g));
         Schema4Features.aimErrors(w4, hasAim, errYaw);
@@ -299,7 +283,7 @@ public final class Scanner implements Runnable {
         }
     }
 
-    /** Feeds the swaps, attacks, spear STABs and block places this player sent since the last scan. */
+    // feeds the lunge and combo checks the swaps, attacks, spear stabs and block places since the last scan
     private void lunge(UUID id, LungeSettings l, long now) {
         Lunge lu = lunges.computeIfAbsent(id, k -> new Lunge(l));
         LungeRate r = lu.rate;
@@ -331,7 +315,7 @@ public final class Scanner implements Runnable {
                 r.lastNanos = n;
             }
         }
-        alerts |= combo << 4; // StunRepeat, SlamRepeat, WebRepeat are checks 4-6
+        alerts |= combo << 4; // the combo checks are 4-6
         for (int c = 0; c < LungeSettings.CHECKS.length; c++) {
             if ((alerts & (1 << c)) == 0 || !l.on(c) || now - lu.lastAlertNanos[c] < l.cooldownMs() * 1_000_000L) {
                 continue;
@@ -362,7 +346,7 @@ public final class Scanner implements Runnable {
 
     private static final String[] COMBO_STEPS = {"follow-up hit", "mace hit", "cobweb place"};
 
-    /** e.g. "8 of the last 10 stuns identical: swap-in 2t, swap away 1t, follow-up hit 3t". */
+    // the verbose text for a combo alert, e.g. "80% of the last 10 stuns identical to the tick: swap-in 2t, ..."
     private static String comboVerbose(ComboRepeat co, int k, int of) {
         int[] g = co.sig[k];
         String kind = k == 0 ? "stuns" : k == 1 ? "stun slams" : "stun webs";
@@ -374,7 +358,7 @@ public final class Scanner implements Runnable {
         return t < 0 ? "none" : t + "t";
     }
 
-    /** Learned step and current score per player, for /gmld status. */
+    // the player's AimGrid state for /grimml status
     public String gridStatus(UUID id) {
         Grid gr = grids.get(id);
         return gr == null ? null : String.format("step %.5f score %.1f baseline %.1f%% legit rate %.1f%%",

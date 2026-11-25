@@ -1,26 +1,15 @@
 package dev.grimml.detect.features;
 
 /**
- * The four live swap checks for one player (exact port of Python spearmace.LiveLunge). Not thread safe: one scan
- * thread feeds it. Each feed returns alert bits: {@link #RATE}, {@link #HOLD}, {@link #ORDER}, {@link #AXE_HOLD}
- * (0 = none); a check's
- * counter restarts when it alerts. All times are integer nanoseconds.
- *
- * A swap-lunge is a spear STAB whose last hotbar swap went to the spear at most swapInMs earlier (each swap counts
- * once); jabbing while holding the spear never counts.
- * <ul>
- * <li>RATE (LungeRate): gaps in [minMs, fastMs) between consecutive swap-lunges; {@code count} inside windowMs alert.
- * Legit swap-lunges were never under 345 ms apart; Instant Lunge chains them 100-250 ms apart.</li>
- * <li>HOLD (LungeHold): the spear held exactly one client tick (swap in, jab, swap back next tick); holdCount among the
- * last holdOf swap-lunges alert. Legit 1.1%, Instant Lunge 34-100% at 0-90 ms delay.</li>
- * <li>ORDER (SwapOrder): a hotbar swap in the same client tick after an attack or STAB, which vanilla never sends
- * (hotbar changes go before attacks inside a tick); orderCount inside orderWindowMs alert.</li>
- * <li>AXE_HOLD (AxeHold): a swap away from the axe one client tick after the last hit with it (Auto Shield Breaker:
- * swap in, stun the shield, swap back next tick). An axe hold is a swap to the axe with at least one player hit,
- * ended by the next swap. axeCount one-tick axe holds among the last axeOf alert. Legit fast hand stuns 3-8%,
- * Prestige Auto Shield Breaker 63-98%.</li>
- * </ul>
- * The tick rules need client ticks (1.21.2+ clients, ct &gt; 0).
+ * This is a feature that detects if the player is using a lunge.
+ * 
+ * A lunge is a spear stab whose last hotbar swap went to the spear at most swapInMs earlier (each swap counts once) while jabbing while holding the spear never counts.
+ * 
+ * It works by checking the gaps in between consecutive lunges and seeing if they are within the minMs and fastMs range.
+ * It also checks if the player is holding the spear exactly one client tick after the last hit with it.
+ * It also checks if the player is swapping in the same client tick after an attack or stab, which vanilla never sends (hotbar changes go before attacks inside a tick) ther is one mod which false flags but i guess we can just call it it a cheat.
+ * It also checks if the player is swapping away from the axe one client tick after the last hit with it.
+
  */
 public final class LungeRate {
 
@@ -31,15 +20,15 @@ public final class LungeRate {
     private final int count, holdCount, holdOf, orderCount, axeCount, axeOf;
 
     private final LongRing fast;
-    private final LongRing recent = new LongRing(64); // swap-lunge times inside windowNs, for rateShare
-    /** Evidence behind the last alert of each check (0-1): what share of recent actions looked like the macro. */
+    private final LongRing recent = new LongRing(64);   
+    // evidence behind the last alert of each check (0-1): what share of recent actions looked like a cheat
     public double rateShare, holdShare, axeShare;
     private final LongRing order;
     private final int[] holds;
     private int holdHead, holdSize, holdSum;
     private final int[] axes;
     private int axeHead, axeSize, axeSum, axeHolds;
-    private int axeHitCt = -1;
+    private int axeHitCt = -1; // saving the last axe hit time
 
     private int swapTo = -1;
     private long swapNs;
@@ -50,7 +39,7 @@ public final class LungeRate {
     private int lunges, orderTotal;
     private int pendingHoldCt = -1;
     private int hitCt;
-    /** Event time of the last event fed, so the scanner feeds each event once. */
+    // saving the last event time
     public long lastNanos = Long.MIN_VALUE;
 
     public LungeRate(double fastMs, double minMs, int count, double windowMs, double swapInMs,
@@ -77,7 +66,6 @@ public final class LungeRate {
         this.axes = new int[this.axeOf + 1];
     }
 
-    /** Defaults as in config.yml (and Python LiveLunge()). */
     public LungeRate() {
         this(300.0, 75.0, 6, 30000.0, 150.0, 5, 10, 2, 60000.0);
     }
@@ -204,9 +192,9 @@ public final class LungeRate {
         return fast.size;
     }
 
-    /** A small FIFO of times; never holds more than its capacity (callers clear it at the alert count). */
+    // a small FIFO of times
     private static final class LongRing {
-        final long[] v;
+        final long[] v; // the array of times
         int head, size;
 
         LongRing(int cap) {
@@ -215,7 +203,7 @@ public final class LungeRate {
 
         void add(long x) {
             if (size == v.length) {
-                drop();
+                drop(); // dropping the first time if the array is full
             }
             v[(head + size) % v.length] = x;
             size++;
@@ -227,7 +215,7 @@ public final class LungeRate {
 
         void drop() {
             head = (head + 1) % v.length;
-            size--;
+            size--; // dropping the first time
         }
 
         void clear() {

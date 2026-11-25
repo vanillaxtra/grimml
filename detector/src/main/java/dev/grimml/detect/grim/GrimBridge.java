@@ -32,15 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
-/**
- * Turns a GrimML flag into everything a staff member sees:
- *  - Grim's FlagEvent (other Grim add-ons can see and cancel it),
- *  - one short chat line with a confidence %, details on hover, to players allowed and opted in,
- *  - an optional sound ping (permission grimml.alerts.sound),
- *  - a Discord webhook laid out exactly like Grim's own (discord.yml),
- *  - optional punishment commands at violation counts (per group of checks), each also posted to the webhook.
- * Called from the scan thread; chat, sounds and commands run on the main thread, webhooks on their own thread.
- */
+// This turns the flag into the message, ping, webhook and does punishments.
 public final class GrimBridge {
 
     public record Settings(
@@ -59,13 +51,13 @@ public final class GrimBridge {
     ) {
     }
 
-    /** Field for field the same as Grim's discord.yml, so ML alerts look like Grim's own. */
+    // Recreating what normal grim webhooks look like
     public record Webhook(boolean enabled, String url, boolean useGrimWebhook, String title, String color,
                           String thumbnailUrl, String imageUrl, String footerText, String footerUrl,
                           boolean includeTimestamp, boolean includeVerbose, List<String> content) {
     }
 
-    /** Short names people understand, shown instead of the internal check name. */
+    // changing the name to something more understandable.
     private static final Map<String, String> FRIENDLY = Map.ofEntries(
             Map.entry("MLKillAura", "Kill Aura"),
             Map.entry("MLAimAssist", "Aim Assist"),
@@ -80,13 +72,12 @@ public final class GrimBridge {
             Map.entry("SlamRepeat", "Stun Slam"),
             Map.entry("WebRepeat", "Stun Web"));
 
-    private static final String BACKTICK_REPLACEMENT = "ˋ"; // Grim's default backtick-replacement-char
+    private static final String BACKTICK_REPLACEMENT = "ˋ"; 
 
     private final Plugin plugin;
     private final Logger log;
     private final Predicate<Player> receives;
     private final Map<UUID, Map<String, MlCheck>> checks = new ConcurrentHashMap<>();
-    /** Kept when a player leaves, so relogging does not reset punishment counts (they decay instead). */
     private final Punishments punish = new Punishments();
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
     private final ExecutorService webhookThread = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
@@ -136,7 +127,6 @@ public final class GrimBridge {
         }
     }
 
-    /** Scan thread. */
     public void flag(UUID uuid, String playerName, String checkName, String description, double confidence, String verbose) {
         Settings s = settings;
         MlCheck check = checks.computeIfAbsent(uuid, k -> new ConcurrentHashMap<>())
@@ -149,7 +139,7 @@ public final class GrimBridge {
         if (user != null) {
             try {
                 if (api.getEventBus().get(FlagEvent.class).fire(user, check, verbose)) {
-                    return; // another Grim add-on cancelled it
+                    return; // edge case incase another plugin cancels our flag
                 }
             } catch (Throwable t) {
                 log.fine("FlagEvent failed: " + t);
@@ -215,7 +205,7 @@ public final class GrimBridge {
         });
     }
 
-    /** The alert placeholders plus %group% %group_vl% and %commands% (the commands run, filled in, joined by "; "). */
+   // building placeholders for punishments
     static Map<String, String> punishmentPlaceholders(Map<String, String> ph, Punishments.Fired f) {
         Map<String, String> out = new HashMap<>(ph);
         out.put("%group%", f.group().name());
@@ -232,7 +222,7 @@ public final class GrimBridge {
         return s == null ? "?" : s;
     }
 
-    /** The chat line: format text, with the hover lines and click command attached to all of it. */
+    // building the message sent to staff
     static Component message(Settings s, Map<String, String> ph) {
         Map<String, String> safe = new HashMap<>(ph);
         safe.replaceAll((k, v) -> MiniMessage.miniMessage().escapeTags(v)); // inserted values can never open a tag
@@ -268,8 +258,6 @@ public final class GrimBridge {
         }
     }
 
-    // ---- colours: '&' codes and MiniMessage tags mixed, like Grim's messages
-
     private static final String[] LEGACY_TAGS = new String[128];
 
     static {
@@ -286,7 +274,7 @@ public final class GrimBridge {
         LEGACY_TAGS['r'] = "<reset>";
     }
 
-    /** Turns '&' codes into MiniMessage tags, then parses once. */
+    // allows parsing of legacy colors and tags
     public static Component colour(String text) {
         return MiniMessage.miniMessage().deserialize(legacyToMini(text));
     }
@@ -313,7 +301,7 @@ public final class GrimBridge {
         return out.toString();
     }
 
-    // ---- Discord: the same embed Grim's DiscordManager sends
+    // building the embed for discord
 
     static String embed(Webhook w, Map<String, String> ph, String verbose) {
         JsonObject embed = new JsonObject();
@@ -365,7 +353,7 @@ public final class GrimBridge {
         return s.replaceAll("([*_~`|>\\\\])", "\\\\$1");
     }
 
-    /** Webhook thread: one post at a time; on Discord's rate limit, waits as long as it asks and tries once more. */
+    // posting the webhook
     private void post(String url, String body) {
         HttpRequest req = HttpRequest.newBuilder(URI.create(url))
                 .timeout(Duration.ofSeconds(15))

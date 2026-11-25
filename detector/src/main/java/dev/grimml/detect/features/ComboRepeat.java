@@ -1,21 +1,15 @@
 package dev.grimml.detect.features;
 
 /**
- * The three combo repeat checks for one player (exact port of Python spearmace.LiveCombo). Not thread safe: one scan
- * thread feeds it. Each feed returns alert bits: {@link #STUN}, {@link #SLAM}, {@link #WEB} (0 = none).
- *
- * A combo starts with a hit with the axe and ends with the swap away from it plus what follows:
- * <ul>
- * <li>STUN (StunRepeat): axe swapped in, axe hit, swapped to another weapon, follow-up hit on the same target.</li>
- * <li>SLAM (SlamRepeat): axe hit, swapped to the mace, mace hit on the same target (stun slam).</li>
- * <li>WEB (WebRepeat): axe hit, swapped to cobwebs, cobweb placed (stun web).</li>
- * </ul>
- * Each combo is written down as the client ticks between its steps (its signature): swap-in to axe hit, axe hit to
- * swap away, swap away to the follow-up; -1 where a step is missing (no swap-in for a slam or web, no follow-up hit
- * for a stun). A hand does not do the same chain to the tick every time; a macro with fixed delays does. {@code count}
- * combos of one kind with the same signature among that kind's last {@code of} alert, and that kind's list restarts.
- * Needs client ticks (1.21.2+ clients): combos with a step at client tick 0 are not written down. All times are
- * integer nanoseconds.
+ * This was kind of a joke to see if it could detect very specific movments and not false flag.
+ * 
+ * Its idea is that if you stun, stunslam, stun web, etc too consistently you are cheating.
+ * 
+ * This of course does not make sense in high level play as very good players would be able to do it consistently.
+ * 
+ * It works by recording the amount of ticks inbetween each action like swapping to axe, mace, sword, web etc.
+ * Then once you have done it enough times, it checks how consistently you are doing it where most players would not be able to do it consistently.
+ * However if you are using a cheat or macro of course it would do it the same every time.
  */
 public final class ComboRepeat {
 
@@ -28,7 +22,7 @@ public final class ComboRepeat {
     private final int count, of;
     private final long[][] lists = new long[3][];
     private final int[] sizes = new int[3];
-    /** Per kind (index 0 stun, 1 slam, 2 web): top signature share and the signature at its last alert. */
+    // save what it is
     public final double[] share = new double[3];
     public final int[][] sig = new int[3][];
     private final int[] combos = new int[3];
@@ -36,11 +30,11 @@ public final class ComboRepeat {
     private int swapTo = -1;
     private long swapNs;
     private int swapCt;
-    private int stage;      // 0 none, 1 after the axe hit, 2 wait follow-up hit, 3 wait mace hit, 4 wait place
-    private int inCt = -1;  // swap-in client tick (-1 none)
+    private int stage;      // 0 none 1 after the axe hit 2 wait follow-up hit 3 wait mace hit 4 wait place
+    private int inCt = -1;  // swap timing 
     private long axeNs, outNs;
     private int axeCt, outCt, target;
-    /** Event time of the last event fed, so the scanner feeds each event once. */
+    // saving the last event time
     public long lastNanos = Long.MIN_VALUE;
 
     public ComboRepeat(int count, int of) {
@@ -51,7 +45,7 @@ public final class ComboRepeat {
         }
     }
 
-    /** Defaults as in config.yml (and Python LiveCombo()). */
+    // defaults
     public ComboRepeat() {
         this(8, 10);
     }
@@ -107,7 +101,7 @@ public final class ComboRepeat {
         return 0;
     }
 
-    /** (swap-in to axe hit, axe hit to swap away, swap away to end) in client ticks; NONE at client tick 0. */
+    // getting the ticks between the events
     private long gaps(int endCt) {
         if (axeCt == 0 || outCt == 0 || endCt == 0 || inCt == 0) {
             return NONE;

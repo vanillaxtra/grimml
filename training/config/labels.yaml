@@ -45,6 +45,20 @@ exclude:
     - m94403eea
     - mf97e1a20
 
+  # decided 2026-11-24: Prestige Aim Assist ONLY_ON_ROTATE:TRUE is not a detection target for now. It only nudges
+  # turns the player already makes, the features barely see it (14-23% of windows), and keeping it in training
+  # adds nothing the model can use. Kept recorded so it can come back with a feature built for it.
+  "Prestige Aim Assist ONLY_ON_ROTATE: not detected for now":
+    - m0ee3763e
+    - m23f2b7a7
+    - m37c52816
+    - me775aea8
+  # decided 2026-11-24: legit fights vs the old pvp bot (before the orbit fix) made the camera spin one way and
+  # scored as the highest legit fights, setting the alert line. Dropped with the user's approval.
+  "Legit vs old bot (pre orbit fix)":
+    - m67d3e2b3
+    - m45b396e6
+
 # Legit duels recorded from both players' accounts are the same fight twice, so they must never be split across
 # train and test. Every mark id listed under a group id is held out together with it.
 same_fight:
@@ -68,6 +82,7 @@ same_fight:
   # 2026-11-23 duels vs a friend, both accounts
   m18f92367: [mad98911a]
   m1c4b76c4: [me90c2577]
+  m22a2c3e3: [mae085340]
 
 # Recorder builds before the per-window validity fix OR'd the event bits over the player's whole session, so
 # valid_death/respawn/teleport/... were set on almost every window after the first such event. Set this to the UTC

@@ -15,13 +15,13 @@ import java.util.HexFormat;
 import java.util.List;
 
 /**
- * An immutable set of module models built from one manifest version. Swapped atomically on update,
- * so the scan thread always sees a complete set.
- *
- * manifest.json:
- * { "version": 3, "published": "...", "models": [ { "module": "Kill Aura", "check": "MLKillAura",
- *   "model": "kill_aura.txt", "model_sha256": "...", "meta": "kill_aura.json", "meta_sha256": "...",
- *   "enabled": true, "alert_share": 0.2 } ] }
+ * This is the model set class for the GrimMLDetector.
+ * It is an immutable set of module models built from one manifest version.
+ * It is swapped atomically on update, so the scan thread always sees a complete set.
+ * 
+ * The manifest.json file is the file that contains the models.
+ * It is a json file that contains the models.
+ * It is a json file that contains the models.
  */
 public record ModelSet(int version, String published, List<ModuleModel> models) {
 
@@ -70,7 +70,7 @@ public record ModelSet(int version, String published, List<ModuleModel> models) 
         return new ModelSet(version, published, List.copyOf(out));
     }
 
-    // manifest file names are plain names in the same folder, never paths
+    // checks if the name is a valid file name
     static String safeName(String name) throws IOException {
         if (!name.matches("[A-Za-z0-9_.-]{1,64}") || name.contains("..")) {
             throw new IOException("bad file name in manifest: " + name);
@@ -78,6 +78,7 @@ public record ModelSet(int version, String published, List<ModuleModel> models) 
         return name;
     }
 
+    // verifies the sha256 of the data 
     static void verify(String what, byte[] data, String sha256) throws IOException {
         String got = sha256(data);
         if (!got.equalsIgnoreCase(sha256)) {

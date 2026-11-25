@@ -2,11 +2,6 @@ package dev.grimml.detect.model;
 
 import dev.grimml.detect.features.Features;
 
-/**
- * One cheat module's model plus how to turn its window scores into a fight verdict.
- * windowThreshold: score above which one 8 s window counts as flagged (5% of legit windows in training).
- * alertShare: a fight is flagged when at least this share of its windows is flagged, after minWindows windows.
- */
 public record ModuleModel(
         String module,
         String checkName,
@@ -27,7 +22,7 @@ public record ModuleModel(
         return model.predict(x);
     }
 
-    /** Index into the combined vector: the 13 core features, then the 44 schema 4 features. */
+    // combines the index of the feature
     public static int combinedIndex(String name) {
         int i = Features.indexOf(name);
         if (i >= 0) {
@@ -37,6 +32,7 @@ public record ModuleModel(
         return j < 0 ? -1 : Features.NAMES.length + j;
     }
 
+    // checks if the model uses schema 4
     public boolean usesSchema4() {
         for (int i : featureIndex) {
             if (i >= Features.NAMES.length) {
@@ -46,6 +42,7 @@ public record ModuleModel(
         return false;
     }
 
+    // maps the features to the index
     public static int[] mapFeatures(java.util.List<String> names) {
         int[] idx = new int[names.size()];
         for (int i = 0; i < idx.length; i++) {

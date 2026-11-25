@@ -1,11 +1,30 @@
 package dev.grimml.detect.features;
 
 /**
- * Java port of training/grimml_train/features/aimgrid.py (mouse-grid aim check). Same constants, same order of
- * float operations: ParitySelfCheck compares the window features and the live alerts with Python. Change both.
- *
- * Real mouse rotation is a whole number of sensitivity steps, step = (sens*0.6+0.2)^3 * 8 * 0.15, on yaw and pitch.
- * Aim assist, aimbots and kill aura add rotation that is not.
+ * Ill try my best to explain this. This is the java version of aimgrid.py which claude built.
+ * 
+ * Each time a player changes their aim direction, they send a yaw or pitch or both update to the server which is called the "step".
+ * Most people use normal sensitivity with no enhanced pointer precision so the amount of which the "step" increases is always the same.
+ * Then when there are aimbots or other modules which aim for you, they do not the same "step" which allows for me to differentiate between legit and cheat.
+ * 
+ * Each minecraft sensitivty is from 0 - 100% in the minecraft settings which we represent as 0 - 1.
+ * The formula for the "step" is     step = (sens * 0.6 + 0.2)^3 * 8 * 0.15
+ * This formula is used to calculate the "step" for each yaw and pitch update
+ * The "step" is then used to calculate the "off-grid" share of the player's rotation
+ * The "off-grid" is the percentage of the player's rotation that is not on the grid which goes into detecting.
+ * 
+ * However, when we have people who use enhanced pointer precision or any sort of raw mouse acceleration, the "step" is not always the same.
+ * To counter this, we actually need to be able to learn not only the "step" but also the rate of which the "step" is changing.
+ * To do this, we do a original probe where we differentiate whether the "step" is changing or not where if it isnt changing we run it normally.
+ * 
+ * But if the step is changing, we need to learn the new "step" and the rate that the "step" is changing.
+ * To learn the rate of increase, we use a CUSUM algorithm which is basically a way of tracking the rate of increase in the speed over distance mouse moved.
+ * Over 200 rotation samples which can take anywhere from 1-30 seconds depending on the amount of mouse movement and how wierd the acceleration curve is.
+ * 
+ * As to make it flag faster as well as less likely false flag players, we have a waiting where the step is changing off grid towards an enemy.
+ * If you are cheating, your aim assist will most likely only turn towards an enemy not away which means it will be off grid more towards an enemy if cheating.
+ * But if you are legit and false flagging, you will always be off grid no matter if you are towards or away from an enemy.
+ * Thus weighting the off grid towards an enemy more heavily than off grid away from an enemy, legit players will have a lower percentage.
  */
 public final class AimGrid {
 
@@ -57,7 +76,7 @@ public final class AimGrid {
         return (double) on / (to - from);
     }
 
-    /** Learned step, or NaN. ds[from..to): absolute deltas in time order (filtered here like Python). */
+    
     public static double learnStep(double[] in, int from, int to) {
         double[] ds = new double[to - from];
         int n = 0;
@@ -121,10 +140,7 @@ public final class AimGrid {
         return onShare(ds, 0, n, step) < MIN_FIT ? Double.NaN : step;
     }
 
-    /**
-     * Window features (NAMES order). hasAim[i]/errYaw[i]: the frame's aim error to the opponent (Schema4Features
-     * aim track). Toward = the yaw delta shrinks the error.
-     */
+    // getting the features for the aimgrid
     public static double[] features(Window4 w, boolean[] hasAim, double[] errYaw) {
         double[] row = {Double.NaN, Double.NaN, Double.NaN, Double.NaN};
         double[] all = new double[2 * w.n];
@@ -193,16 +209,7 @@ public final class AimGrid {
         }
     }
 
-    /**
-     * The live AimGrid check for one player (Python LiveGrid). Not thread safe: one scan thread feeds it.
-     *
-     * Per-player baseline: mouse acceleration (Windows "Enhance pointer precision", Raw Accel, custom curves) puts some
-     * legit rotation off the grid. The assist only acts with a target, so the off-grid share of the last BASE_KEEP
-     * out-of-fight samples is the player's own rate: the test's legit rate becomes max(p0, rate * baseMargin) (rounded
-     * to 0.001) and its cheat rate max(p1, 2 * that). Players over baseMax are skipped; until baseMin out-of-fight
-     * samples exist fight rotation is not tested. Moves over maxMult steps are ignored (baseline and test): a tiny step
-     * error grows with the size of the move and acceleration curves bend fast flicks the most.
-     */
+    // the live aimgrid check for one player
     public static final class Live {
         static final int LEARN = 200, CHECK = 200, KEEP = 600, RING = 300, MIN_SIDE = 10, BASE_KEEP = 600;
         static final double STEP_CHANGE = 0.005;
@@ -239,17 +246,16 @@ public final class AimGrid {
             this.legitRate = p0;
         }
 
-        /** Defaults as in config.yml (and Python LiveGrid()). */
         public Live(double p0, double p1, double h, double minBias) {
             this(p0, p1, h, minBias, 1.5, 0.08, 100, 20.0);
         }
 
-        /** Off-grid share of the player's out-of-fight rotation, NaN before baseMin samples. */
+        // getting the baseline for the player
         public double baseline() {
             return baseN >= baseMin ? (double) baseOff / baseN : Double.NaN;
         }
 
-        /** The test's current legit off-grid rate (p0 raised to the player's baseline). */
+        // getting the legit rate for the player
         public double legitRate() {
             return legitRate;
         }
@@ -329,7 +335,7 @@ public final class AimGrid {
                 }
             }
             if (d > maxMult * step) {
-                return; // big flicks: a tiny step error and mouse acceleration both scale with the size of the move
+                return; // ignoring big flicks
             }
             boolean off = offGrid(d, step);
             if (!fight) {
@@ -338,7 +344,7 @@ public final class AimGrid {
             }
             double b = baseline();
             if (Double.isNaN(b) || b > baseMax) {
-                cusum.s = 0.0; // no baseline yet, or a mouse too noisy to test
+                cusum.s = 0.0; // ignoring if no baseline yet
                 return;
             }
             cusum.add(off);
@@ -356,7 +362,7 @@ public final class AimGrid {
             }
         }
 
-        /** Toward minus away off-grid share over the ring, NaN with fewer than MIN_SIDE samples on a side. */
+        // getting the bias for the player
         public double bias() {
             int t = 0, tOff = 0, a = 0, aOff = 0;
             for (int k = 0; k < ringN; k++) {
@@ -375,6 +381,7 @@ public final class AimGrid {
             return (double) tOff / t - (double) aOff / a;
         }
 
+        // getting the off share for the player
         public double offShare() {
             if (ringN == 0) return Double.NaN;
             int off = 0;
@@ -384,7 +391,7 @@ public final class AimGrid {
             return (double) off / ringN;
         }
 
-        /** One frame; err is the aim error when hasAim. Returns true when this frame raises an alert. */
+        // giving the player data to the aimgrid
         public boolean feed(int tick, boolean hasRot, float yaw, float pitch, boolean hasOpp, boolean hasAim, double err) {
             boolean ok = hasPrev && hasRot && prevRot && tick - prevTick == 1;
             boolean pAim = prevAim;
