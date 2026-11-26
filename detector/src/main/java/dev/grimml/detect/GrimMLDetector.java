@@ -136,10 +136,11 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
             }
 
             @Override
-            public void window(UUID id, double[] features, List<String> checks, double[] scores, double[] thresholds) {
+            public void window(UUID id, double[] features, List<String> checks, double[] scores, double[] thresholds,
+                               int attacks, int events) {
                 if (!bypasses(id, "telemetry")) {
-                    telemetry.window(id, System.currentTimeMillis(), features, checks, scores, thresholds,
-                            bypasses(id, "trusted"));
+                    telemetry.window(id, System.currentTimeMillis(), features, checks, scores, thresholds, attacks,
+                            events, bypasses(id, "trusted"));
                 }
             }
 
@@ -495,6 +496,27 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                     missedAlerts(p);
                 }
             }, 60L);
+        }
+    }
+
+    // a ban for telemetry: the server's own ban list (the kick cause), or a kick whose message says "ban", which is how
+    // ban plugins kick (UNVERIFIED for each plugin). The message itself is never sent.
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
+    public void onKick(org.bukkit.event.player.PlayerKickEvent e) {
+        if (telemetry == null || !telemetry.enabled() || bypasses(e.getPlayer().getUniqueId(), "telemetry")) {
+            return;
+        }
+        var cause = e.getCause();
+        String how = null;
+        if (cause == org.bukkit.event.player.PlayerKickEvent.Cause.BANNED
+                || cause == org.bukkit.event.player.PlayerKickEvent.Cause.IP_BANNED) {
+            how = "vanilla";
+        } else if (net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+                .serialize(e.reason()).toLowerCase(Locale.ROOT).contains("ban")) {
+            how = "kick-message";
+        }
+        if (how != null) {
+            telemetry.ban(e.getPlayer().getUniqueId(), how, System.currentTimeMillis());
         }
     }
 

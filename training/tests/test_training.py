@@ -111,13 +111,61 @@ def test_pipeline_separates_and_writes_a_run(tmp_path):
     for f in ("kill_aura.txt", "kill_aura.json"):
         (models / f).write_text("x", encoding="utf-8")
     (models / "manifest.json").write_text(json.dumps({"version": 9, "models": [other]}), encoding="utf-8")
-    m = publish([run], enable=True, models_dir=models)
+    none = tmp_path / "no-telemetry"
+    m = publish([run], enable=True, models_dir=models, telemetry_dir=none)
     assert m["version"] == 10
     assert m["models"][0] == other
     new = m["models"][1]
     assert new["check"] == "MLAimAssist" and new["enabled"] and (models / "aim_assist.txt").exists()
     # republishing without --enable keeps the module's current state
-    assert publish([run], models_dir=models)["models"][1]["enabled"] is True
+    assert publish([run], models_dir=models, telemetry_dir=none)["models"][1]["enabled"] is True
+
+    # a real server where most players play like the cheat windows: publish refuses unless told otherwise
+    rng = np.random.default_rng(1)
+    tel = tmp_path / "telemetry"
+    lines = [{"type": "header", "schema": 5, "features": sets["core"]}]
+    for i in range(12):
+        shift = 2.0 if i < 6 else 0.0
+        lines.append({"type": "fight", "g": i, "p": f"p{i}", "keep": 1, "band": "low"})
+        for _ in range(25):
+            row = {"yaw_vel_mean": rng.normal(shift, 1), "yaw_vel_std": rng.normal(0, 1),
+                   "yaw_vel_abs_mean": rng.normal(shift, 1), "cps": rng.normal(8 + shift, 2),
+                   "speed_mean": rng.normal(0, 1), "on_ground_frac": rng.random()}
+            lines.append({"type": "window", "g": i, "p": f"p{i}", "t": 1, "a": 3, "e": 20,
+                          "f": [float(row.get(f, 0.0)) for f in sets["core"]], "s": {}})
+    _upload(tel / "2026-01-01" / ("ab" * 16 + "-1-00000000.jsonl.gz"), lines)
+    with pytest.raises(SystemExit, match="too many real players"):
+        publish([run], models_dir=models, telemetry_dir=tel)
+    assert publish([run], models_dir=models, telemetry_dir=tel, allow_flags=True)["version"] == 12
+
+
+def _upload(path, lines):
+    import gzip
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        fh.write("\n".join(json.dumps(x) for x in lines) + "\n")
+
+
+def test_telemetry_gate_counts_players_per_server(tmp_path):
+    from grimml_train import telemetry
+
+    lines = [{"type": "header", "schema": 5, "features": ["x"]}, {"type": "label", "p": "p0", "label": "cheat"},
+             {"type": "ban", "p": "p1", "how": "vanilla"}]
+    for i in range(12):
+        lines.append({"type": "fight", "g": i, "p": f"p{i}", "keep": 0.5 if i == 11 else 1, "band": "low"})
+        lines += [{"type": "window", "g": i, "p": f"p{i}", "t": 1, "a": 2, "e": 9, "f": [1.0 if i < 3 else 0.0]}
+                  for _ in range(20)]
+    lines.append({"type": "window", "g": 99, "p": "short", "t": 1, "f": [1.0]})  # too short to judge
+    _upload(tmp_path / "d" / ("cd" * 16 + "-1-00000000.jsonl.gz"), lines)
+    tel = telemetry.load(tmp_path)
+    assert tel.windows["attack_count"].iloc[0] == 2 and tel.bans == {("cd" * 16, "p1")}
+    r = telemetry.flag_shares(tel.X[:, 0], 0.5, 0.5, tel)
+    s = r["servers"][0]
+    # p0 is labelled cheat and p1 banned: left out, so 1 of 10 judged players is flagged
+    assert (s["players"], s["players_flagged"]) == (10, 1) and s["gated"]
+    assert r["banned_players"] == 1 and r["banned_flagged"] == 1
+    assert telemetry.gate(r, 0.08)[0] is False and telemetry.gate(r, 0.2)[0] is True
 
 
 def test_match_activity_balances_classes():

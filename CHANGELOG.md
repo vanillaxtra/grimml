@@ -35,7 +35,9 @@ not compute. A 1.1.0 server that downloads it refuses the whole model set and ke
   `grimml.bypass.telemetry` to leave a player out.
   Fights are sampled the same way on every server: every alerted and borderline fight, a matching number of quiet ones and
   a 3% random slice, each tagged with its band and keep chance. `/grimml label <player> cheat|legit [kind]`
-  (`grimml.label`) and `grimml.telemetry.trusted` add labels for training.
+  (`grimml.label`) and `grimml.telemetry.trusted` add labels for training. Each window also carries its attack and
+  event counts, and a ban (the server's ban list, or a kick whose message mentions a ban) is sent as a `ban` line with
+  the player's waiting fights kept; the kick message itself is never sent.
   Receiver in `tools/receiver` (Node, no dependencies, stops at 8 GiB). `config-version` is now 4.
 - **Flick features** (`flick_one_tick_frac`, `flick_return_frac`, `flick_snap_frac`) for the ML checks: for every hit,
   how the view turned over the 3 client ticks before and after it. Silent aim, snap kill auras and knockback

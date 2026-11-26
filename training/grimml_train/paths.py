@@ -12,6 +12,7 @@ LABELS_YAML = CONFIG_DIR / "labels.yaml"
 MODULES_YAML = CONFIG_DIR / "modules.yaml"
 
 DATA_DIR = TRAINING_DIR / "prestige temp test"  # the labelled .gmlml recordings
+TELEMETRY_DIR = TRAINING_DIR / "telemetry" / "telemetry-data"  # uploads copied from the receiver (git-ignored)
 RUNS_DIR = TRAINING_DIR / "runs"                # one folder per training run (git-ignored)
 CACHE_DIR = TRAINING_DIR / ".cache"             # decoded windows (git-ignored)
 

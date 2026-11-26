@@ -142,8 +142,31 @@ def train_module(spec: ModuleSpec, opts: DataOptions, rules: LabelRules, reg: Mo
     header = {"module": spec.name, "run_at": out.name, **p.header, "settings": asdict(spec)}
     if clf is not None:
         save_model(out / "model", spec.slug, clf, sets["core"], res, built=out.name)
+        res["telemetry"] = real_server_checks(out / "model", spec.slug, res, legit, sets["core"], spec.seed)
     print("\n" + write_run(out, header, [res], p.notes))
     print(f"\nsaved to {out}")
+    return out
+
+
+def real_server_checks(model_dir: Path, slug: str, res: dict, legit: pd.DataFrame, core: list[str],
+                       seed: int) -> dict | None:
+    """The false-flag gate at the line `publish` would use, and the recordings-vs-real-servers setup check.
+    None when there is no telemetry in training/telemetry/telemetry-data."""
+    import json
+
+    from grimml_train import telemetry
+    from grimml_train.publish import DEFAULT_MARGIN, alert_line
+
+    if not telemetry.files():
+        return None
+    tel = telemetry.load()
+    print(f"real-server checks on telemetry: {telemetry.summary(tel)}", flush=True)
+    meta = json.loads((model_dir / f"{slug}.json").read_text(encoding="utf-8"))
+    out: dict = {"data": telemetry.summary(tel)}
+    fights = res.get("fights") or {}
+    if "legit_share_max" in fights:
+        out["gate"] = telemetry.check_model(model_dir / f"{slug}.txt", meta, alert_line(fights, DEFAULT_MARGIN), tel)
+    out["setup"] = telemetry.setup_check(legit, core, tel, seed)
     return out
 
 

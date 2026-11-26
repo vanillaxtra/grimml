@@ -169,7 +169,7 @@ public final class Telemetry {
     // scan thread: one scored window. checks, scores and each model's window threshold line up.
     // It joins the player's fight; the fight is sent or not when it ends (FightSampler).
     public void window(UUID id, long epochMs, double[] features, List<String> checks, double[] scores,
-                       double[] thresholds, boolean trusted) {
+                       double[] thresholds, int attacks, int events, boolean trusted) {
         if (!settings.enabled()) {
             return;
         }
@@ -180,14 +180,16 @@ public final class Telemetry {
             flagged |= scores[i] >= thresholds[i];
             byCheck.put(checks.get(i), scores[i]);
         }
-        sampler.window(p, epochMs, trusted, flagged, byCheck, g -> windowLine(g, p, epochMs, features, checks, scores));
+        sampler.window(p, epochMs, trusted, flagged, byCheck, g -> windowLine(g, p, epochMs, features, checks, scores, attacks,
+                events));
     }
 
     private static String windowLine(long g, String p, long epochMs, double[] features, List<String> checks,
-                                     double[] scores) {
+                                     double[] scores, int attacks, int events) {
         StringBuilder sb = new StringBuilder(features.length * 9 + 140);
         sb.append("{\"type\":\"window\",\"g\":").append(g).append(",\"p\":\"").append(p).append("\",\"t\":")
-                .append(epochMs / 1000).append(",\"f\":[");
+                .append(epochMs / 1000).append(",\"a\":").append(attacks).append(",\"e\":").append(events)
+                .append(",\"f\":[");
         for (int i = 0; i < features.length; i++) {
             if (i > 0) {
                 sb.append(',');
@@ -222,6 +224,19 @@ public final class Telemetry {
         add("{\"type\":\"label\",\"p\":\"" + p + "\",\"t\":" + epochMs / 1000 + ",\"label\":\"" + label + "\""
                 + (kind == null ? "" : ",\"kind\":\"" + kind + "\"") + "}");
         return sampler.label(p, label, kind, epochMs);
+    }
+
+    // main thread: the player was banned (how: "vanilla" for the server's ban list, "kick-message" for a kick whose
+    // message mentions a ban, as ban plugins send). Sent as its own line; the player's open and waiting fights are kept.
+    // Not proof of cheating (bans for chat or alts look the same), so training uses it to leave the player out of
+    // false-flag counts and to see which flagged players got banned, never as a cheat label.
+    public void ban(UUID id, String how, long epochMs) {
+        if (!settings.enabled()) {
+            return;
+        }
+        String p = player(id);
+        add("{\"type\":\"ban\",\"p\":\"" + p + "\",\"t\":" + epochMs / 1000 + ",\"how\":\"" + how + "\"}");
+        sampler.ban(p);
     }
 
     public String sampling() {

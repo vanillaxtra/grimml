@@ -83,16 +83,20 @@ public final class FightSamplerSelfCheck {
         long t0 = t;
         t = fight(h, "late", t, 3, 0, false);
         t = fight(h, "lab", t, 3, 0, false);
+        t = fight(h, "banned", t, 3, 0, false);
         h.tick(t + MIN);
         check(out.isEmpty(), "nothing decided before hold-minutes");
         h.alert("late", t + MIN);
         check(h.label("lab", "cheat", "killaura", t + MIN) == 1, "label reaches the waiting fight");
+        check(h.ban("banned") == 1, "ban reaches the waiting fight");
         h.tick(t0 + 12 * MIN);
         List<String> hf = lines(out, "fight");
-        check(hf.size() == 2 && hf.stream().anyMatch(l -> l.contains("\"p\":\"late\"") && l.contains("\"band\":\"high\"")),
+        check(hf.size() == 3 && hf.stream().anyMatch(l -> l.contains("\"p\":\"late\"") && l.contains("\"band\":\"high\"")),
                 "late alert makes it high: " + hf);
         check(hf.stream().anyMatch(l -> l.contains("\"p\":\"lab\"") && l.contains("\"label\":\"cheat\",\"by\":\"staff\","
                 + "\"kind\":\"killaura\"") && l.contains("\"keep\":1,")), "labelled fight kept: " + hf);
+        check(hf.stream().anyMatch(l -> l.contains("\"p\":\"banned\"") && l.contains("\"banned\":true")
+                && !l.contains("\"label\"")), "banned player's fight kept, not labelled: " + hf);
 
         // the label also covers the player's next fights, and labelled fights skip the per-player cap
         out.clear();

@@ -64,7 +64,7 @@ public final class TelemetrySelfCheck {
 
         // a window joins a fight; the alert goes out at once and marks the fight; the fight goes out when it ends
         t.window(steve, 1_795_600_000_000L, new double[]{0.5, Double.NaN, 2}, List.of("MLKillAura"), new double[]{0.25},
-                new double[]{0.5}, false);
+                new double[]{0.5}, 3, 7, false);
         t.alert(steve, 1_795_600_001_000L, "SwapOrder", 1.0, -1, -1);
         t.tick(1_795_600_001_000L);
         check(t.buffered() == 1, "fight held until it ends: " + t.buffered());
@@ -85,7 +85,7 @@ public final class TelemetrySelfCheck {
                         + "\"windows\":1,\"flagged\":0,\"band\":\"high\",\"keep\":1,\"rand\":true,\"max\":{\"MLKillAura\":0.25},"
                         + "\"label\":\"cheat\",\"by\":\"staff\",\"kind\":\"macro\"}"), "fight line: " + lines[3]);
         check(lines[4].equals("{\"type\":\"window\",\"g\":" + g + ",\"p\":\"" + p + "\",\"t\":1795600000,"
-                + "\"f\":[0.5,null,2],\"s\":{\"MLKillAura\":0.25}}"), "window line: " + lines[4]);
+                + "\"a\":3,\"e\":7,\"f\":[0.5,null,2],\"s\":{\"MLKillAura\":0.25}}"), "window line: " + lines[4]);
         check(!body.contains(steve.toString()), "no UUID in the upload");
 
         // full receiver: lines kept, uploads paused

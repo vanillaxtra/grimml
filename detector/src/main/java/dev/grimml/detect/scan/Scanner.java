@@ -45,9 +45,10 @@ public final class Scanner implements Runnable {
             return false;
         }
 
-        // a scored window: every feature (NaN = not computed), each enabled model's score and window threshold
+        // a scored window: every feature (NaN = not computed), each enabled model's score and window threshold,
+        // and how busy it was (attack packets and all tracked events, the training data's attack_count/event_count)
         default void window(UUID player, double[] features, java.util.List<String> checks, double[] scores,
-                            double[] thresholds) {
+                            double[] thresholds, int attacks, int events) {
         }
     }
 
@@ -254,7 +255,7 @@ public final class Scanner implements Runnable {
             }
             if (collect) {
                 sink.window(id, f, names, java.util.Arrays.copyOf(scores, names.size()),
-                        java.util.Arrays.copyOf(thresholds, names.size()));
+                        java.util.Arrays.copyOf(thresholds, names.size()), w.m, w4.m);
             }
         }
     }

@@ -62,6 +62,7 @@ final class FightSampler {
         String label;
         String kind;
         String by;
+        boolean banned;
         long bytes;
         final List<String> lines = new ArrayList<>();
         final Map<String, Double> max = new LinkedHashMap<>();
@@ -183,6 +184,23 @@ final class FightSampler {
         return n;
     }
 
+    // the player was banned: their open and waiting fights are kept and marked
+    synchronized int ban(String p) {
+        int n = 0;
+        Fight f = open.get(p);
+        if (f != null) {
+            f.banned = true;
+            n++;
+        }
+        for (Fight h : held) {
+            if (h.p.equals(p)) {
+                h.banned = true;
+                n++;
+            }
+        }
+        return n;
+    }
+
     private static void apply(Fight f, Label l) {
         f.label = l.label();
         f.kind = l.kind();
@@ -234,7 +252,7 @@ final class FightSampler {
             f.label = "legit";
             f.by = "trusted";
         }
-        boolean forced = f.label != null;
+        boolean forced = f.label != null || f.banned;
         double p = forced || band < 2 ? 1.0 : Math.min(1.0, s.balance() * highSeen / Math.max(1.0, lowSeen));
         double r = s.randomShare();
         double keep = 1.0 - (1.0 - p) * (1.0 - r);
@@ -244,7 +262,7 @@ final class FightSampler {
             return;
         }
         ArrayDeque<Long> q = kept.computeIfAbsent(f.p, k -> new ArrayDeque<>());
-        if (!"staff".equals(f.by) && q.size() >= s.perPlayerHour()) {
+        if (!"staff".equals(f.by) && !f.banned && q.size() >= s.perPlayerHour()) {
             capped++;
             return;
         }
@@ -273,6 +291,9 @@ final class FightSampler {
             first = false;
         }
         sb.append('}');
+        if (f.banned) {
+            sb.append(",\"banned\":true");
+        }
         if (f.label != null) {
             sb.append(",\"label\":\"").append(f.label).append("\",\"by\":\"").append(f.by).append('"');
             if (f.kind != null) {

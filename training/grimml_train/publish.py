@@ -5,6 +5,9 @@ manifest version goes up by one per publish, and servers switch to it without a 
 
 alert_share (the share of a fight's windows that must be flagged) is set above every legit fight seen in held-out
 testing: max(95th percentile, max of legit fight shares) + margin.
+
+Real-server telemetry (training/telemetry/telemetry-data) is checked first: a model that would flag more than
+--max-flag-share of a server's players, or any player staff labelled legit, is not published unless --allow-flags.
 """
 from __future__ import annotations
 
@@ -36,6 +39,10 @@ class Candidate:
     files: tuple[Path, Path]  # model .txt, meta .json
 
 
+def alert_line(fights: dict, margin: float) -> float:
+    return round(max(fights["legit_share_p95"], fights["legit_share_max"]) + margin, 2)
+
+
 def candidate_from_run(run: Path, margin: float) -> Candidate:
     payload = json.loads((run / "result.json").read_text(encoding="utf-8"))
     res = next((r for r in payload["results"] if "test_client" not in r), None)
@@ -46,7 +53,7 @@ def candidate_from_run(run: Path, margin: float) -> Candidate:
     fights = res.get("fights") or {}
     if not txt.exists() or not meta.exists() or "legit_share_max" not in fights:
         raise SystemExit(f"{run}: model files or fight-level results missing")
-    share = round(max(fights["legit_share_p95"], fights["legit_share_max"]) + margin, 2)
+    share = alert_line(fights, margin)
     entry = {
         "module": name, "check": check_name(name),
         "description": f"ML model for {name} (experimental)",
@@ -62,11 +69,42 @@ def candidate_from_run(run: Path, margin: float) -> Candidate:
     return Candidate(entry, (txt, meta))
 
 
+def real_server_gate(cands: list[Candidate], max_share: float, allow: bool, folder: Path | None = None) -> None:
+    """Refuse (SystemExit) a candidate that over-flags real servers, unless allow."""
+    from grimml_train import telemetry
+
+    folder = folder or telemetry.TELEMETRY_DIR
+    if not telemetry.files(folder):
+        print("  real servers: no telemetry to check against")
+        return
+    tel = telemetry.load(folder)
+    print(f"  real servers ({telemetry.summary(tel)}):")
+    bad = []
+    for c in cands:
+        meta = json.loads(c.files[1].read_text(encoding="utf-8"))
+        r = telemetry.check_model(c.files[0], meta, c.entry["alert_share"], tel)
+        if "skipped" in r:
+            print(f"    {c.entry['check']}: {r['skipped']}")
+            continue
+        ok, why = telemetry.gate(r, max_share)
+        print(f"    {c.entry['check']}: {'ok' if ok else 'TOO MANY FLAGS'}, {why}")
+        if not ok:
+            bad.append(c.entry["check"])
+    if bad and not allow:
+        raise SystemExit(f"not published: {', '.join(bad)} would flag too many real players. Retrain, raise the "
+                         "margin, or pass --allow-flags if you checked those players yourself.")
+
+
 def publish(runs: list[Path], *, enable: bool | None = None, margin: float = DEFAULT_MARGIN,
-            dry_run: bool = False, models_dir: Path = MODELS_DIR) -> dict | None:
+            dry_run: bool = False, models_dir: Path = MODELS_DIR, max_flag_share: float | None = None,
+            allow_flags: bool = False, telemetry_dir: Path | None = None) -> dict | None:
     """Replace each run's module in models/. enable: True/False switches the module on/off, None keeps its current
     state (new modules start switched off). Returns the new manifest (None on a dry run)."""
+    from grimml_train.telemetry import MAX_PLAYER_SHARE
+
     cands = [candidate_from_run(Path(r), margin) for r in runs]
+    real_server_gate(cands, MAX_PLAYER_SHARE if max_flag_share is None else max_flag_share, allow_flags or dry_run,
+                     telemetry_dir)
     names = [c.entry["module"].lower() for c in cands]
     if len(set(names)) != len(names):
         raise SystemExit("two runs for the same module")

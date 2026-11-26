@@ -68,6 +68,11 @@ def module_lines(r: dict) -> list[str]:
     if tr:
         L.append(f"   transfer to other clients: AUC {fmt(tr['auc'])}  windows {tr['windows_by_client']}")
         L.append(f"     recall@5% {tr['recall_fpr5']}  @1% {tr['recall_fpr1']}")
+    if r.get("telemetry"):
+        from grimml_train.telemetry import lines as telemetry_lines
+
+        L.append(f"   real-server telemetry: {r['telemetry']['data']}")
+        L += telemetry_lines(r["telemetry"])
     return L
 
 

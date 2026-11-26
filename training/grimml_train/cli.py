@@ -88,6 +88,12 @@ def build_parser() -> argparse.ArgumentParser:
     on.add_argument("--disable", dest="enable", action="store_false", help="load the module but never flag")
     p.add_argument("--margin", type=float, default=0.04, help="added to the highest legit fight share")
     p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--max-flag-share", type=float, default=None,
+                   help="refuse a model that flags more than this share of a real server's players (default 0.08)")
+    p.add_argument("--allow-flags", action="store_true", help="publish even if the real-server check fails")
+
+    p = sub.add_parser("telemetry", help="real-server telemetry: data summary and how many players each live model flags")
+    p.add_argument("--folder", type=Path, default=None, help="default training/telemetry/telemetry-data")
 
     sub.add_parser("parity", help="write the detector's parity fixtures from models/")
     return ap
@@ -187,7 +193,29 @@ def cmd_loco(args) -> int:
 def cmd_publish(args) -> int:
     from grimml_train.publish import publish
 
-    publish(args.runs, enable=args.enable, margin=args.margin, dry_run=args.dry_run)
+    publish(args.runs, enable=args.enable, margin=args.margin, dry_run=args.dry_run,
+            max_flag_share=args.max_flag_share, allow_flags=args.allow_flags)
+    return 0
+
+
+def cmd_telemetry(args) -> int:
+    import json
+
+    from grimml_train import telemetry
+    from grimml_train.paths import MODELS_DIR
+
+    folder = args.folder or telemetry.TELEMETRY_DIR
+    tel = telemetry.load(folder)
+    print(f"{folder}: {telemetry.summary(tel)}")
+    if tel.empty:
+        return 0
+    manifest = json.loads((MODELS_DIR / "manifest.json").read_text(encoding="utf-8"))
+    print(f"published models v{manifest['version']}, line = each model's alert_share:")
+    for e in manifest["models"]:
+        meta = json.loads((MODELS_DIR / e["meta"]).read_text(encoding="utf-8"))
+        r = telemetry.check_model(MODELS_DIR / e["model"], meta, e["alert_share"], tel)
+        print(f"== {e['check']} ({'on' if e.get('enabled') else 'off'}) ==")
+        print("\n".join(telemetry.lines({"gate": r})))
     return 0
 
 
@@ -199,7 +227,8 @@ def cmd_parity(_args) -> int:
 
 
 COMMANDS = {"modules": cmd_modules, "sessions": cmd_sessions, "train": cmd_train, "loco": cmd_loco,
-            "publish": cmd_publish, "parity": cmd_parity}
+            "publish": cmd_publish, "telemetry": cmd_telemetry,
+            "parity": cmd_parity}
 
 
 def main(argv: list[str] | None = None) -> int:
