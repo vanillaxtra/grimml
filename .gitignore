@@ -20,7 +20,7 @@ CLAUDE.md
 .claude/
 todo.txt
 training/prestige temp test
-
+training/telemetry
 # ---- recordings and player data: never commit (they hold other players' play)
 *.gmlml
 !training/tests/fixtures/*.gmlml

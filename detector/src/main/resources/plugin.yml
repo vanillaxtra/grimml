@@ -12,7 +12,7 @@ commands:
   grimml:
     description: GrimML alerts, status, reload and model update
     aliases: [gml]
-    usage: /<command> [alerts|overlay|history|status|reload|update]
+    usage: /<command> [alerts|overlay|history|label|status|reload|update|telemetry]
 permissions:
   grimml.*:
     description: Everything below except bypass
@@ -23,6 +23,7 @@ permissions:
       grimml.alerts.sound: true
       grimml.overlay: true
       grimml.history: true
+      grimml.label: true
       grimml.notify: true
       grimml.update.notify: true
   grimml.admin:
@@ -100,4 +101,13 @@ permissions:
     default: false
   grimml.bypass.webrepeat:
     description: Never flagged for Stun Web (WebRepeat)
+    default: false
+  grimml.label:
+    description: /grimml label, tell telemetry a player is a cheater or legit
+    default: op
+  grimml.telemetry.trusted:
+    description: Telemetry sends this player's fights labelled legit (staff, known clean players)
+    default: false
+  grimml.bypass.telemetry:
+    description: Never included in telemetry uploads (still checked)
     default: false

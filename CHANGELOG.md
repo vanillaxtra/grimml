@@ -27,7 +27,16 @@ not compute. A 1.1.0 server that downloads it refuses the whole model set and ke
 - **Missed alerts on join**: staff with `grimml.alerts` see the alerts and punishments from while they were away
   (at most `history.on-join.max-minutes` back), grouped per player and check; click a line for that player's history.
 - **Punishment delay** (`punishments.delay-seconds`, default 10–45 s): each punishment waits a random time so a
-  cheater can't tell which hit caught them. It is posted to the webhook when it runs. `config-version` is now 3.
+  cheater can't tell which hit caught them. It is posted to the webhook when it runs.
+- **Telemetry, opt-in** (`telemetry` section, off by default): uploads scored fight windows and alerts, anonymous
+  (salted player hash, random server id; no names, UUIDs, IPs, chat or coordinates), every 60 minutes over HTTPS
+  (port 443, so hosts that block other outgoing ports still reach it) to the GrimML receiver at
+  `telemetry.notauthorised.lol`. `/grimml telemetry` to check and send now (a failed upload shows the network error),
+  `grimml.bypass.telemetry` to leave a player out.
+  Fights are sampled the same way on every server: every alerted and borderline fight, a matching number of quiet ones and
+  a 3% random slice, each tagged with its band and keep chance. `/grimml label <player> cheat|legit [kind]`
+  (`grimml.label`) and `grimml.telemetry.trusted` add labels for training.
+  Receiver in `tools/receiver` (Node, no dependencies, stops at 8 GiB). `config-version` is now 4.
 - **Flick features** (`flick_one_tick_frac`, `flick_return_frac`, `flick_snap_frac`) for the ML checks: for every hit,
   how the view turned over the 3 client ticks before and after it. Silent aim, snap kill auras and knockback
   displacement turn onto the target on the hit tick and straight back; a real flick builds up over several ticks and

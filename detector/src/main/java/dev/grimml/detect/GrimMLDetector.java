@@ -5,6 +5,7 @@ import com.github.retrooper.packetevents.event.PacketListenerCommon;
 import dev.grimml.detect.grim.GrimBridge;
 import dev.grimml.detect.grim.Punishments;
 import dev.grimml.detect.history.AlertHistory;
+import dev.grimml.detect.telemetry.Telemetry;
 import dev.grimml.detect.model.ModelSet;
 import dev.grimml.detect.model.ModelStore;
 import dev.grimml.detect.model.ModuleModel;
@@ -47,7 +48,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
 
     private static final int ATTACK_CAP = 2048; // events kept per player (about 60-80 a second in a fight)
     // bump this when config.yml keys are added, renamed or change meaning
-    public static final int CONFIG_VERSION = 3;
+    public static final int CONFIG_VERSION = 4;
 
     private final Map<UUID, PlayerTrack> tracks = new ConcurrentHashMap<>();
     private final Map<Integer, PlayerTrack> byEntity = new ConcurrentHashMap<>();
@@ -68,6 +69,7 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
     private PacketListenerCommon tap;
     private dev.grimml.detect.overlay.Overlay overlay;
     private AlertHistory history;
+    private Telemetry telemetry; // null if its folder could not be made
     private ScheduledExecutorService scanExec;
     private ScheduledExecutorService updateExec;
     private dev.grimml.detect.update.ModelNotices modelNotices;
@@ -87,6 +89,20 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         history = new AlertHistory(getDataFolder().toPath().resolve("history"),
                 getConfig().getBoolean("history.enabled", true), getConfig().getInt("history.keep-days", 14), getLogger());
         grim.history(history::record);
+        try {
+            String[] featureNames = java.util.stream.Stream.concat(
+                    java.util.Arrays.stream(dev.grimml.detect.features.Features.NAMES),
+                    java.util.Arrays.stream(dev.grimml.detect.features.Schema4Features.NAMES)).toArray(String[]::new);
+            telemetry = new Telemetry(getDataFolder().toPath().resolve("telemetry"), telemetrySettings(), getLogger(),
+                    getPluginMeta().getVersion(), Bukkit.getMinecraftVersion(), () -> store.current().version(),
+                    featureNames);
+            if (telemetry.enabled()) {
+                getLogger().info("Telemetry on: anonymous fight data is shared with the GrimML developers "
+                        + "(telemetry.enabled in config.yml). Thank you!");
+            }
+        } catch (Exception ex) {
+            getLogger().warning("telemetry is off: " + ex.getMessage());
+        }
         // old days are deleted at start and every 6 hours
         Bukkit.getScheduler().runTaskTimer(this, () -> history.prune(System.currentTimeMillis()), 20L, 6 * 72_000L);
         overlay = new dev.grimml.detect.overlay.Overlay(overlaySettings(),
@@ -108,6 +124,22 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                     grim.flag(id, names.getOrDefault(id, id.toString()), check, description, confidence, verbose,
                             flagged, windows);
                     overlay.alert(id, check, confidence, flagged, windows);
+                    if (telemetry != null) {
+                        telemetry.alert(id, System.currentTimeMillis(), check, confidence, flagged, windows);
+                    }
+                }
+            }
+
+            @Override
+            public boolean collect() {
+                return telemetry != null && telemetry.enabled();
+            }
+
+            @Override
+            public void window(UUID id, double[] features, List<String> checks, double[] scores, double[] thresholds) {
+                if (!bypasses(id, "telemetry")) {
+                    telemetry.window(id, System.currentTimeMillis(), features, checks, scores, thresholds,
+                            bypasses(id, "trusted"));
                 }
             }
 
@@ -121,6 +153,9 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
             @Override
             public void scanned() {
                 overlay.refresh();
+                if (telemetry != null) {
+                    telemetry.tick(System.currentTimeMillis());
+                }
             }
         }, scanSettings(), gridSettings(), lungeSettings(), ATTACK_CAP);
         var cmd = getCommand("grimml");
@@ -190,6 +225,9 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
         }
         if (history != null) {
             history.shutdown();
+        }
+        if (telemetry != null) {
+            telemetry.shutdown();
         }
         tracks.clear();
     }
@@ -287,6 +325,14 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
     private boolean bypasses(UUID id, String check) {
         Set<String> b = bypass.get(id);
         return b != null && b.contains(check.toLowerCase(Locale.ROOT));
+    }
+
+    private Telemetry.Settings telemetrySettings() {
+        var c = getConfig();
+        return new Telemetry.Settings(c.getBoolean("telemetry.enabled", false),
+                Telemetry.URL,
+                c.getInt("telemetry.upload-every-minutes", 60),
+                Telemetry.SAMPLING);
     }
 
     // the alerts, webhook and punishments sections
@@ -604,6 +650,12 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                     mine.add(key);
                 }
             }
+            if (p.hasPermission("grimml.bypass.telemetry")) {
+                mine.add("telemetry"); // never sent, still checked
+            }
+            if (p.hasPermission("grimml.telemetry.trusted")) {
+                mine.add("trusted"); // telemetry labels this player's fights legit
+            }
             bypass.put(p.getUniqueId(), mine);
             if (overlay.isOn(p.getUniqueId()) && !p.hasPermission("grimml.overlay")) {
                 overlay.turnOff(p.getUniqueId());
@@ -684,6 +736,47 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
             java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm").withZone(java.time.ZoneId.systemDefault());
 
     // /grimml history <player> [days]
+    // /grimml label <player> cheat|legit [kind]: sent with telemetry so the player's fights can be used for training
+    private void label(CommandSender sender, String label, String[] args) {
+        if (telemetry == null || !telemetry.enabled()) {
+            sender.sendMessage(prefix().append(mm("<gray>Telemetry is <red>off</red>, so labels go nowhere. Turn on "
+                    + "<white>telemetry.enabled</white> in config.yml first.")));
+            return;
+        }
+        String what = args.length > 2 ? args[2].toLowerCase(Locale.ROOT) : "";
+        String kind = args.length > 3 ? args[3].toLowerCase(Locale.ROOT) : null;
+        if (args.length < 3 || !Telemetry.LABELS.contains(what) || (kind != null
+                && (!what.equals("cheat") || !Telemetry.KINDS.contains(kind)))) {
+            sender.sendMessage(prefix().append(mm("<gray>Usage: <white>/<label> label \\<player> cheat|legit [kind]</white>",
+                    Placeholder.unparsed("label", label))));
+            sender.sendMessage(prefix().append(mm("<gray>Kinds for cheat: <white><kinds></white>",
+                    Placeholder.unparsed("kinds", String.join(", ", Telemetry.KINDS)))));
+            return;
+        }
+        Player online = Bukkit.getPlayerExact(args[1]);
+        org.bukkit.OfflinePlayer target = online != null ? online : Bukkit.getOfflinePlayerIfCached(args[1]);
+        if (target == null) {
+            sender.sendMessage(prefix().append(mm("<white><player></white> <gray>has never joined this server.",
+                    Placeholder.unparsed("player", args[1]))));
+            return;
+        }
+        String name = target.getName() == null ? args[1] : target.getName();
+        if (bypasses(target.getUniqueId(), "telemetry")) {
+            sender.sendMessage(prefix().append(mm("<white><player></white> <gray>has <white>grimml.bypass.telemetry</white>, "
+                    + "so their fights are never sent.", Placeholder.unparsed("player", name))));
+            return;
+        }
+        int fights = telemetry.label(target.getUniqueId(), what, kind, System.currentTimeMillis());
+        getLogger().info(sender.getName() + " labelled " + name + " " + what + (kind == null ? "" : " (" + kind + ")"));
+        String c = what.equals("cheat") ? "red" : "green";
+        sender.sendMessage(prefix().append(mm("<gray>Labelled <white><player></white> <" + c + "><what></" + c + ">"
+                        + " for telemetry: <white><fights></white> waiting fights and the next 30 minutes of "
+                        + "their fights are sent with it.",
+                Placeholder.unparsed("player", name),
+                Placeholder.unparsed("what", what + (kind == null ? "" : " (" + kind + ")")),
+                Placeholder.unparsed("fights", Integer.toString(fights)))));
+    }
+
     private void showHistory(CommandSender sender, String label, String[] args) {
         if (!history.enabled()) {
             say(sender, "&7Alert history is off in config.yml &8(history.enabled)&7.");
@@ -781,6 +874,28 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                     showHistory(sender, label, args);
                 }
             }
+            case "label" -> {
+                if (!sender.hasPermission("grimml.label")) {
+                    say(sender, "&cYou don't have permission to label players.");
+                } else {
+                    label(sender, label, args);
+                }
+            }
+            case "telemetry" -> {
+                if (!admin(sender)) {
+                    return true;
+                }
+                if (telemetry == null || !telemetry.enabled()) {
+                    say(sender, "&7Telemetry is &coff&7. Turn it on with &ftelemetry.enabled: true &7in config.yml, then "
+                            + "&f/" + label + " reload&7. It shares anonymous fight data to improve the checks.");
+                    return true;
+                }
+                say(sender, "&7Telemetry &aon&7: &f" + telemetry.status().get("buffered") + " &7lines waiting, last: &f"
+                        + telemetry.lastResult());
+                line(sender, "&8 - &7" + telemetry.sampling());
+                say(sender, "&7Sending now...");
+                telemetry.sendNow(r -> Bukkit.getScheduler().runTask(this, () -> say(sender, "&7Telemetry: &f" + r)));
+            }
             case "status" -> {
                 if (!admin(sender)) {
                     return true;
@@ -826,6 +941,13 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                         }
                     }
                 }
+                if (telemetry != null) {
+                    line(sender, "&8 - &7Telemetry " + (telemetry.enabled() ? "&aon &8(" + telemetry.status().get("buffered")
+                            + " lines waiting, server id " + telemetry.serverId().substring(0, 8) + ")" : "&coff"));
+                    if (telemetry.enabled()) {
+                        line(sender, "&8   - &7" + telemetry.sampling());
+                    }
+                }
                 line(sender, String.format("&7Tracking &f%d &7players, &f%d &7windows scored, &f%d &7flags, last scan &f%.2f ms",
                         tracks.size(), scanner.windowsScored.get(), scanner.flagsRaised.get(), scanner.lastRunMs));
                 if (!store.lastError().isEmpty()) {
@@ -840,6 +962,9 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                 checkConfigVersion();
                 grim.settings(bridgeSettings());
                 history.settings(getConfig().getBoolean("history.enabled", true), getConfig().getInt("history.keep-days", 14));
+                if (telemetry != null) {
+                    telemetry.settings(telemetrySettings());
+                }
                 overlay.settings(overlaySettings());
                 scanner.settings(scanSettings(), gridSettings(), lungeSettings());
                 say(sender, "&7Config reloaded &8(window size and scan interval need a restart)&7.");
@@ -873,6 +998,10 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
                     line(sender, "&8 - &f/" + label + " status [player] &7checks, models and a player's state");
                     line(sender, "&8 - &f/" + label + " reload &7reload config.yml");
                     line(sender, "&8 - &f/" + label + " update &7download newer models now");
+                    line(sender, "&8 - &f/" + label + " telemetry &7telemetry status, and send now");
+                }
+                if (sender.hasPermission("grimml.label")) {
+                    line(sender, "&8 - &f/" + label + " label <player> cheat|legit [kind] &7tell telemetry what a player is");
                 }
             }
         }
@@ -901,14 +1030,24 @@ public final class GrimMLDetector extends JavaPlugin implements Listener, TabCom
             if (sender.hasPermission("grimml.history")) {
                 options.add("history");
             }
+            if (sender.hasPermission("grimml.label")) {
+                options.add("label");
+            }
             if (sender.hasPermission("grimml.admin")) {
-                options.addAll(List.of("status", "reload", "update"));
+                options.addAll(List.of("status", "reload", "update", "telemetry"));
             }
         } else if (args.length == 2 && ((args[0].equalsIgnoreCase("status") && sender.hasPermission("grimml.admin"))
+                || (args[0].equalsIgnoreCase("label") && sender.hasPermission("grimml.label"))
                 || (args[0].equalsIgnoreCase("history") && sender.hasPermission("grimml.history")))) {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 options.add(p.getName());
             }
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("label") && sender.hasPermission("grimml.label")) {
+            options.addAll(Telemetry.LABELS);
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("label") && args[2].equalsIgnoreCase("cheat")
+                && sender.hasPermission("grimml.label")) {
+            options.addAll(Telemetry.KINDS);
         }
         String typed = args.length == 0 ? "" : args[args.length - 1].toLowerCase(Locale.ROOT);
         options.removeIf(o -> !o.toLowerCase(Locale.ROOT).startsWith(typed));

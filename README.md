@@ -142,6 +142,8 @@ punishments:
 | `/grimml status [player]` | `grimml.admin` | Models, checks, punishments, and a player's scan state and counts |
 | `/grimml update` | `grimml.admin` | Download newer models now |
 | `/grimml reload` | `grimml.admin` | Reload `config.yml` |
+| `/grimml telemetry` | `grimml.admin` | Telemetry status, and send what is waiting now |
+| `/grimml label <player> cheat\|legit [kind]` | `grimml.label` | Tell telemetry what a player is, for training |
 
 **Alias:** `/gml`
 
@@ -160,6 +162,9 @@ punishments:
 | `grimml.update.notify` | OP | Be told when a new GrimML release is out |
 | `grimml.admin` | OP | Status, reload, update |
 | `grimml.bypass` | false | Never scanned by any check |
+| `grimml.label` | OP | Use `/grimml label` |
+| `grimml.telemetry.trusted` | false | Telemetry sends this player's fights labelled legit (staff, known clean players) |
+| `grimml.bypass.telemetry` | false | Never included in telemetry uploads |
 | `grimml.bypass.<check>` | false | Never flagged by one check (`mlkillaura`, `mlaimassist`, `mltriggerbot`, `mlsilentaim`, `aimgrid`, `lungerate`, `lungehold`, `swaporder`, `axehold`, `stunrepeat`, `slamrepeat`, `webrepeat`) |
 
 ---
@@ -196,8 +201,40 @@ Main config: `plugins/GrimML/config.yml`
 - `aim-grid`, `lunge-rate`, `lunge-hold`, `swap-order`, `axe-hold`, `combo-repeat` – Rule check tuning
 - `models` – Auto-update and manifest URL
 - `update-checker` – Plugin release notices
+- `telemetry` – Opt-in anonymous fight data upload (see below)
 
 Full technical details: [detector/README.md](detector/README.md).
+
+### Telemetry (opt-in)
+
+Off by default. With `telemetry.enabled: true` GrimML uploads, every `upload-every-minutes` (60), a sample of the
+fights it scored (each window's model features and scores) and the alerts, gzipped, to the GrimML receiver. This is
+used to check and retrain the models on more players.
+
+**Which fights are sent** (fixed, the same on every server). A fight is one player's scored windows with no gap over 30 s. It
+waits 5 minutes after it ends (so a late alert or a label still reaches it), then gets a band:
+
+| Band | When | Sent |
+|------|------|------|
+| high | an alert came during it | all |
+| unsure | at least 25% of its windows passed a model's threshold, no alert | all |
+| low | the rest | about as many as high + unsure together |
+
+3% of all fights are also sent whatever their band, as an unbiased sample. Each fight line says its band and the
+chance it had of being sent (`keep`), so training can weight it back to the real mix. A player sends at most 6
+fights an hour.
+
+**Labels.** Scores are the model's guess, not the truth, so training needs labels:
+- `/grimml label <player> cheat [kind]` or `legit`: when staff are sure (caught on video, admitted, reviewed). Their
+  fights from the last 5 minutes and the next 30 are sent with the label.
+- `grimml.telemetry.trusted` (give it to staff or known clean players): their fights are sent labelled legit.
+
+- **Never sent:** player names, UUIDs, IPs, chat, coordinates. A player is a salted hash that only your server can
+  make, so the same player on two servers can't be matched. Your server is a random id in
+  `plugins/GrimML/telemetry/` (delete that folder for a new one).
+- At most 48 MB waits in memory (oldest dropped). If the receiver is down or full, uploads wait and retry.
+- `/grimml telemetry` shows what is waiting and sends it now. `grimml.bypass.telemetry` leaves a player out.
+- Running your own receiver: [tools/receiver/README.md](tools/receiver/README.md).
 
 ---
 

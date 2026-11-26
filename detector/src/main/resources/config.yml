@@ -2,10 +2,10 @@
 # Detects Kill Aura, Aim Assist, Triggerbot, Silent Aim, Instant Lunge and Auto Shield Breaker.
 # Beta: the models are trained on a small number of players. Alerts are safe to use; keep punishments off
 # until you have checked the alerts on your own server.
-# Permissions: grimml.alerts, grimml.alerts.sound, grimml.overlay, grimml.history, grimml.notify, grimml.admin, grimml.bypass, grimml.bypass.<check>
+# Permissions: grimml.alerts, grimml.alerts.sound, grimml.overlay, grimml.history, grimml.notify, grimml.admin, grimml.bypass, grimml.bypass.<check>, grimml.bypass.telemetry, grimml.label, grimml.telemetry.trusted
 
 # do not change: tells GrimML which settings this file has (a warning on startup means new settings were added)
-config-version: 3
+config-version: 4
 
 # tell the console and players with grimml.update.notify when a new GrimML release is on GitHub
 update-checker: true
@@ -153,6 +153,17 @@ alerts:
     volume: 1.0
     pitch: 1.0
   decay-per-minute: 0.05
+
+# Help improve the checks: share anonymous fight data with the GrimML developers (off until you turn it on).
+# Sent every upload-every-minutes: the numbers each fight window was scored on, the model scores and the alerts,
+# plus your GrimML, Minecraft and model versions. Never sent: player names, UUIDs, IPs, chat or coordinates.
+# Players are a salted hash that only this server can make, so nobody can tell who they are or match them across
+# servers. Your server is a random id (plugins/GrimML/telemetry/server-id; delete the folder for a new one).
+# Not every fight is sent: all alerted and borderline ones, a matching number of quiet ones and a small random
+# sample. Players with grimml.bypass.telemetry are never sent.
+telemetry:
+  enabled: false
+  upload-every-minutes: 60
 
 # Alert history: every alert and punishment is saved to plugins/GrimML/history/<date>.jsonl (one file per day, UTC).
 # /grimml history <player> [days] (grimml.history) shows them, even for offline players and after restarts.

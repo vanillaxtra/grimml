@@ -189,6 +189,26 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>telemetry-self-check</id>
+                        <phase>test</phase>
+                        <goals><goal>java</goal></goals>
+                        <configuration>
+                            <mainClass>dev.grimml.detect.telemetry.TelemetrySelfCheck</mainClass>
+                            <classpathScope>test</classpathScope>
+                            <skip>${skipTests}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>fight-sampler-self-check</id>
+                        <phase>test</phase>
+                        <goals><goal>java</goal></goals>
+                        <configuration>
+                            <mainClass>dev.grimml.detect.telemetry.FightSamplerSelfCheck</mainClass>
+                            <classpathScope>test</classpathScope>
+                            <skip>${skipTests}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>update-self-check</id>
                         <phase>test</phase>
                         <goals><goal>java</goal></goals>

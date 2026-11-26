@@ -39,6 +39,16 @@ public final class Scanner implements Runnable {
         // called after every scan, on the scan thread
         default void scanned() {
         }
+
+        // true to get every scored window (telemetry); all features are then computed
+        default boolean collect() {
+            return false;
+        }
+
+        // a scored window: every feature (NaN = not computed), each enabled model's score and window threshold
+        default void window(UUID player, double[] features, java.util.List<String> checks, double[] scores,
+                            double[] thresholds) {
+        }
     }
 
     public record Settings(int frameCap, int minAttacks, int minFrames, long fightGapMs, int blockWindows,
@@ -211,7 +221,8 @@ public final class Scanner implements Runnable {
             }
             double[] core = Features.compute(w.yaw, w.pitch, w.x, w.z, w.flags, w.n, w.attacks, w.m);
             System.arraycopy(core, 0, combined, 0, core.length);
-            boolean need4 = false;
+            boolean collect = sink.collect();
+            boolean need4 = collect;
             for (ModuleModel m : set.models()) {
                 need4 |= m.enabled() && m.usesSchema4();
             }
@@ -223,15 +234,27 @@ public final class Scanner implements Runnable {
             double[] f = combined;
             windowsScored.incrementAndGet();
             Map<String, Fight> mine = fights.computeIfAbsent(id, k -> new HashMap<>());
+            java.util.List<String> names = collect ? new java.util.ArrayList<>() : null;
+            double[] scores = collect ? new double[set.models().size()] : null;
+            double[] thresholds = collect ? new double[set.models().size()] : null;
             for (ModuleModel m : set.models()) {
                 if (!m.enabled()) {
                     continue;
                 }
                 double score = m.score(f);
+                if (collect) {
+                    scores[names.size()] = score;
+                    thresholds[names.size()] = m.windowThreshold();
+                    names.add(m.checkName());
+                }
                 Fight fight = mine.computeIfAbsent(m.checkName(), k -> new Fight());
                 report(id, m, fight.add(now, score, m.windowThreshold(), m.alertShare(), s.blockWindows(),
                         minWindows(s, m), gapNs, s.earlyZ(), s.earlyMinWindows()));
                 sink.live(id, m.checkName(), fight.windows(), fight.flagged(), fight.meanScore());
+            }
+            if (collect) {
+                sink.window(id, f, names, java.util.Arrays.copyOf(scores, names.size()),
+                        java.util.Arrays.copyOf(thresholds, names.size()));
             }
         }
     }
