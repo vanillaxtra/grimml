@@ -1,7 +1,7 @@
 {
-  "version": 10,
-  "published": "2026-11-23 15:45 UTC",
-  "source_run": "aim_assist/20261123_153853, silent_aim/20261123_153944",
+  "version": 11,
+  "published": "2026-11-26 18:19 UTC",
+  "source_run": "silent_aim/20261125_141551",
   "models": [
     {
       "module": "Aim Assist",
@@ -37,12 +37,12 @@
       "model": "silent_aim.txt",
       "meta": "silent_aim.json",
       "enabled": true,
-      "alert_share": 0.27,
-      "held_out_core_auc": 0.824,
-      "cheat_sessions_caught": "8/9",
-      "source_run": "silent_aim/20261123_153944",
-      "model_sha256": "1aceb32b62113dc1de04ace038b6bbe5c9ddd3afd2b651a999fafc4fb18a8e31",
-      "meta_sha256": "dc639220ba5205a17d10bc3c57a6ffe6d27db54610027ce05e72afc1f2d7e6ea"
+      "alert_share": 0.23,
+      "held_out_core_auc": 0.985,
+      "cheat_sessions_caught": "7/7",
+      "source_run": "silent_aim/20261125_141551",
+      "model_sha256": "a1dcb4e7fd5d194eb174c97c9feb973fc0ede20ec5f94abd52d941a336e1cc6f",
+      "meta_sha256": "fea35136abfc93f0269bc4293fccc16ff1a64ff2c7343571261cc30a95655dfd"
     },
     {
       "module": "Kill Aura",
